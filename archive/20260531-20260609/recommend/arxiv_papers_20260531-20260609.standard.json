@@ -1,0 +1,860 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-09T03:24:38.385804+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 18,
+    "deep_cap": 6,
+    "deep_selected": 10,
+    "quick_candidates": 20,
+    "quick_skim_target": 11,
+    "quick_selected": 11
+  },
+  "deep_dive": [
+    {
+      "id": "2606.01508v1",
+      "source": "arxiv",
+      "title": "Agent Operating Systems (AOS): Integrating Agentic Control Planes into, and Beyond, Traditional Operating Systems",
+      "abstract": "Traditional operating systems were designed around deterministic programs, explicit control flow, and human initiated workflows. Their core abstractions processes, threads, system calls, files, and permissions assume bounded behavior and predictable interaction patterns. Agentic AI systems introduce a different execution model: long-lived, goal-directed entities that reason probabilistically, invoke tools dynamically, and adapt behavior based on feedback. While agents can be implemented as user-space applications today, their execution characteristics stress OS boundaries in scheduling, memory and state management, security, observability, and governance. This paper introduces the concept of an Agent Operating System (AOS), a systems architecture that integrates an agentic control plane into existing operating systems or, in some models, subsumes selected OS responsibilities over time. We provide a precise definition of an AOS, explicit assumptions and non-goals, and a structured decomposition of AOS responsibilities into schedulers, context and memory management, tool and capability registries, policy and trust enforcement, and observability and audit. We analyze limitations of classical OS abstractions for agent workloads, propose integration models from user-space runtimes to distributed control planes, and map AOS concepts onto Linux and Windows primitives. We present security and safety implications, including agent specific threat models, and define evaluation criteria that emphasize deterministic enforcement, auditability, and operator comprehensibility. The objective is not to replace operating systems wholesale, but to establish a rigorous systems foundation for agentic computation that remains controllable, accountable, and secure at scale.",
+      "authors": [
+        "Ankur Sharma",
+        "Deep Shah"
+      ],
+      "primary_category": "cs.CR",
+      "categories": [
+        "cs.CR",
+        "cs.AI"
+      ],
+      "published": "2026-06-01T00:08:03+00:00",
+      "link": "https://arxiv.org/pdf/2606.01508v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 10.0,
+      "llm_evidence_en": "Agent Operating Systems integrating agentic control planes into traditional OS",
+      "llm_evidence_cn": "将智能体控制平面集成到传统操作系统的Agent操作系统",
+      "llm_evidence": "将智能体控制平面集成到传统操作系统的Agent操作系统",
+      "canonical_evidence": "将智能体控制平面集成到传统操作系统的Agent操作系统",
+      "llm_tldr_en": "Introduces Agent Operating Systems (AOS) concept, extending traditional OS abstractions to support long-lived, goal-directed AI agents with dynamic tool invocation and probabilistic reasoning.",
+      "llm_tldr_cn": "传统操作系统针对确定性程序和人工工作流设计，无法有效支持智能体系统的概率推理、动态工具调用和自适应行为。本文提出Agent操作系统（AOS）概念，在调度、内存管理、安全、可观测性和治理等方面扩展传统OS边界，为智能体提供原生支持。AOS将智能体控制平面集成到操作系统内核，是构建服务器基础设施中AI操作系统的关键一步。",
+      "llm_tldr": "传统操作系统针对确定性程序和人工工作流设计，无法有效支持智能体系统的概率推理、动态工具调用和自适应行为。本文提出Agent操作系统（AOS）概念，在调度、内存管理、安全、可观测性和治理等方面扩展传统OS边界，为智能体提供原生支持。AOS将智能体控制平面集成到操作系统内核，是构建服务器基础设施中AI操作系统的关键一步。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "Agents operating system for server infrastructure",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.02672v1",
+      "source": "arxiv",
+      "title": "Heterogeneous Mapping for Analog In-Memory Computing Accelerators: A Unified Workflow",
+      "abstract": "Analog In-Memory Computing (AIMC) accelerators execute matrix-vector multiplications directly within memory arrays, reducing data movement and improving DNN inference efficiency. Their limited effective precision motivates heterogeneous architectures that combine analog compute tiles with digital processing units. This letter classifies existing methods for partitioning DNN workloads across these resources by mapping granularity, optimization strategy, and model support, and distills them into a unified four-stage workflow. To demonstrate the workflow on a model class not yet addressed by existing methods, we apply its first two stages to GPT-2, producing the first AIMC-specific precision sensitivity profile for a decoder-only transformer. Sensitivity is dominated by 4 of 49 projections, with the first decoder block's attention output dominating by an order of magnitude. This suggests that projection-level mapping and selective digital execution of early-block and output-facing projections are important for reliable decoder-transformer deployment on AIMC hardware.",
+      "authors": [
+        "Corey Lammie"
+      ],
+      "primary_category": "cs.AR",
+      "categories": [
+        "cs.AR",
+        "cs.ET"
+      ],
+      "published": "2026-06-01T12:17:51+00:00",
+      "link": "https://arxiv.org/pdf/2606.02672v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "heterogeneous mapping workflow for analog in-memory computing accelerators for DNN inference",
+      "llm_evidence_cn": "为模拟计算存储一体加速器设计的异构映射统一工作流",
+      "llm_evidence": "为模拟计算存储一体加速器设计的异构映射统一工作流",
+      "canonical_evidence": "为模拟计算存储一体加速器设计的异构映射统一工作流",
+      "llm_tldr_en": "Classifies and unifies mapping methods for partitioning DNN workloads across analog compute tiles and digital processing units into a four-stage workflow, demonstrated on GPT-2.",
+      "llm_tldr_cn": "模拟计算存储一体（AIMC）加速器因精度有限需结合数字处理器形成异构架构。本文系统分类现有DNN工作负载划分方法，提炼为统一四阶段工作流。在GPT-2上应用前两阶段，首次获得AIMC专用精度敏感性分布，为异构映射提供指导。",
+      "llm_tldr": "模拟计算存储一体（AIMC）加速器因精度有限需结合数字处理器形成异构架构。本文系统分类现有DNN工作负载划分方法，提炼为统一四阶段工作流。在GPT-2上应用前两阶段，首次获得AIMC专用精度敏感性分布，为异构映射提供指导。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "compute in memory architecture for neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.02781v1",
+      "source": "arxiv",
+      "title": "CRAM-ER: Error-Resilient Spintronic Computational Random Access Memory for Scalable In-Memory Computation",
+      "abstract": "Deep neural networks (DNNs) have achieved state-of-the-art performance across diverse domains. However, typical Von Neumann compute paradigms face severe memory bottlenecks. Emerging near-memory and compute-in-memory approaches alleviate this but incur significant peripheral overhead. Computational Random Access Memory (CRAM) based on MRAM enables in-situ logic without peripheral overhead, offering a dense, energy-efficient solution. However, probabilistic MRAM switching induces gate-level errors that limit the scalability and reliability of CRAM for accelerating DNN. Moreover, the large number of sequential MRAM writes severely constrains CRAM throughput. To address these challenges, we propose an error-resilient CRAM (CRAM-ER) architecture for scalable in-memory matrix-vector multiplications (MVMs). Our error-aware hardware-software co-design framework leverages a hybrid spintronic-CRAM + CMOS adder-tree architecture to mitigate the impact of device-level errors, demonstrating MVM functionality with high area and energy efficiency. We further develop an error-aware model fine-tuning and fine-grained error correction for enhanced error resilience. Evaluations of the CMOS+spintronic hybrid architecture on DNN benchmarks show near-lossless accuracy while reducing CRAM latency by up to 2 orders of magnitude, outperforming CPU/GPU+high-bandwidth DRAM in both energy efficiency and energy-delay product.",
+      "authors": [
+        "Sohan Salahuddin Mugdho",
+        "Md. Shahedul Hasan",
+        "Brahmdutta Dixit",
+        "Yang Lv",
+        "Jian-Ping Wang",
+        "Cheng Wang"
+      ],
+      "primary_category": "cs.AR",
+      "categories": [
+        "cs.AR",
+        "cs.AI",
+        "cs.ET"
+      ],
+      "published": "2026-06-01T18:45:05+00:00",
+      "link": "https://arxiv.org/pdf/2606.02781v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Error-resilient spintronic CRAM for in-memory DNN acceleration",
+      "llm_evidence_cn": "面向神经网络的内存计算架构，容错自旋存储计算随机访问存储器",
+      "llm_evidence": "面向神经网络的内存计算架构，容错自旋存储计算随机访问存储器",
+      "canonical_evidence": "面向神经网络的内存计算架构，容错自旋存储计算随机访问存储器",
+      "llm_tldr_en": "Proposes CRAM-ER, an error-resilient spintronic CRAM that enables scalable in-memory computation for DNNs, overcoming reliability and throughput bottlenecks.",
+      "llm_tldr_cn": "针对冯诺依曼瓶颈，提出CRAM-ER，一种基于MRAM的容错计算随机访问存储器，消除了外围开销，通过错误弹性设计应对概率性开关错误，实现可扩展的深度神经网络内存计算，在加速DNN时显著提升能效和可靠性。",
+      "llm_tldr": "针对冯诺依曼瓶颈，提出CRAM-ER，一种基于MRAM的容错计算随机访问存储器，消除了外围开销，通过错误弹性设计应对概率性开关错误，实现可扩展的深度神经网络内存计算，在加速DNN时显著提升能效和可靠性。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "compute in memory architecture for neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.02963v1",
+      "source": "arxiv",
+      "title": "KForge: LLM-Driven Cross-Platform Kernel Generation for AI Accelerators",
+      "abstract": "Production inference increasingly targets a heterogeneous mix of accelerators. Agentic pipelines interleave reasoning, tool calls, and multi-agent coordination, each with distinct compute and memory profiles. For optimal efficiency, each stage should run on the accelerator best suited to it. This creates a systems challenge: each pipeline now requires high-performance kernels across a growing set of hardware backends and programming models. Writing these kernels by hand is time-consuming, demands deep low-level expertise, and does not scale as kernel complexity grows. Recently, Large Language Models (LLMs) have been leveraged for automatic kernel generation, but challenges in low-level code generation and cross-backend generalization persist. We present KForge, a cross-platform framework built around an iterative refinement loop driven by two collaborating LLM-based agents: a generation agent that produces and progressively refines kernels using compilation and correctness feedback, and a performance-analysis agent that interprets profiling data, from programmatic APIs to GUI-based tools, and emits recommendations that steer the next round of synthesis. The loop alternates between functional passes, which drive a candidate to correctness, and optimization passes, which close the performance gap to hand-tuned baselines. We evaluate KForge on two backends with very different baseline reference availability. On NVIDIA B200, KForge achieves a 2.12$\\%$ improvement in end-to-end throughput compared to TensorRT-LLM on the gpt-oss-20b inference speed benchmark. On Intel Arc B580, KForge generates Triton kernels achieving a 5.13$\\times$ geometric mean speedup over the faster of PyTorch eager and torch.compile on 37 GEMM + tail-ops workloads from KernelBench Level 2, primarily via operator fusion and mixed-precision execution.",
+      "authors": [
+        "Taras Sereda",
+        "Burak Bartan",
+        "Ankita Nayak",
+        "Tom St. John",
+        "Natalie Serrino",
+        "Zain Asgar"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-06-01T23:48:55+00:00",
+      "link": "https://arxiv.org/pdf/2606.02963v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "LLM-driven cross-platform kernel generation for heterogeneous accelerators in agentic pipelines",
+      "llm_evidence_cn": "利用LLM为智能体流水线中的异构加速器自动生成跨平台内核",
+      "llm_evidence": "利用LLM为智能体流水线中的异构加速器自动生成跨平台内核",
+      "canonical_evidence": "利用LLM为智能体流水线中的异构加速器自动生成跨平台内核",
+      "llm_tldr_en": "KForge uses LLMs to automatically generate high-performance kernels for heterogeneous accelerators, addressing the kernel diversity challenge in agentic AI pipelines.",
+      "llm_tldr_cn": "针对智能体AI流水线中异构加速器内核编写成本高、通用性差的问题，提出KForge，利用大语言模型自动生成跨平台高性能内核，通过上下文学习和验证循环提升生成质量，在多种加速器上取得接近手写内核的性能，大幅降低开发负担。",
+      "llm_tldr": "针对智能体AI流水线中异构加速器内核编写成本高、通用性差的问题，提出KForge，利用大语言模型自动生成跨平台高性能内核，通过上下文学习和验证循环提升生成质量，在多种加速器上取得接近手写内核的性能，大幅降低开发负担。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How to design heterogeneous computing infrastructure for intelligent agents?",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.03014v1",
+      "source": "arxiv",
+      "title": "MOSAIC: Efficient Mixture-of-Agent Scheduling via Adaptive Aggregation and Inference Concurrency",
+      "abstract": "Mixture-of-Agents (MoA) systems improve reasoning accuracy by routing each query to multiple expert LLMs and aggregating their outputs. Efficiently executing this workload on limited GPU resources has bottlenecks. Skill-based routing creates skewed expert demand, and combining instruction-tuned LLMs with long-reasoning models results in extreme variability in generation lengths. Consequently, traditional scheduling strategies suffer from significant GPU idling and throughput collapse due to load imbalances. We present MOSAIC, a scheduling framework to accelerate MoA workloads. First, we formulate an Integer Linear Program (ILP) based scheduler that jointly optimizes expert placement and per-worker prompt assignment from offline-profiled costs, replicating reasoning experts across workers while pinning lightweight ones. Second, MOSAIC uses confidence-aware adaptive aggregation, leveraging inter-expert agreement to bypass the heavy final aggregator LLM for consensus queries. In our 4-GPU system, MOSAIC achieves up to 2.5x expert-stage, 4.23x aggregator-stage and 1.7~2.3x end-to-end speedups over the baseline scheduler, while matching accuracy within 0.1pp.",
+      "authors": [
+        "Saptarshi Mitra",
+        "Yifan Zhang",
+        "Rachid Karami",
+        "Phyo Pyae Moe Aung",
+        "Nazmul Takbir",
+        "Sreetama Sarkar",
+        "Souvik Kundu",
+        "Sitao Huang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AR"
+      ],
+      "published": "2026-06-02T01:40:33+00:00",
+      "link": "https://arxiv.org/pdf/2606.03014v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Scheduling framework for Mixture-of-Agents systems on GPU servers",
+      "llm_evidence_cn": "面向GPU服务器上混合智能体系统的调度框架",
+      "llm_evidence": "面向GPU服务器上混合智能体系统的调度框架",
+      "canonical_evidence": "面向GPU服务器上混合智能体系统的调度框架",
+      "llm_tldr_en": "MOSAIC is a scheduling framework for MoA systems that uses ILP optimization to place experts and assign prompts, minimizing GPU idling and improving throughput.",
+      "llm_tldr_cn": "针对混合智能体（MoA）系统中专家负载不均和生成长度差异导致的GPU空闲和吞吐量下降问题，提出MOSAIC调度框架，通过整数线性规划联合优化专家放置和提示分配，并利用自适应聚合和推理并发策略，在多种MoA配置下显著提升GPU利用率和推理吞吐量。",
+      "llm_tldr": "针对混合智能体（MoA）系统中专家负载不均和生成长度差异导致的GPU空闲和吞吐量下降问题，提出MOSAIC调度框架，通过整数线性规划联合优化专家放置和提示分配，并利用自适应聚合和推理并发策略，在多种MoA配置下显著提升GPU利用率和推理吞吐量。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "Agents operating system for server infrastructure",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.03895v1",
+      "source": "arxiv",
+      "title": "Agent libOS: A Library-OS-Inspired Runtime for Long-Running, Capability-Controlled LLM Agents",
+      "abstract": "Large language model (LLM) agents are evolving from request-response assistants into long-running software actors: they maintain state across model calls, fork subtasks, wait for external events, request human authority, generate tools, and perform side effects that must be resumed and audited. This paper presents Agent libOS, a library-OS-inspired runtime substrate for LLM agents. Agent libOS runs above a conventional host operating system; it does not implement hardware drivers, kernel-mode isolation, or a POSIX-compatible operating system. Instead, it treats an agent as an AgentProcess: a schedulable execution subject with process identity, parent-child lineage, lifecycle state, a tool table derived from an AgentImage, typed Object Memory, explicit capabilities, human queues, checkpoints, events, and audit records. Its central design rule is tools are libc-like wrappers; runtime primitives are the authority boundary. Filesystem access, object access, sleeps, human approval, JIT tool registration, and external side effects are checked at primitive boundaries under explicit capabilities and policy.   We describe the design, threat model, Python prototype, and safety-oriented evaluation. The current prototype implements async scheduling, namespace-local Object Memory, runtime-integrated human approval, one-shot permission grants, per-process working directories, shell and image-registration primitives, Deno/TypeScript JIT tools over a libOS syscall broker, filesystem/object bridge tools, an injectable Resource Provider Substrate, deterministic demos, real-model smoke scripts, and 123 regression tests at the time of writing. Rather than improving planner accuracy, Agent libOS demonstrates a runtime substrate in which long-running LLM agents can be scheduled, authorized, resumed, and audited without treating tool dispatch as the trust boundary.",
+      "authors": [
+        "Yingqi Zhang"
+      ],
+      "primary_category": "cs.OS",
+      "categories": [
+        "cs.OS",
+        "cs.AI",
+        "cs.CR"
+      ],
+      "published": "2026-06-02T16:53:24+00:00",
+      "link": "https://arxiv.org/pdf/2606.03895v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Library-OS runtime for LLM agents matches agents OS for server infrastructure",
+      "llm_evidence_cn": "为LLM智能体设计的类库操作系统运行时，符合智能体操作系统需求",
+      "llm_evidence": "为LLM智能体设计的类库操作系统运行时，符合智能体操作系统需求",
+      "canonical_evidence": "为LLM智能体设计的类库操作系统运行时，符合智能体操作系统需求",
+      "llm_tldr_en": "Agent libOS provides a library-OS runtime for LLM agents, treating agents as processes with state, lineage, and tools, enabling long-running capability-controlled execution.",
+      "llm_tldr_cn": "大型语言模型智能体正从请求-响应助手演变为长期运行的软件角色，需要状态维护和工具调度。本文提出Agent libOS，一种受库操作系统启发的运行时，将智能体视为可调度的AgentProcess，支持进程标识、父-子关系、生命周期和工具表。该设计运行在常规主机OS之上，不涉及硬件驱动或内核隔离，而是聚焦于智能体的执行抽象和资源控制。实验证明了其在长周期任务中的稳定性和可审计性，为服务器端智能体操作系统提供了基础架构。",
+      "llm_tldr": "大型语言模型智能体正从请求-响应助手演变为长期运行的软件角色，需要状态维护和工具调度。本文提出Agent libOS，一种受库操作系统启发的运行时，将智能体视为可调度的AgentProcess，支持进程标识、父-子关系、生命周期和工具表。该设计运行在常规主机OS之上，不涉及硬件驱动或内核隔离，而是聚焦于智能体的执行抽象和资源控制。实验证明了其在长周期任务中的稳定性和可审计性，为服务器端智能体操作系统提供了基础架构。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "Agents operating system for server infrastructure",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.04101v1",
+      "source": "arxiv",
+      "title": "UltraEP: Unleash MoE Training and Inference on Rack-Scale Nodes with Near-Optimal Load Balancing",
+      "abstract": "Large-scale expert parallelism (EP) is becoming pivotal for training and serving frontier MoE models, but it also amplifies device-level expert load imbalance into compute stragglers, token all-to-all bottlenecks, and activation-memory spikes. Existing balancers redistribute experts periodically based on historical load, which becomes unreliable for production deployments with non-stationary load patterns.   We present UltraEP, the first exact-load, real-time balancer for large-EP MoE training and serving prefill on rack-scale nodes (RSNs). Built upon the extended scale-up connectivity of RSNs, UltraEP rebalances every microbatch and layer on critical paths, which requires nontrivial co-design of plan solving and expert replication communication to minimize exposed overhead. To this end, UltraEP eagerly reacts to post-gating load with efficient quota-driven planning, and executes the resulting irregular expert-state transfers with RSN-native persistent tile streaming and relay-based fan-out mitigation. Averaged across MoE models from 106B to 671B parameters in training and prefill, UltraEP achieves 94.3% of the force-balanced ideal throughput, delivering 1.49$\\times$ improvement over non-balancing, while reducing the final inter-rank imbalance from 1.30$-$4.01 to 1.01$-$1.04. Additionally, we validate UltraEP's scalability and robustness in production MoE training with 2560 GPUs.",
+      "authors": [
+        "Xinming Wei",
+        "Chao Jin",
+        "Tuo Dai",
+        "Yinmin Zhong",
+        "Shan Yu",
+        "Chengxu Yang",
+        "Bingyang Wu",
+        "Zili Zhang",
+        "Jing Mai",
+        "Qianchao Zhu",
+        "Zhouyang Li",
+        "Yuliang Liu",
+        "Guojie Luo"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC",
+        "cs.LG"
+      ],
+      "published": "2026-06-02T18:07:51+00:00",
+      "link": "https://arxiv.org/pdf/2606.04101v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "exact-load real-time balancer for MoE training on rack-scale nodes",
+      "llm_evidence_cn": "在机架级节点上实现MoE训练的精确负载实时均衡",
+      "llm_evidence": "在机架级节点上实现MoE训练的精确负载实时均衡",
+      "canonical_evidence": "在机架级节点上实现MoE训练的精确负载实时均衡",
+      "llm_tldr_en": "UltraEP is the first exact-load real-time balancer for large-EP MoE training and inference on rack-scale nodes, achieving near-optimal load balancing via microbatch-level rebalancing and co-designed plan solving and expert replication.",
+      "llm_tldr_cn": "超大MoE模型训练和推理中，专家并行加剧了负载不均衡和通信瓶颈。UltraEP提出首个精确负载实时均衡器，在机架级节点上通过微批次和逐层重新均衡，结合规划求解和专家复制协同设计，实现了近似最优的负载均衡，显著减少计算拖尾和通信开销，为大规模异构计算下的AI训练提供了关键系统支持。",
+      "llm_tldr": "超大MoE模型训练和推理中，专家并行加剧了负载不均衡和通信瓶颈。UltraEP提出首个精确负载实时均衡器，在机架级节点上通过微批次和逐层重新均衡，结合规划求解和专家复制协同设计，实现了近似最优的负载均衡，显著减少计算拖尾和通信开销，为大规模异构计算下的AI训练提供了关键系统支持。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How does heterogeneous computing support large model training?",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.05362v1",
+      "source": "arxiv",
+      "title": "MOSAIC: A Workload-Driven Simulation and Design-Space Exploration Framework for Heterogeneous NPUs",
+      "abstract": "AI model architectures are diversifying rapidly. Although dense matrix multiplication underlies today's CNNs and transformers, emerging architectures (state-space models, long convolutions via the fast Fourier transform (FFT), Kolmogorov-Arnold networks, and spiking networks) are not multiply-accumulate (MAC) dominated; they spend much of their computation on vector and non-MAC primitives that homogeneous, MAC-centric neural processing units (NPUs) serve poorly. This has motivated heterogeneous NPUs (HPUs) built from non-identical tiles. Prior heterogeneous designs vary only one or two coarse knobs (typically MAC precision or array size) and are evaluated on narrow workloads; no existing framework supports fine-grained HPU design, where tiles differ across many architectural dimensions at once. We present MOSAIC, an analytical simulator and design-space-exploration (DSE) framework for HPU microarchitecture design. MOSAIC searches the joint space of tile-level heterogeneity: beyond array size and precision, it varies tile-type composition (large Big, small Little, and non-MAC Special-Function tiles), dataflow, sparsity mode, MAC engine type, and special-function units for non-MAC operators (FFT, spiking-integrate, polynomial). Unlike prior simulators that model a single homogeneous tile type, MOSAIC models non-MAC tiles with their own energy, area, and timing models and maps operators across a mix of tiles with a heterogeneity-aware compiler. A multi-seed pipeline pairing a stratified sweep with genetic-algorithm refinement returns Pareto-optimal designs, with cost models calibrated to a 7 nm node and cross-validated against NVIDIA's Deep Learning Accelerator (NVDLA). Across a 20-workload suite, the best general-purpose HPU found by MOSAIC (~200 mm^2 Big+Little+Special-Function) achieves +46.91% mean iso-area energy savings over the best iso-area homogeneous baseline.",
+      "authors": [
+        "Arghadip Das",
+        "Hoseok Kim",
+        "Soomin Lee",
+        "Arnab Raha",
+        "Deepak A Mathaikutty",
+        "Vijay Raghunathan"
+      ],
+      "primary_category": "cs.AR",
+      "categories": [
+        "cs.AR"
+      ],
+      "published": "2026-06-03T19:10:07+00:00",
+      "link": "https://arxiv.org/pdf/2606.05362v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Workload-driven simulation and design-space exploration framework for heterogeneous NPUs",
+      "llm_evidence_cn": "面向异构NPU的工作负载驱动仿真与设计空间探索框架",
+      "llm_evidence": "面向异构NPU的工作负载驱动仿真与设计空间探索框架",
+      "canonical_evidence": "面向异构NPU的工作负载驱动仿真与设计空间探索框架",
+      "llm_tldr_en": "MOSAIC is a simulation framework for designing heterogeneous NPUs (HPUs) that efficiently execute diverse AI model primitives beyond dense MAC operations.",
+      "llm_tldr_cn": "针对多样化AI模型架构（如状态空间模型、长卷积等）对异构计算的需求，提出MOSAIC框架，支持工作负载驱动的异构NPU设计与空间探索，可灵活调整非MAC原语单元，在多种新兴AI模型上比同构NPU显著提升性能和能效。",
+      "llm_tldr": "针对多样化AI模型架构（如状态空间模型、长卷积等）对异构计算的需求，提出MOSAIC框架，支持工作负载驱动的异构NPU设计与空间探索，可灵活调整非MAC原语单元，在多种新兴AI模型上比同构NPU显著提升性能和能效。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "heterogeneous computing infrastructure for AI workloads",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.06820v1",
+      "source": "arxiv",
+      "title": "SCALE: Scalable Cross-Attention Learning with Extrapolation for Agentic Workflow Scheduling",
+      "abstract": "Agentic Large Language Model (LLM) systems decompose complex tasks into workflow Directed Acyclic Graphs (DAGs) whose primitives must be scheduled on heterogeneous clusters. Existing deep reinforcement learning (DRL) schedulers are tied to a fixed cluster size and require retraining whenever the number of servers changes. We propose SCALE (Scalable Cross-Attention Learning with Extrapolation), a DRL scheduler that generalizes to unseen cluster scales without fine-tuning. SCALE employs a cross-attention pointer network where task features query against server features, so the architecture accepts any number of servers by construction. We observe, however, that permutation-invariant architecture alone does not guarantee good performance at new scales - the attention feature undergoes distribution shift as the server count grows. To counter this, we introduce Structured Representation Regularization (SRR): a decorrelation loss combined with a KL penalty toward the standard normal, which keeps feature statistics stable regardless of input size. Trained on 16 nodes and tested directly on 32 and 48 nodes, SCALE reduces average response time by 8.9% at N=48 relative to the same architecture without SRR, confirming that explicit regularization is necessary to close the scale-generalization gap.",
+      "authors": [
+        "Zhifei Xu",
+        "Jierui Lan",
+        "Zixuan Liang",
+        "Aiji Liang",
+        "Jinxi He"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-06-05T01:45:02+00:00",
+      "link": "https://arxiv.org/pdf/2606.06820v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "DRL scheduler for agentic workflows on heterogeneous clusters with scale generalization",
+      "llm_evidence_cn": "面向智能体工作流在异构集群上的深度强化学习调度器，具备规模泛化能力",
+      "llm_evidence": "面向智能体工作流在异构集群上的深度强化学习调度器，具备规模泛化能力",
+      "canonical_evidence": "面向智能体工作流在异构集群上的深度强化学习调度器，具备规模泛化能力",
+      "llm_tldr_en": "SCALE uses cross-attention pointer network for DRL scheduling of agentic workflows on heterogeneous clusters, generalizing to unseen cluster sizes without retraining.",
+      "llm_tldr_cn": "智能体系统将复杂任务分解为有向无环图工作流，需在异构集群上调度。现有深度强化学习调度器受限于固定集群规模。本文提出SCALE，采用跨注意力指针网络，任务特征查询服务器特征，天然支持任意数量服务器。实验表明SCALE在未见过的规模上表现良好。该工作直接解决了服务器异构计算资源的智能调度问题。",
+      "llm_tldr": "智能体系统将复杂任务分解为有向无环图工作流，需在异构集群上调度。现有深度强化学习调度器受限于固定集群规模。本文提出SCALE，采用跨注意力指针网络，任务特征查询服务器特征，天然支持任意数量服务器。实验表明SCALE在未见过的规模上表现良好。该工作直接解决了服务器异构计算资源的智能调度问题。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "heterogeneous compute resources for servers",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.07119v1",
+      "source": "arxiv",
+      "title": "The Three-Ring Architecture: Governing Agents in the Era of On-Platform Organisations",
+      "abstract": "The current phase of enterprise AI deployment faces a structural failure: organisations are acquiring agentic capability without the infrastructure to govern it. The result is expected to reproduce the error of the first wave of AI deployment: decentralised intelligence without a federation layer leading to a 95% project failure rate. This paper formalises the Three-Ring Architecture as the governing infrastructure of the on-platform organisation. Ring 1 is the existing production architecture; Ring 2 is the M2 federation layer built on strategies-based agentic AI; Ring 3 is the LLM-based frontier intelligence layer. Ring 2 constitutes, in the technically exact sense, the operating system of the agentic enterprise - performing at the organisational level what a computing OS performs at the device level: resource abstraction, process coordination, permission enforcement, and a stable platform for compounding intelligence. A central contribution is the formal distinction between Ring 2 and Ring 3 risk profiles. Strategies-based agents operate within a deterministic framework: their consequences are traceable, their permissions enforceable, their deviations recoverable. LLM-based agents introduce a categorically distinct risk: a non-deterministic actor whose deviations propagate through complex organisational systems without retrospective traceability. Ring 2 is not a useful addition - it is a necessary condition of control and compliance. A further consequence: every improvement in LLM capability is a structural tailwind for this architecture. More capable non-deterministic actors produce larger consequences when they deviate. The governance requirement scales with capability. The architecture has been validated across a decade of deployment in financial services, government, procurement, and compliance among other sectors.",
+      "authors": [
+        "Sergio Alvarez-Telena",
+        "Marta Diez-Fernandez"
+      ],
+      "primary_category": "cs.ET",
+      "categories": [
+        "cs.ET",
+        "cs.AI",
+        "cs.MA"
+      ],
+      "published": "2026-06-05T10:20:03+00:00",
+      "link": "https://arxiv.org/pdf/2606.07119v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "explicitly defines Ring 2 as the operating system of the agentic enterprise",
+      "llm_evidence_cn": "明确将环2定义为代理企业的操作系统",
+      "llm_evidence": "明确将环2定义为代理企业的操作系统",
+      "canonical_evidence": "明确将环2定义为代理企业的操作系统",
+      "llm_tldr_en": "The Three-Ring Architecture formalizes the governing infrastructure for agentic enterprises, with Ring 2 as the operating system for the agentic enterprise.",
+      "llm_tldr_cn": "三环架构将代理企业的治理基础设施形式化，其中环2（M2联邦层）被定义为代理企业的操作系统，为AI操作系统在异构计算环境中的治理提供理论基础。",
+      "llm_tldr": "三环架构将代理企业的治理基础设施形式化，其中环2（M2联邦层）被定义为代理企业的操作系统，为AI操作系统在异构计算环境中的治理提供理论基础。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "AI operating system for heterogeneous computing",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.01161v1",
+      "source": "arxiv",
+      "title": "AcOrch: Accelerating Sampling-based GNN Training under CPU-NPU Heterogeneous Environments",
+      "abstract": "Graph Neural Networks (GNNs) have achieved remarkable success in various applications. Sampling-based GNN training, which conducts mini-batch training on sampled subgraphs, has become a promising solution for large-scale graphs. Given the resource-intensive nature of sampling-based GNN training, Neural Processing Units (NPUs), such as the Ascend AI processor, offer a promising alternative due to their high throughput and energy efficiency, making them well-suited for GNN workloads. However, the multi-stage nature of sampling-based training, which involves subgraph sampling, feature gathering, and model training, with different resource requirements and computation volume. This requires careful coordination to fully utilize the heterogeneous computation resources of CPUs and NPUs. In this work, we present AcOrch, a sampling-based GNN training system optimized for CPU-NPU heterogeneous platforms. AcOrch offers fine-grained task orchestration and adopts a two-level pipelined execution model to overlap sampling, gathering, and training. It analyzes the heterogeneous compute features of NPUs and maps tasks to AI Cube (AIC) units, AI Vector (AIV) units, and CPU cores accordingly. Moreover, the two-level pipeline enables overlapping execution not only between the CPU and NPU, but also among different types of compute units within the NPU (e.g., AIC and AIV units), thereby maximizing the utilization of available resources. Experiments on an Ascend 910B AI processor show that AcOrch achieves an average speedup of 2.31x over the state-of-the-art NPU-native graph learning system, MindSporeGL.",
+      "authors": [
+        "Kefu Chen",
+        "Xin Ai",
+        "Qiange Wang",
+        "Yanfeng Zhang",
+        "Ge Yu"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC"
+      ],
+      "published": "2026-05-31T11:08:51+00:00",
+      "link": "https://arxiv.org/pdf/2606.01161v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "accelerating sampling-based GNN training under CPU-NPU heterogeneous environments",
+      "llm_evidence_cn": "在CPU-NPU异构环境下加速基于采样的图神经网络训练",
+      "llm_evidence": "在CPU-NPU异构环境下加速基于采样的图神经网络训练",
+      "canonical_evidence": "在CPU-NPU异构环境下加速基于采样的图神经网络训练",
+      "llm_tldr_en": "Proposes AcOrch, an orchestration framework for sampling-based GNN training on CPU-NPU heterogeneous systems, optimizing subgraph sampling, feature gathering, and model training stages.",
+      "llm_tldr_cn": "基于采样的图神经网络训练在异构系统（CPU+NPU）上面临多阶段协调难题。本文提出AcOrch编排框架，联合优化子图采样、特征收集和模型训练三个阶段，充分利用异构计算资源。在Ascend NPU上实验，训练速度显著提升。",
+      "llm_tldr": "基于采样的图神经网络训练在异构系统（CPU+NPU）上面临多阶段协调难题。本文提出AcOrch编排框架，联合优化子图采样、特征收集和模型训练三个阶段，充分利用异构计算资源。在Ascend NPU上实验，训练速度显著提升。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "heterogeneous computing infrastructure for AI workloads",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2606.01007v1",
+      "source": "arxiv",
+      "title": "Beyond Task-Agnostic: Task-Aware Grouping for Communication-Efficient Multi-Task MoE Inference",
+      "abstract": "Sparsely activated Mixture-of-Experts (MoE) models scale capacity via conditional computation, but distributed inference suffers from cross-GPU expert communication and routing-induced load imbalance. Existing placement methods reduce this cost by co-locating frequently co-activated experts; however, they derive a single deployment plan from globally aggregated routing traces, thereby averaging away the heterogeneous, task-specific co-activation patterns that actually drive communication in multi-task serving. We observe that expert co-activation is strongly task-conditioned: pairs tightly coupled in one task family are often uncorrelated in another, so effective deployment should group experts by task-aware co-activation rather than by a task-agnostic average. Based on this insight, we propose \\emph{Task-Aware Coactivation Grouping} (TACG), a deployment-time framework that uses family-specific dispatch and co-activation traces to derive per-expert task-family preferences, reweights the co-activation graph so that intra-family locality dominates grouping, and assigns each expert to a primary GPU under exact capacity constraints. To keep the static placement robust under online workload skew, we further introduce \\emph{Generic Expert Shared Replication} (GESR), a lightweight companion that identifies generic experts with consistently central co-activation profiles, replicates them across a small set of secondary GPUs, and applies locality- and load-aware selection at serving time. Experiments on three representative open-source MoE models demonstrate that our framework reduces the average communication cost by 31.39\\% over the baseline, while preserving an average Jain fairness index of 0.9975. This advantage persists even under severe distribution shifts in the inference data, consistently outperforming strong baselines.",
+      "authors": [
+        "Zhiyao Xu",
+        "Aoxue Liu",
+        "Zhanjie Ding",
+        "Dan Zhao",
+        "Yong Jiang",
+        "Qing Li"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-05-31T04:51:09+00:00",
+      "link": "https://arxiv.org/pdf/2606.01007v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "task-aware expert grouping for communication-efficient MoE inference, addressing heterogeneous co-activation patterns",
+      "llm_evidence_cn": "面向多任务MoE推理的任务感知专家分组，降低异构协同激活通信开销",
+      "llm_evidence": "面向多任务MoE推理的任务感知专家分组，降低异构协同激活通信开销",
+      "canonical_evidence": "面向多任务MoE推理的任务感知专家分组，降低异构协同激活通信开销",
+      "llm_tldr_en": "Identifies task-conditioned expert co-activation in MoE models and proposes task-aware grouping to minimize communication across GPUs.",
+      "llm_tldr_cn": "混合专家模型分布式推理中，专家激活模式具有任务特异性。现有方法采用全局聚合导致次优部署。本文观察到此现象，提出任务感知的专家分组策略，根据任务家族协同激活模式放置专家。实验表明通信量显著降低，推理加速。",
+      "llm_tldr": "混合专家模型分布式推理中，专家激活模式具有任务特异性。现有方法采用全局聚合导致次优部署。本文观察到此现象，提出任务感知的专家分组策略，根据任务家族协同激活模式放置专家。实验表明通信量显著降低，推理加速。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How does heterogeneous computing support large model training?",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.01162v1",
+      "source": "arxiv",
+      "title": "Deft Scheduling of Dynamic Cloud Workflows with Varying Deadlines via Mixture-of-Experts",
+      "abstract": "Workflow scheduling in cloud computing demands the intelligent allocation of dynamically arriving, graph-structured workflows with varying deadlines onto ever-changing virtual machine resources. However, existing deep reinforcement learning (DRL) schedulers remain limited by rigid, single-path inference architectures that struggle to handle diverse scheduling scenarios. We introduce \\textbf{DEFT} (\\textbf{D}eadline-p\\textbf{E}rceptive Mixture-o\\textbf{F}-Exper\\textbf{t}s), an innovative DRL policy architecture that leverages a specialized mixture of experts, each trained to manage different levels of deadline tightness. To our knowledge, DEFT is the first to introduce and validate a Mixture-of-Experts architecture for dynamic cloud workflow scheduling. By adaptively routing decisions through the most appropriate experts, DEFT is capable of meeting a broad spectrum of deadline requirements that no single expert can achieve. Central to DEFT is a \\textbf{graph-adaptive} gating mechanism that encodes workflow deadlines and DAGs, task states, and VM conditions, using cross-attention to guide expert activation in a fine-grained, deadline-sensitive manner. Experiments on dynamic cloud workflow benchmarks demonstrate that DEFT significantly reduces execution cost and deadline violations, outperforming multiple state-of-the-art DRL baselines.",
+      "authors": [
+        "Ya Shen",
+        "Gang Chen",
+        "Hui Ma",
+        "Mengjie Zhang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-05-31T11:10:37+00:00",
+      "link": "https://arxiv.org/pdf/2606.01162v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Mixture-of-Experts scheduling for dynamic cloud workflows on heterogeneous VMs relates to heterogeneous compute resources for servers",
+      "llm_evidence_cn": "混合专家调度算法处理异构虚拟机资源",
+      "llm_evidence": "混合专家调度算法处理异构虚拟机资源",
+      "canonical_evidence": "混合专家调度算法处理异构虚拟机资源",
+      "llm_tldr_en": "DEFT uses a Mixture-of-Experts DRL policy to schedule dynamic cloud workflows with varying deadlines, addressing heterogeneous virtual machine resources.",
+      "llm_tldr_cn": "DEFT提出基于混合专家模型的深度强化学习调度策略，针对动态到达的云工作流和不断变化的虚拟机资源，通过多个专家分别处理不同的截止时间紧张程度，实现了异构资源的高效调度。",
+      "llm_tldr": "DEFT提出基于混合专家模型的深度强化学习调度策略，针对动态到达的云工作流和不断变化的虚拟机资源，通过多个专家分别处理不同的截止时间紧张程度，实现了异构资源的高效调度。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "heterogeneous compute resources for servers",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.03557v1",
+      "source": "arxiv",
+      "title": "From Prompt to Service: An SLM-Based Agent Orchestration Gateway for AI-Driven Virtual Worlds",
+      "abstract": "As generative AI capabilities expand, AI-driven virtual worlds face a growing architectural challenge. Users interact through in-world interfaces in multimodal ways, yet their requests demand fundamentally different AI backend models and computational resources. Embedding these capabilities directly into virtual world systems reduces extensibility, complicates maintenance, and limits the ability to coordinate services distributed across edge and cloud infrastructure. This paper presents an SLM-based Agent Orchestration Gateway, a lightweight runtime coordination mechanism that decouples a virtual world client from heterogeneous AI backends through intent-driven service routing. An edge-deployed SLM classifies the semantic intent of each user prompt, a configurable service registry validates and resolves the routing decision, and the selected backend is invoked transparently, enabling new AI capabilities to be introduced in the virtual world without modifying the client application. The gateway is implemented and evaluated within the InterwovenXR virtual museum testbed. The evaluation shows that compact SLMs can serve as reliable intent routers on edge hardware, and that task-specific fine-tuning can transform sub-billion-parameter models into practical, low-latency routers. A layered configuration pairing a fine-tuned sub billion-parameter model as router with a larger SLM for conversational response generation is shown to be deployable on mid-range edge hardware and more efficient than delegating both responsibilities to a single model. The findings show that SLMs can support practical AI service orchestration in virtual worlds and the work contributes an evaluated architecture for scalable, extensible, and edge-supported AI interaction, enabling virtual agents become access points to distributed generative AI services.",
+      "authors": [
+        "Louis Nisiotis",
+        "Aimilios Hadjiliasi"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.HC"
+      ],
+      "published": "2026-06-02T12:22:03+00:00",
+      "link": "https://arxiv.org/pdf/2606.03557v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "SLM-based agent orchestration gateway for heterogeneous AI backends in virtual worlds relates to designing heterogeneous infrastructure for intelligent agents",
+      "llm_evidence_cn": "基于SLM的代理编排网关协调异构AI后端",
+      "llm_evidence": "基于SLM的代理编排网关协调异构AI后端",
+      "canonical_evidence": "基于SLM的代理编排网关协调异构AI后端",
+      "llm_tldr_en": "Presents an SLM-based Agent Orchestration Gateway that decouples virtual world clients from heterogeneous AI backends via intent-driven routing, enabling edge-cloud coordination for agent workloads.",
+      "llm_tldr_cn": "本文提出一种基于小语言模型（SLM）的代理编排网关，通过意图驱动的服务路由将虚拟世界客户端与异构AI后端解耦，支持边缘与云基础设施的协调，为智能代理的异构计算基础设施提供轻量级运行时方案。",
+      "llm_tldr": "本文提出一种基于小语言模型（SLM）的代理编排网关，通过意图驱动的服务路由将虚拟世界客户端与异构AI后端解耦，支持边缘与云基础设施的协调，为智能代理的异构计算基础设施提供轻量级运行时方案。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How to design heterogeneous computing infrastructure for intelligent agents?",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2606.01162v2",
+      "source": "arxiv",
+      "title": "Deft Scheduling of Dynamic Cloud Workflows with Varying Deadlines via Mixture-of-Experts",
+      "abstract": "Workflow scheduling in cloud computing demands the intelligent allocation of dynamically arriving, graph-structured workflows with varying deadlines onto ever-changing virtual machine resources. However, existing deep reinforcement learning (DRL) schedulers remain limited by rigid, single-path inference architectures that struggle to handle diverse scheduling scenarios. We introduce $\\textbf{DEFT}$ ($\\textbf{D}$eadline-p$\\textbf{E}$rceptive Mixture-o$\\textbf{F}$-Exper$\\textbf{t}$s), an innovative DRL policy architecture that leverages a specialized mixture of experts, each trained to manage different levels of deadline tightness. To our knowledge, DEFT is the first to introduce and validate a Mixture-of-Experts architecture for dynamic cloud workflow scheduling. By adaptively routing decisions through the most appropriate experts, DEFT is capable of meeting a broad spectrum of deadline requirements that no single expert can achieve. Central to DEFT is a $\\textbf{graph-adaptive}$ gating mechanism that encodes workflow DAGs, task states, and VM conditions, using cross-attention to guide expert activation in a fine-grained, deadline-sensitive manner. Experiments on dynamic cloud workflow benchmarks demonstrate that DEFT significantly reduces execution cost and deadline violations, outperforming multiple state-of-the-art DRL baselines.",
+      "authors": [
+        "Ya Shen",
+        "Gang Chen",
+        "Hui Ma",
+        "Mengjie Zhang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-05-31T11:10:37+00:00",
+      "link": "https://arxiv.org/pdf/2606.01162v2",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "MoE-based DRL scheduler for dynamic cloud workflows on heterogeneous virtual machines",
+      "llm_evidence_cn": "基于混合专家模型的动态云工作流调度器，面向异构虚拟机",
+      "llm_evidence": "基于混合专家模型的动态云工作流调度器，面向异构虚拟机",
+      "canonical_evidence": "基于混合专家模型的动态云工作流调度器，面向异构虚拟机",
+      "llm_tldr_en": "DEFT uses Mixture-of-Experts DRL for scheduling dynamic cloud workflows with varying deadlines on heterogeneous VM resources, the first to apply MoE in this context.",
+      "llm_tldr_cn": "云计算中动态到达的图结构工作流需要在不断变化的虚拟机上调度，且截止时间各异。现有DRL调度器采用单一推理架构，难以应对多样化场景。本文提出DEFT，采用混合专家（MoE）策略架构，每个专家专攻不同的截止时间紧迫程度。实验表明DEFT在动态场景下优于基线。该方法可直接应用于异构计算资源上的工作流调度。",
+      "llm_tldr": "云计算中动态到达的图结构工作流需要在不断变化的虚拟机上调度，且截止时间各异。现有DRL调度器采用单一推理架构，难以应对多样化场景。本文提出DEFT，采用混合专家（MoE）策略架构，每个专家专攻不同的截止时间紧迫程度。实验表明DEFT在动态场景下优于基线。该方法可直接应用于异构计算资源上的工作流调度。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "heterogeneous compute resources for servers",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.01533v1",
+      "source": "arxiv",
+      "title": "Multi-Agent Computer Use",
+      "abstract": "Computer use agents (CUAs) today are primarily deployed as single serial agents. This setup is suboptimal for complex long-horizon tasks that benefit from task decomposition, parallel execution, and consistent re-planning based on new information. In this paper, we argue that we should instead move towards evaluating and building multi-agent computer use (MACU) systems. These systems, which emphasize planning and parallel execution, alleviate many of the shortcomings of single-agent CUAs. We propose a general multi-agent setup in which a manager model decomposes computer use tasks as a directed acyclic graph (DAG), encoding relevant dependencies and goals for subagents. At each iteration, the manager dispatches parallel CUA subagents to carry out nodes on the ready frontier of the DAG, and continuously revises the DAG (adding, canceling, or rewriting nodes) as new findings arrive from subagents. This design treats the partially observable environment of computer use as a first class challenge: information that downstream agents may not be able to re-observe are retained and passed forward through the manager and DAG structure. We demonstrate that MACU consistently improves over strong single-agent baselines by $3.4-25.5\\%$ on desktop (OSWorld) and web navigation (Online-Mind2Web, WebTailBench, Odysseys) benchmarks, exhibits more favorable test-time scaling, and solves complex long-horizon tasks where single-agent CUAs get stuck. On Odysseys, a long-horizon web navigation benchmark, MACU improves average task completion wall-clock time by ${\\sim} 1.5 \\times$, demonstrating its efficacy in speeding up traditionally slow CUA pipelines. Our findings highlight that multi-agent coordination is a promising axis for scaling computer use agents to work productively for longer and more effectively. We release all code and interactive visualizations at https://jykoh.com/multi-agent-computer-use.",
+      "authors": [
+        "Jing Yu Koh",
+        "Ruslan Salakhutdinov",
+        "Daniel Fried"
+      ],
+      "primary_category": "cs.MA",
+      "categories": [
+        "cs.MA",
+        "cs.CL",
+        "cs.LG"
+      ],
+      "published": "2026-06-01T01:29:36+00:00",
+      "link": "https://arxiv.org/pdf/2606.01533v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "multi-agent computer use with manager DAG decomposition relates to agents operating system for server infrastructure",
+      "llm_evidence_cn": "多智能体计算机使用框架与服务器代理操作系统相关",
+      "llm_evidence": "多智能体计算机使用框架与服务器代理操作系统相关",
+      "canonical_evidence": "多智能体计算机使用框架与服务器代理操作系统相关",
+      "llm_tldr_en": "Proposes multi-agent computer use (MACU) with a manager that decomposes tasks into DAGs and dispatches parallel subagents, overcoming limitations of single-agent CUAs.",
+      "llm_tldr_cn": "本文提出多智能体计算机使用（MACU）框架，管理者将任务分解为有向无环图（DAG），并行派生子代理执行，利用并行性和重规划优势，为服务器基础设施中的代理操作系统提供了更好的任务调度范式。",
+      "llm_tldr": "本文提出多智能体计算机使用（MACU）框架，管理者将任务分解为有向无环图（DAG），并行派生子代理执行，利用并行性和重规划优势，为服务器基础设施中的代理操作系统提供了更好的任务调度范式。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "Agents operating system for server infrastructure",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.04101v2",
+      "source": "arxiv",
+      "title": "UltraEP: Unleash MoE Training and Inference on Rack-Scale Nodes with Near-Optimal Load Balancing",
+      "abstract": "Large-scale expert parallelism (EP) is becoming pivotal for training and serving frontier MoE models, but it also amplifies device-level expert load imbalance into compute stragglers, token all-to-all bottlenecks, and activation-memory spikes. Existing balancers redistribute experts periodically based on historical load, which becomes unreliable for production deployments with non-stationary load patterns.   We present UltraEP, the first exact-load, real-time balancer for large-EP MoE training and serving prefill on rack-scale nodes (RSNs). Built upon the extended scale-up connectivity of RSNs, UltraEP rebalances every microbatch and layer on critical paths, which requires nontrivial co-design of plan solving and expert replication communication to minimize exposed overhead. To this end, UltraEP eagerly reacts to post-gating load with efficient quota-driven planning, and executes the resulting irregular expert-state transfers with RSN-native persistent tile streaming and relay-based fan-out mitigation. Averaged across MoE models from 106B to 671B parameters in training and prefill, UltraEP achieves 94.3% of the force-balanced ideal throughput, delivering 1.49$\\times$ improvement over non-balancing, while reducing the final inter-rank imbalance from 1.30$-$4.01 to 1.01$-$1.04. Additionally, we validate UltraEP's scalability and robustness in production MoE training with 2560 GPUs.",
+      "authors": [
+        "Xinming Wei",
+        "Chao Jin",
+        "Tuo Dai",
+        "Yinmin Zhong",
+        "Shan Yu",
+        "Chengxu Yang",
+        "Bingyang Wu",
+        "Zili Zhang",
+        "Jing Mai",
+        "Qianchao Zhu",
+        "Zhouyang Li",
+        "Yuliang Liu",
+        "Guojie Luo"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC",
+        "cs.LG"
+      ],
+      "published": "2026-06-02T18:07:51+00:00",
+      "link": "https://arxiv.org/pdf/2606.04101v2",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "expert load balancing for large MoE model training on rack-scale nodes",
+      "llm_evidence_cn": "大规模MoE模型训练在机架级节点上的专家负载均衡",
+      "llm_evidence": "大规模MoE模型训练在机架级节点上的专家负载均衡",
+      "canonical_evidence": "大规模MoE模型训练在机架级节点上的专家负载均衡",
+      "llm_tldr_en": "UltraEP achieves near-optimal load balancing for MoE training/inference on rack-scale nodes, directly supporting large model training on heterogeneous compute.",
+      "llm_tldr_cn": "大规模MoE模型训练面临专家负载不均导致的性能瓶颈。本文提出UltraEP，首个精确负载实时均衡器，利用机架级节点扩展连接性，在每个微批次和层上进行专家重新平衡。实验表明，UltraEP可消除计算拖后腿者，显著提升训练吞吐。该工作为异构计算基础设施支持大模型训练提供了高效负载管理方案。",
+      "llm_tldr": "大规模MoE模型训练面临专家负载不均导致的性能瓶颈。本文提出UltraEP，首个精确负载实时均衡器，利用机架级节点扩展连接性，在每个微批次和层上进行专家重新平衡。实验表明，UltraEP可消除计算拖后腿者，显著提升训练吞吐。该工作为异构计算基础设施支持大模型训练提供了高效负载管理方案。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How does heterogeneous computing support large model training?",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2606.01722v1",
+      "source": "arxiv",
+      "title": "Post-Deterministic Distributed Systems: A New Foundation for Trustworthy Autonomous Infrastructure",
+      "abstract": "For decades, distributed systems have typically assumed that correct participants execute protocol-specified behavior with stable, externally defined, and deterministic semantics. Classical theory has extensively parameterized network timing, communication topologies, and failure domains, but this participant model has remained comparatively fixed. The integration of autonomous reasoning engines, stochastic model-driven agents, and policy-driven actors into cloud control planes, incident response systems, and financial infrastructure challenges the universality of this assumption. These agents often produce divergent reasoning paths, distinct operational traces, and heterogeneous internal representations while achieving semantically equivalent and correct outcomes. In this paper, we introduce Post-Deterministic Distributed Systems (PDDS) as a research and engineering model for coordinating heterogeneous environments where deterministic code, stochastic models, and autonomous agents coexist. We show that classical distributed computing models form a zero-ambiguity special case of this participant-general model. We do not argue that deterministic systems disappear; rather, deterministic execution can no longer serve as the universal participant assumption for autonomous infrastructure. Finally, we outline five architectural pillars of post-deterministic infrastructure: Protocol-Driven Development, Verifiable Agentic Infrastructure, Autonomous State Control Planes, Semantic Quorum Assurance, and Epistemic State Replication. Epistemic State Replication extends persistence and consistency models from data visibility to knowledge visibility, enabling agentic memory, Verifiable Semantic Rollback, and coherence across reasoning participants. We also define a taxonomy of failure classes that arise in this setting.",
+      "authors": [
+        "Jun He",
+        "Deying Yu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.DC"
+      ],
+      "published": "2026-06-01T05:37:59+00:00",
+      "link": "https://arxiv.org/pdf/2606.01722v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "foundation for trustworthy autonomous infrastructure with heterogeneous agents",
+      "llm_evidence_cn": "面向异构智能体的可信自主基础设施新基础",
+      "llm_evidence": "面向异构智能体的可信自主基础设施新基础",
+      "canonical_evidence": "面向异构智能体的可信自主基础设施新基础",
+      "llm_tldr_en": "Post-Deterministic Distributed Systems introduces a new foundation for trustworthy autonomous infrastructure, addressing the challenge of non-deterministic agents (e.g., AI reasoning engines) in cloud control planes and incident response.",
+      "llm_tldr_cn": "传统分布式系统假设参与者执行确定性协议，但自主推理引擎产生的发散路径挑战了这一假设。本文提出后确定性分布式系统基础，形式化处理非确定性智能体行为，为云控制平面、事件响应等基础设施中的异构自主智能体提供可信运行环境，直接支撑了面向智能体的异构计算基础设施设计。",
+      "llm_tldr": "传统分布式系统假设参与者执行确定性协议，但自主推理引擎产生的发散路径挑战了这一假设。本文提出后确定性分布式系统基础，形式化处理非确定性智能体行为，为云控制平面、事件响应等基础设施中的异构自主智能体提供可信运行环境，直接支撑了面向智能体的异构计算基础设施设计。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How to design heterogeneous computing infrastructure for intelligent agents?",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.02259v1",
+      "source": "arxiv",
+      "title": "EES-CND: Collaborative Neural Decision-Making for Drift-Aware Fault-Tolerant Edge-Cloud Service Placement",
+      "abstract": "The edge-cloud paradigm improves service delivery by orchestrating resources across edge nodes and cloud data centres. These environments consist of heterogeneous, interconnected computing nodes that cooperate to deliver continuous services. However, their scale and complexity increase vulnerability to failures from hardware malfunctions, software defects, and dynamic operating conditions. These failures can disrupt system configurations and service execution, leading to reduced reliability, performance degradation, and violations of service-level objectives. Ensuring service execution requires adaptive service placement strategies across edge-cloud resources. This study introduces a fault-tolerant service placement approach (Enhanced Evolution Strategy for Collaborative Neural Decision-making, EES-CND) for edge-cloud environments. The method employs collaborative decision-making, wherein multiple lightweight neural networks jointly infer redeployment strategies during failure events. To address the system dynamics and mitigate performance drift, adaptive models are updated online using an enhanced evolution strategy. Extensive simulations show that EES-CND effectively handles performance drift and significantly outperforms existing methods in service recovery time, response time, and reliability, achieving a 44.8\\% reduction in fault-tolerance cost compared to standalone models.",
+      "authors": [
+        "Mohammadsadeq Garshasbi Herabad",
+        "Javid Taheri",
+        "Bestoun S. Ahmed",
+        "Calin Curescu"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC"
+      ],
+      "published": "2026-06-01T13:48:04+00:00",
+      "link": "https://arxiv.org/pdf/2606.02259v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Fault-tolerant service placement in heterogeneous edge-cloud, relates to heterogeneous computing infrastructure for AI workloads",
+      "llm_evidence_cn": "异构边缘-云中的容错服务放置，与AI工作负载的异构计算基础设施相关",
+      "llm_evidence": "异构边缘-云中的容错服务放置，与AI工作负载的异构计算基础设施相关",
+      "canonical_evidence": "异构边缘-云中的容错服务放置，与AI工作负载的异构计算基础设施相关",
+      "llm_tldr_en": "EES-CND proposes collaborative neural decision-making for fault-tolerant service placement in heterogeneous edge-cloud environments, addressing failures and dynamic conditions.",
+      "llm_tldr_cn": "边缘-云环境中的异构节点协同服务易受故障影响。本文提出EES-CND方法，利用协作神经网络决策实现漂移感知的容错服务放置。该方法自适应调整服务部署策略以应对硬件故障、软件缺陷和动态操作条件，在保证服务质量的同时提高了系统可靠性。研究验证了在异构计算基础设施中部署AI工作负载的容错能力。",
+      "llm_tldr": "边缘-云环境中的异构节点协同服务易受故障影响。本文提出EES-CND方法，利用协作神经网络决策实现漂移感知的容错服务放置。该方法自适应调整服务部署策略以应对硬件故障、软件缺陷和动态操作条件，在保证服务质量的同时提高了系统可靠性。研究验证了在异构计算基础设施中部署AI工作负载的容错能力。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "heterogeneous computing infrastructure for AI workloads",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.04415v1",
+      "source": "arxiv",
+      "title": "FlexNPU: Transparent NPU Virtualization for Dynamic LLM Prefill-Decode Co-location",
+      "abstract": "Modern AI serving increasingly relies on NPUs for conventional inference and large language model serving. However, current NPU deployments commonly expose physical devices directly to applications, which limits runtime control over scheduling and makes it difficult to adapt execution to phase-level workload behavior. This limitation is particularly evident in LLM serving, where the prefill phase is compute-intensive while the decode phase is often constrained by memory bandwidth and KV-cache accesses. Static prefill-decode (PD) disaggregation reduces phase interference, but can introduce resource imbalance and unnecessary data movement. We present FlexNPU, a transparent user-space virtualization layer for Ascend NPUs. FlexNPU interposes on AscendCL APIs and routes NPU operations through per-device daemons, decoupling unmodified from physical NPU devices without modifying model code, AI frameworks, or NPU drivers. This runtime boundary allows FlexNPU to virtualize NPU objects, control operator dispatch, and support phase-aware scheduling for LLM serving. In particular, FlexNPU enables dynamic PD co-location, which adapts scheduling between prefill and decode according to their complementary resource characteristics. We implement FlexNPU on Huawei Ascend NPUs and evaluate it with typical LLM workloads. Compared with direct NPU passthrough, FlexNPU introduces no measurable inference overhead and slightly improves throughput in some scenarios. On a 384-card Ascend 910C deployment of DeepSeek-R1, FlexNPU improves throughput over static PD disaggregation by 5.15% and 26.33%. On Qwen2.5-7B, compared with static PD co-location, FlexNPU maintains comparable throughput while reducing TTFT by over 92% across tested workloads with nearly unchanged TPOT. These results show that transparent NPU virtualization is a practical substrate for efficient and responsive LLM serving.",
+      "authors": [
+        "Jiongjiong Gu",
+        "Jianfeng Wang",
+        "Zidong Han",
+        "Yongqiao Wang",
+        "Pengfei Xia",
+        "Mingjie Zhang",
+        "Hong Liu",
+        "Yuanyi Xia",
+        "Jiajia Chu",
+        "Yifeng Tang",
+        "Hui Zang",
+        "Xin Yao",
+        "Qijie Qiu",
+        "Yuzhao Wang",
+        "Chuanfei Xu",
+        "Lin Zhang",
+        "Zhuonan Lai",
+        "Hongming Huang",
+        "Jiawei Qiu",
+        "Gong Zhang",
+        "Zhong Ming",
+        "Weipeng Cao"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC"
+      ],
+      "published": "2026-06-03T03:49:34+00:00",
+      "link": "https://arxiv.org/pdf/2606.04415v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Transparent NPU virtualization for dynamic LLM serving, directly relates to AI operating system for heterogeneous computing",
+      "llm_evidence_cn": "透明NPU虚拟化用于动态LLM服务，直接对应AI操作系统异构计算管理",
+      "llm_evidence": "透明NPU虚拟化用于动态LLM服务，直接对应AI操作系统异构计算管理",
+      "canonical_evidence": "透明NPU虚拟化用于动态LLM服务，直接对应AI操作系统异构计算管理",
+      "llm_tldr_en": "FlexNPU provides user-space NPU virtualization for dynamic co-location of prefill and decode phases in LLM serving, improving resource utilization and reducing data movement.",
+      "llm_tldr_cn": "当前NPU部署直接暴露物理设备给应用，限制了运行时调度灵活性，尤其在LLM服务中，预填充和生成阶段资源需求不同。本文提出FlexNPU，一个简单的用户空间虚拟化层，通过透明拦截和调度，动态调整预填充-生成共置策略。实验表明，与静态分离相比，该方案减少了资源不平衡和额外数据移动，提升了LLM服务吞吐量。FlexNPU为AI操作系统管理异构加速器提供了关键技术。",
+      "llm_tldr": "当前NPU部署直接暴露物理设备给应用，限制了运行时调度灵活性，尤其在LLM服务中，预填充和生成阶段资源需求不同。本文提出FlexNPU，一个简单的用户空间虚拟化层，通过透明拦截和调度，动态调整预填充-生成共置策略。实验表明，与静态分离相比，该方案减少了资源不平衡和额外数据移动，提升了LLM服务吞吐量。FlexNPU为AI操作系统管理异构加速器提供了关键技术。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "AI operating system for heterogeneous computing",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2606.01841v1",
+      "source": "arxiv",
+      "title": "The Neuromorphic Supremacy",
+      "abstract": "Live neural systems demonstrate remarkable capabilities to learn new behavior and patterns from mere few examples and are known to operate robustly under severe sensory noise. These capabilities, however, remain largely out of reach for modern artificial neural networks, including deep learning models. We show that this gap can be bridged by embedding novel genuine neuromorphic circuits into conventional artificial neural network architectures. These circuits comprise astrocytic modulation and spiking dynamics inherent to biological neural structures. Tested across standard benchmarks representing tasks of varying complexity, the hybrid models achieve high accuracy from few training examples per class and sustain high performance under occlusion and impulse noise that cause performance collapse in standard models without neuromorphic adaptation. We term this phenomenon neuromorphic supremacy - a regime in which architectures grounded in neurobiology decisively outperform classical deep learning, pointing toward a principled foundation for perception in embodied AI systems operating in noisy, data-scarce environments.",
+      "authors": [
+        "Yuliya Tsybina",
+        "Ivan Y. Tyukin",
+        "Alexander N. Gorban",
+        "Victor Kazantsev",
+        "Dianhui Wang",
+        "Susanna Gordleeva"
+      ],
+      "primary_category": "q-bio.NC",
+      "categories": [
+        "q-bio.NC"
+      ],
+      "published": "2026-06-01T07:52:40+00:00",
+      "link": "https://arxiv.org/pdf/2606.01841v1",
+      "tags": [
+        "keyword:agents-os"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "neuromorphic circuits as compute-in-memory approach for neural networks",
+      "llm_evidence_cn": "类脑电路作为神经网络存内计算架构",
+      "llm_evidence": "类脑电路作为神经网络存内计算架构",
+      "canonical_evidence": "类脑电路作为神经网络存内计算架构",
+      "llm_tldr_en": "Neuromorphic circuits embedded in conventional ANNs achieve few-shot learning and robustness to noise, bridging the gap to biological neural systems.",
+      "llm_tldr_cn": "当前人工神经网络在小样本学习和噪声鲁棒性方面远不及生物神经系统。本文提出将包含星形胶质调节和脉冲动力学的类脑电路嵌入传统神经网络架构中。在多个标准基准测试上，混合模型仅需极少量训练样本即可达到高精度，且在遮挡和脉冲噪声下仍保持高性能。这项工作展示了类脑计算在提升神经网络能力方面的潜力。",
+      "llm_tldr": "当前人工神经网络在小样本学习和噪声鲁棒性方面远不及生物神经系统。本文提出将包含星形胶质调节和脉冲动力学的类脑电路嵌入传统神经网络架构中。在多个标准基准测试上，混合模型仅需极少量训练样本即可达到高精度，且在遮挡和脉冲噪声下仍保持高性能。这项工作展示了类脑计算在提升神经网络能力方面的潜力。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "compute in memory architecture for neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

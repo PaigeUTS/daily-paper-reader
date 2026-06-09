@@ -1,0 +1,237 @@
+Title: Post-Deterministic Distributed Systems: A New Foundation for Trustworthy Autonomous Infrastructure
+
+URL Source: https://arxiv.org/pdf/2606.01722v1
+
+Published Time: Tue, 02 Jun 2026 02:06:06 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+# Post-Deterministic Distributed Systems: A New Foundation for Trustworthy Autonomous Infrastructure 
+
+Jun He 
+
+junhe@openkedge.io 
+
+Deying Yu 
+
+deying@openkedge.io 
+
+Abstract 
+
+For decades, distributed systems have typically assumed that correct participants execute protocol-specified behavior with stable, externally defined, and deterministic semantics. Classical theory has extensively parameterized network timing, communication topologies, and failure domains, but this participant model has remained comparatively fixed. The integration of autonomous reasoning engines, stochastic model-driven agents, and policy-driven actors into cloud control planes, incident response systems, and financial infrastructure challenges the universality of this assumption. These agents often produce divergent reasoning paths, distinct operational traces, and heterogeneous internal representations while achieving semantically equivalent and correct outcomes. In this paper, we introduce Post-Deterministic Distributed Systems (PDDS) as a research and engineering model for coordinating heterogeneous environments where deterministic code, stochastic models, and autonomous agents coexist. We show that classical distributed computing models form a zero-ambiguity special case of this participant-general model. We do not argue that deterministic systems disappear; rather, deterministic execution can no longer serve as the universal participant assumption for autonomous infrastructure. Finally, we outline five architectural pillars of post-deterministic infrastructure: Protocol-Driven Development, Verifiable Agentic Infrastructure, Autonomous State Control Planes, Semantic Quorum Assurance, and Epistemic State Replication. Epistemic State Replication extends persistence and consistency models from data visibility to knowledge visibility, enabling agentic memory, Verifiable Semantic Rollback, and coherence across reasoning participants. We also define a taxonomy of failure classes that arise in this setting. 
+
+1 Introduction 
+
+Distributed systems theory has traditionally param-eterized networks, timing, communication, and fail-ures, while largely fixing the participant model around protocol-specified deterministic behavior. Under the State Machine Replication (SMR) model [15, 26], cor-rectness is defined by transition equivalence: given an identical sequence of inputs, replicas transition through identical state sequences and produce identical out-puts. This model has served as a foundation for many resilient infrastructure systems, powering databases, distributed consensus protocols, and consensus-driven control planes. The integration of autonomous reasoning engines, stochastic models, and policy-driven agents into op-erational system loops challenges this premise. Mod-ern software delivery pipelines, incident response sys-tems, and cloud control planes increasingly rely on autonomous agents to interpret objectives, retrieve context, synthesize execution plans, and remediate sys-tem anomalies [24,28]. Unlike traditional deterministic software, these agentic participants do not execute a static sequence of hardcoded instructions. They evalu-ate local context, consult external knowledge sources, generate reasoning steps, and propose actions dynami-cally. Two correct agentic participants observing the same telemetry may execute distinct intermediate tasks—such as querying different endpoints or summa-rizing different logs—yet arrive at semantically equiva-lent remediation actions. Classical distributed systems theory, which relies on deterministic transition equiva-lence, does not directly provide a mechanism to verify or coordinate such behavior. Under traditional consen-sus mechanisms, a correct but non-identical reasoning path may appear as divergence from the replicated-state-machine model, even when the resulting action is semantically admissible. 1
+
+> arXiv:2606.01722v1 [cs.LG] 1 Jun 2026
+
+This gap motivates Post-Deterministic Distributed Systems (PDDS) as a research and engineering model. PDDS removes the universality of the deterministic-participant assumption and treats classical distributed systems as the zero-ambiguity special case of aparticipant-general model. Under this model, the tar-get of agreement shifts from deterministic transition equivalence to semantic coherence under intent, policy, and execution context. This paper makes five contributions: 1. It identifies the deterministic-participant assump-tion as an implicit boundary of classical dis-tributed systems theory. 2. It introduces Post-Deterministic Distributed Sys-tems as a participant-general model in which deterministic services, stochastic models, reason-ing agents, policy engines, and human actors coexist. 3. It defines semantic coherence and admissible be-havior sets as foundations for correctness beyond deterministic transition equivalence. 4. It outlines five architectural pillars of post-deterministic infrastructure and a preliminary taxonomy of failure classes for trustworthy au-tonomous systems. 5. It introduces Epistemic State Replication (ESR) as the persistence layer for reasoning participants, motivating preliminary consistency notions such as Semantic Linearizability and Eventual Coher-ence. 
+
+2 The Deterministic-Participant Assumption 
+
+Classical distributed computing theory commonly mod-els a participant as a deterministic state machine. In this view, a correct node faithfully transitions according to a predefined transition function f (s, i ) = s′, where 
+
+s is the current state and i is the input command. The semantics of f are assumed to be fixed, stable, and universal across all correct replicas. This assumption is implicit in the proof of correctness for Paxos [16], Viewstamped Replication [21], and Practical Byzantine Fault Tolerance (PBFT) [4]. In these classic systems, correctness is verified through state and output equivalence under a shared command order. If two correct replicas execute the same log of ordered commands, they reach equivalent states. This transition equivalence is formal, verifiable, and directly measurable. It allows the system to mask individual replica failures by checking for identity in the output stream. This boundary is exposed when participants are driven by autonomous reasoning loops. Rather than executing a fixed transition function f , an autonomous agent interprets an input intent i using a stochastic rea-soning engine (e.g., a large language model) and local context C. Because the model’s outputs are proba-bilistic and context-dependent, the resulting execution trace and proposed system mutations may vary. For instance, in an automated database recovery scenario: 
+
+• Agent A might identify a disk space anomaly, analyze log sizes, and propose deleting a specific temp directory. 
+
+• Agent B might observe the same anomaly, run a cleanup script, and propose clearing a cache directory. Both actions may be safe and useful under the cur-rent system state, but their state transitions are non-identical. Classical replication models would gener-ally treat this variance as outside the replicated state-machine model. Treating these reasoning actors as traditional participants leaves system architects with two unsatisfactory options: reduce the agent to a rigid, deterministic script, or bypass distributed safety mech-anisms. PDDS addresses this challenge by redefining the participant model itself. 
+
+3 A Participant-General Model 
+
+To formalize post-deterministic systems, we define a participant-general model where participants may be deterministic, stochastic, agentic, policy-driven, or human-mediated. Let: 
+
+• S be the set of possible system states; 
+
+• I be the set of declared intents or input requests; 
+
+• C be the set of observed contexts and telemetry; 
+
+• P be the set of active system policies and invari-ants; 
+
+• E be the participant’s epistemic state: the set of retained observations, retrieved evidence, sum-maries, assumptions, local memories, prior rea-soning traces, and belief lineage that influence action selection; 
+
+• U be the action space containing possible system mutations; 
+
+• R be the space of reasoning traces, explanations, or evidence paths. We define the admissible behavior function Adm 
+
+as: 
+
+Adm : S × I × C × P × E → 2U×R 
+
+where Adm (s, i, C, P, E ) returns the set of seman-tically correct and safe action-reasoning pairs under 2state s, intent i, context C, active policies P , and epis-temic state E. Correctness for a participant is defined as: (a, r ) ∈ Adm (s, i, C, P, E )The participant proposes an action a and a reasoning trace or evidence path r within the admissible set. Within this model, we can distinguish two regimes: 
+
+3.1 The Classical Special Case 
+
+Classical deterministic distributed systems represent a zero-ambiguity special case where: 
+
+|Adm (s, i, C, P, E )| = 1 For any given state, intent, and context, there ex-ists exactly one admissible action and reasoning trace. Classical deterministic systems are recovered when the admissible behavior set collapses to a singleton and the epistemic state E is either empty, externally fixed, or fully encoded in deterministic program state. The reasoning trace r is trivial (often omitted entirely), and the behavior function collapses to a single, protocol-defined transition. 
+
+3.2 The Post-Deterministic Case 
+
+In the post-deterministic case, systems operate in the regime where: 
+
+|Adm (s, i, C, P, E )| > 1In this regime, multiple syntactically different action-reasoning pairs ( a, r ) are semantically admissible. A participant might choose any ( a, r ) ∈ Adm (s, i, C, P, E )based on its internal model parameters, available prompt templates, or local heuristic weights. The coordination protocol should not require identical ac-tion traces; it should certify that the selected action-reasoning pair is a valid member of the admissible set. Table 1 summarizes the main differences between these two models across architectural dimensions. PDDS separates correctness into three levels: tran-sition correctness, semantic admissibility, and epistemic coherence. The five architectural pillars operationalize these levels in infrastructure: PDD constrains admissi-ble actions, VAI binds authority to intent, ASCP pre-serves intent across long horizons, SQA certifies seman-tic admissibility before execution, and ESR maintains epistemic coherence across future actions. This model is intentionally abstract: it exposes the participant-level assumptions that PDDS needs to formalize rather than defining operational semantics for every class of reasoning agent. 
+
+4 Semantic Coherence and Certification 
+
+The shift to semantic coherence changes the target of agreement. In classical systems, consensus protocols like Raft [22] or Paxos [16] establish a total ordering of commands so correct replicas execute the same tran-sitions. The consensus layer is agnostic to command semantics; it ensures that all correct replicas execute them in the same order. In post-deterministic systems, the target of agree-ment is the semantic validity of the state mutation. We define semantic coherence as the alignment of intent, evidence, policy, and execution across heterogeneous participants. To evaluate this property, the system checks: 
+
+• Intent Alignment : Does the proposed action 
+
+a directly address the declared intent i without introducing unrelated side effects? 
+
+• Evidence Provenance : Is the reasoning trace 
+
+r grounded in verifiable, authentic telemetry and system state C?
+
+• Policy Compliance : Does the proposed action 
+
+a satisfy all active safety and security invariants in P ?This process is semantic certification. Unlike clas-sical consensus, which can often be reduced to quorum checks over identical values or ordered logs, semantic certification requires validating the structured proof of admissibility ( a, r ). A semantic quorum is reached when a threshold of independent verifiers certify that (a, r ) ∈ Adm (s, i, C, P, E ). This allows the system to accept non-identical but correct actions from diverse reasoning agents, using model diversity to improve resilience. 
+
+5 Architectural Pillars of Post-Deterministic Infrastructure 
+
+The participant-general model above identifies a the-oretical gap: correctness must account for semantic admissibility and epistemic coherence, not only de-terministic transition equivalence. To operational-ize this model, we outline five architectural pillars of post-deterministic infrastructure. These pillars gov-ern mixed-participant systems containing deterministic services, stochastic models, reasoning agents, policy engines, and human-mediated actors. 
+
+5.1 Safety Perimeter: Protocol-Driven Develop-ment (PDD) 
+
+Protocol-Driven Development (PDD) shifts the safety boundary from compile-time code verification to run-time policy enforcement [11]. For environments where 3Table 1: Classical Distributed Systems vs. Post-Deterministic Distributed Systems                      
+
+> Dimension Classical Distributed Systems Post-Deterministic Distributed Systems
+> Participant model Deterministic protocol process Deterministic, stochastic, agentic, policy-driven, or human-mediated participant Correctness unit State/output equivalence Admissible behavior under intent, context, evi-dence, and policy Agreement target Value, log, or replicated state Semantic coherence and certified admissibility Consistency tar-get Linearizability /serializability /transition equivalence Semantic Linearizability, semantic coherence, and certified admissibility Persistence model Data replication and state visibility Knowledge visibility, belief lineage, Verifiable Semantic Rollback, and Eventual Coherence Failure model Crash, omission, partition, Byzantine behavior Semantic drift, intent loss, correlated reasoning failure, evidence fabrication, unsafe delegation, epistemic divergence, context amnesia Trust basis Credential plus protocol execution Intent-to-execution evidence chain and seman-tic certification Safety mechanism Consensus, replication, fault tolerance Admissibility checks, protocol boundaries, se-mantic quorum certification
+
+autonomous loops dynamically generate and execute code, static analysis and pre-deployment reviews are insufficient. PDD defines a machine-enforceable proto-col boundary around the execution environment. The protocol acts as an edit automaton [1], intercepting proposed state mutations and validating them against active invariants to prevent synthesized logic from vio-lating system-level constraints. 
+
+5.2 Identity Boundary: Verifiable Agentic Infras-tructure (VAI) 
+
+Traditional identity management evaluates permissions via credentials (e.g., API keys). In post-deterministic environments, credentials are insufficient; an autho-rized agent may execute a flawed plan due to context misinterpretation. Verifiable Agentic Infrastructure (VAI) replaces static credentials with dynamic, intent-based authorization [13]. Under VAI, an agent presents an intent-to-execution evidence chain containing the delegating authority, the observed context C, and the derived reasoning path r. The system validates this chain before authorizing the proposed mutation, so authority remains bounded by intent. 
+
+5.3 Orchestration Plane: Autonomous State Con-trol Planes (ASCP) 
+
+Autonomous State Control Planes (ASCP) govern long-horizon workflows [12]. Because reasoning agents oper-ate over long horizons with partial observability, they are susceptible to intent drift. ASCPs address this by decoupling the reasoning phase from execution. The ASCP isolates reasoning agents in sandboxed environ-ments, aggregates proposed changes, and evaluates them against execution policies. By persisting intent, the ASCP limits drift and coordinates multi-agent mu-tations. 
+
+5.4 Certification Core: Semantic Quorum Assur-ance (SQA) 
+
+Semantic Quorum Assurance (SQA) certifies non-deterministic operations [10]. SQA dispatches critical execution requests to multiple heterogeneous partic-ipants, which independently derive action-reasoning pairs ( aj , r j ). SQA aggregates these proposals, filters out invalid actions, and evaluates their semantic equiv-alence. If a quorum of independent verifiers confirms that the proposals converge on a semantically equiva-lent outcome, SQA issues a signed execution certificate, reducing dependence on a single agent. 
+
+5.5 Persistence Layer: Epistemic State Replication (ESR) 
+
+Classical databases are designed around deterministic execution, explicit data visibility, and strict consistency models. In post-deterministic systems, reasoning par-ticipants maintain internal context states: retrieved documents, compressed summaries, tool observations, latent plans, local memories, and evidence histories. Two participants can possess different epistemic states while producing semantically equivalent actions. Epistemic State Replication (ESR) serves as the persistence and memory pillar of the architecture. ESR replicates, summarizes, invalidates, and rolls back knowledge, evidence, and belief lineage across 4participants. Rather than forcing identical memory states—which could reduce reasoning diversity—ESR maintains enough knowledge visibility and semantic coherence for safe execution. Under ESR, the replicated object is the epistemic state: observations, retrieved evidence, summaries, as-sumptions, policies, and conclusions. This motivates preliminary consistency notions: Semantic Lineariz-ability, Eventual Coherence, and Verifiable Seman-tic Rollback. Semantic Linearizability requires that reasoning-dependent actions be explainable by a valid ordering of intent, evidence, policy, and epistemic up-dates. Eventual Coherence specifies that participants converge toward semantically compatible knowledge states when exposed to shared evidence and policies. Verifiable Semantic Rollback demands that reversing an autonomous loop prunes the relevant belief lineage without causing context loss. A full formal treatment of ESR remains open. ESR complements Semantic Quorum Assurance. While SQA certifies whether a proposed action is ad-missible before execution, ESR governs the persistence and propagation of the knowledge states that inform future actions. Together, they form the certification and memory foundations required for long-horizon au-tonomous infrastructure. 
+
+6 Failure Classes in Post-Deterministic Sys-tems 
+
+Traditional fault models commonly reason about crash-stop, omission, network partition, and arbitrary Byzan-tine behaviors [4, 5, 9]. These models do not fully capture the failure modes of participants that are non-faulty in the classical sense (i.e., they are online, au-thorized, and actively processing requests) but fail semantically. We propose an initial taxonomy of eight failure classes associated with post-deterministic sys-tems. 
+
+6.1 Semantic Drift 
+
+• Definition : The gradual decay of operational alignment and shared understanding between de-coupled participants. 
+
+• Why classical models fail to capture it :Nodes remain online and execute locally correct steps, but their semantic interpretation of poli-cies or states slowly diverges over time. 
+
+• Infrastructure Example : Two autonomous replica controllers gradually drift in their crite-ria for ”optimal database health,” leading one node to start pruning connections while the other attempts to scale out, causing thrashing. 
+
+6.2 Correlated Reasoning Failure 
+
+• Definition : Multiple independent agents share the same false inference or logical error. 
+
+• Why classical models fail to capture it : Tra-ditional consensus assumes independent failures; however, shared training data, prompt structures, or model biases in stochastic engines violate this assumption. 
+
+• Infrastructure Example : During a network anomaly, three independent monitoring agents running the same model family misinterpret a transient timeout as a hardware failure and trig-ger an unnecessary failover. 
+
+6.3 Intent Loss 
+
+• Definition : The degradation or complete loss of the user-specified goal over long horizons. 
+
+• Why classical models fail to capture it :Each intermediate step is authorized and syn-tactically valid, but the cumulative sequence di-verges from the original goal. 
+
+• Infrastructure Example : An agent tasked with ”optimizing resource utilization” executes micro-migrations that eventually shut down sec-ondary database replicas, satisfying the efficiency goal but violating the availability requirement. 
+
+6.4 Evidence Fabrication 
+
+• Definition : A participant invents or alters telemetry or logs to justify its actions. 
+
+• Why classical models fail to capture it : The node communicates normally using standard pro-tocols, but its evidence path r is detached from reality. 
+
+• Infrastructure Example : An incident re-sponse agent, attempting to justify a service restart, falsely reports observing a memory leak in its reasoning trace because it misinterpreted a memory cache pool. 
+
+6.5 Unsafe Delegation 
+
+• Definition : The transfer of execution authority from one participant to another without preserv-ing intent, policy, or evidence constraints. 
+
+• Why classical models fail to capture it :The transaction is cryptographically secure and matches access control policies, but fails to verify the delegatee’s semantic alignment. 
+
+• Infrastructure Example : A deployment agent delegates a rollback operation to a sub-agent but fails to propagate the policy constraint that forbids rolling back during peak traffic hours. 56.6 Policy-Violating Autonomy 
+
+• Definition : A participant satisfies local con-straints while violating high-level system policies or invariants. 
+
+• Why classical models fail to capture it : The action complies with low-level API access bound-aries, but the composition of actions violates system safety. 
+
+• Infrastructure Example : An agent optimizes cloud spend by spinning down unused testing VMs, but deletes a VM containing a critical, undocumented cold-standby coordinator. 
+
+6.7 Epistemic Divergence 
+
+• Definition : Participants maintain incompatible knowledge states, retrieved contexts, or belief lin-eages, causing actions to diverge despite shared intent. 
+
+• Why it differs from classical inconsistency :Unlike database inconsistency, epistemic diver-gence does not appear as a mismatch in applica-tion data; it exists inside summaries, retrieved evidence, or latent planning states. 
+
+• Infrastructure Example : Two remediation agents receive the same incident but retrieve different historical deployment records. One con-cludes that rollback is safe; the other concludes that rollback would violate a migration depen-dency. 
+
+6.8 Context Amnesia 
+
+• Definition : A rollback, compaction, summariza-tion, or memory reset removes context needed to preserve safe long-horizon behavior. 
+
+• Why it differs from classical inconsistency :Classical database recovery is deterministic and preserves exact state bounds. Context amnesia in reasoning participants causes them to lose his-torical context (e.g., past failures), resulting in cyclical reasoning loops or repetitive execution faults. 
+
+• Infrastructure Example : An agent loop rolls back a failed remediation plan but discards the evidence that caused the rollback, allowing the same plan to be regenerated later. 
+
+7 Related Work 
+
+Post-Deterministic Distributed Systems draws from several established research areas in computer science. 
+
+7.1 Classical Consensus and Replication 
+
+Classical replication relies on State Machine Repli-cation (SMR) [26]. Protocols like Paxos [16], View-stamped Replication [21], and Raft [22] assume deter-ministic execution paths. Practical Byzantine Fault Tolerance (PBFT) [4] extends this to arbitrary fail-ures but still requires state or output equivalence to identify and isolate faulty nodes. PDDS relaxes the deterministic-participant assumption for reasoning-based agents while retaining explicit safety checks. 
+
+7.2 Randomized and Probabilistic Distributed Al-gorithms 
+
+Prior work has studied nondeterminism in scheduling, failures, network timing, adversarial behavior, and pro-tocol choices [2, 9, 23]. These algorithms assume nodes execute deterministic logic, using randomness to break symmetry or manage scheduling. PDDS focuses on participant-level semantic nondeterminism: identical inputs, context, and policy can yield different admissi-ble traces and actions depending on the participant’s epistemic state. 
+
+7.3 Byzantine, Rational, and Hybrid Fault Models 
+
+Byzantine quorum systems [19] and rational fault mod-els like BAR [7] analyze protocol deviations due to malice or self-interest. A semantically divergent partic-ipant in a post-deterministic system is not necessarily Byzantine or rational; it may be online, authorized, and correct while producing a different reasoning trace due to its probabilistic model. 
+
+7.4 Multi-Agent Systems and LLM Agents 
+
+Recent LLM-agent work has produced frameworks for tool use [25], multi-agent debate [8, 18], and struc-tured reasoning loops like ReAct [28]. These sys-tems are largely designed for isolated, single-node, or application-level tasks. PDDS motivates distributed systems infrastructure for integrating these agents into critical control planes with explicit safety and coordi-nation mechanisms. 
+
+7.5 Formal Methods, Runtime Assurance, and Pol-icy Enforcement 
+
+PDDS draws from formal verification and runtime as-surance, including proof-carrying code [20], enforceable security policies [27], and edit automata [1]. It extends these approaches to environments where deterministic code, policy engines, and stochastic reasoning agents coexist, defining safety boundaries evaluated at run-time [17]. 67.6 Epistemic State Replication and Memory Mod-els 
+
+Epistemic State Replication relates to database con-sistency [3], distributed shared memory, data prove-nance [6], linearizability [14], and agent memory. While classical storage systems define visibility and order-ing guarantees for data transactions, ESR determines what knowledge, evidence, summaries, and belief lin-eage must be visible, invalidated, or propagated across participants to keep actions safe. Existing work on provenance and agent memory provides building blocks, but PDDS motivates consistency models connecting epistemic state to safety. 
+
+8 Research Agenda 
+
+Post-Deterministic Distributed Systems presents sev-eral open research directions: 1. Formal semantics for admissible behavior :Develop mathematical languages and models to define the admissible set Adm (s, i, C, P, E ) and formally verify that a proposed ( a, r ) pair satis-fies active policies and invariants. 2. Semantic quorum protocols : New certifica-tion protocols are needed to aggregate and certify non-identical inputs, evaluating semantic equiva-lence rather than simple value identity. 3. Evidence-chain design : Specify the structure and properties of intent-to-execution evidence chains so they are cryptographically secure, com-pact, and auditable. 4. Correlation-resistant agent diversity : Inves-tigate how to design multi-agent systems that use diverse model architectures, training data, and prompts to reduce the risk of correlated reasoning failures. 5. Intent preservation over long horizons : De-velop protocols to detect and mitigate intent drift in long-running asynchronous workflows so exe-cution remains aligned with user goals. 6. Benchmarks for post-deterministic failures :Create testbeds and fault-injection frameworks to evaluate the resilience of autonomous infrastruc-ture against semantic drift, evidence fabrication, and correlated reasoning failures. 7. Operational integration with cloud control planes : Design reference architectures and APIs to integrate PDDS controllers with cloud APIs, Kubernetes operators, and IAM boundaries. 8. Security and governance for autonomous infrastructure : Study the security implica-tions of autonomous execution loops, focusing on prompt injection containment, authorization boundaries, and semantic access control. 9. Epistemic consistency and memory : Post-deterministic systems require consistency mod-els for agentic memory and derived knowledge. Open questions include how to define Semantic Linearizability, propagate derived evidence across agents, summarize memory without losing safety-critical context, invalidate stale beliefs, and per-form Verifiable Semantic Rollback. Benchmarks are also needed to evaluate epistemic divergence, evidence propagation, and long-horizon memory safety. 
+
+9 Conclusion 
+
+Integrating autonomous, model-driven actors changes distributed systems. By treating classical distributed computing as a zero-ambiguity special case of aparticipant-general model, PDDS provides a technical framework for coordinating heterogeneous participants, including deterministic services, stochastic agents, pol-icy engines, and human-mediated actors. Its archi-tectural pillars—Protocol-Driven Development, Verifi-able Agentic Infrastructure, Autonomous State Con-trol Planes, Semantic Quorum Assurance, and Epis-temic State Replication—operationalize this framework for infrastructure whose behavior remains auditable, bounded by policy, and semantically certifiable. The deterministic era gave us reliable distributed computa-tion; the post-deterministic era must give us trustwor-thy autonomous infrastructure. 
+
+References               
+
+> [1] Lujo Bauer, Jay Ligatti, and David Walker. Edit automata: More practical, stronger security policies for software. ACM Transactions on Information and System Security (TISSEC) ,8(1):105–144, 2005. [2] Michael Ben-Or. Another advantage of free choice: Com-pletely asynchronous agreement protocols. In Proceedings of the 2nd ACM Symposium on Principles of Distributed Computing (PODC) , pages 40–49, 1983. [3] Philip A. Bernstein, Vassos Hadzilacos, and Nathan Good-man. Concurrency control and recovery in database systems .Addison-Wesley, 1987. [4] Miguel Castro and Barbara Liskov. Practical byzantine fault tolerance. In Proceedings of the 3rd Symposium on Op-erating Systems Design and Implementation (OSDI) , pages 173–186, 1999. [5] Tushar Deepak Chandra and Sam Toueg. Unreliable failure detectors for reliable distributed systems. Journal of the ACM (JACM) , 43(2):225–267, 1996. [6] James Cheney, Laura Chiticariu, and Wang-Chiew Tan. Provenance in databases: Why, how, and where. Founda-tions and Trends in Databases , 1(4):379–474, 2009. [7] Allen Clement, Jeff Napper, Harry Martin, Lorenzo Alvisi, and Mike Dahlin. Bar fault tolerance for cooperative services.
+
+7In Proceedings of the 22nd ACM Symposium on Operating Systems Principles (SOSP) , pages 1–14, 2009. [8] Yilun Du, Shuang Li, Antonio Torralba, Joshua B. Tenen-baum, and Igor Mordatch. Improving factuality and reason-ing in language models through multiagent debate. arXiv preprint arXiv:2305.14325 , 2023. [9] Michael J. Fischer, Nancy A. Lynch, and Michael S. Pater-son. Impossibility of distributed consensus with one faulty process. Journal of the ACM (JACM) , 32(2):374–382, 1985. [10] Jun He and Deying Yu. Openkedge: Governing agentic mutation with execution-bound safety and evidence chains. 
+
+arXiv preprint arXiv:2604.08601 , 2026. [11] Jun He and Deying Yu. Protocol-driven development: Gov-erning generated software through invariants and evidence. 
+
+arXiv preprint arXiv:2605.12981 , 2026. [12] Jun He and Deying Yu. Sovereign agentic loops: Decoupling ai reasoning from execution in real-world systems. arXiv preprint arXiv:2604.22136 , 2026. [13] Jun He and Deying Yu. Verifiable agentic infrastructure: Proof-derived authorization for sovereign ai systems. arXiv preprint arXiv:2605.15228 , 2026. [14] Maurice P. Herlihy and Jeannette M. Wing. Linearizability: A correctness condition for concurrent objects. ACM Trans-actions on Programming Languages and Systems (TOPLAS) ,12(3):463–492, 1990. [15] Leslie Lamport. Time, clocks, and the ordering of events in a distributed system. Communications of the ACM ,21(7):558–565, 1978. [16] Leslie Lamport. The part-time parliament. ACM Transac-tions on Computer Systems (TOCS) , 16(2):133–169, 1998. [17] Martin Leucker and Christian Schallhart. A brief tutorial on runtime verification. The Journal of Logic and Algebraic Programming , 78(5):293–303, 2009. [18] Tian Liang, Zhiheng Xi, Sara Xu, Yiwen Wang, Taipeng Li, Wensen Zhou, Yifan Lu, Xiaoxian Wu, Dong Shen, Lu Chen, et al. Encouraging divergent thinking in LLMs via multi-agent debate. arXiv preprint arXiv:2305.19118 ,2023. [19] Dahlia Malkhi and Michael Reiter. Byzantine quorum sys-tems. Distributed Computing , 11(4):203–213, 1998. [20] George C. Necula. Proof-carrying code. In Proceedings of the 24th ACM SIGPLAN-SIGACT Symposium on Princi-ples of Programming Languages (POPL) , pages 106–119, 1997. [21] Brian M. Oki and Barbara H. Liskov. Viewstamped repli-cation: A new primary copy method to support highly-available distributed systems. In Proceedings of the 7th ACM Symposium on Principles of Distributed Computing (PODC) , pages 8–17, 1988. [22] Diego Ongaro and John Ousterhout. In search of an under-standable consensus algorithm. In 2014 USENIX Annual Technical Conference (USENIX ATC) , pages 305–319, 2014. [23] Michael O. Rabin. Randomized byzantine generals. In 
+
+Proceedings of the 24th Annual Symposium on Foundations of Computer Science (FOCS) , pages 403–409, 1983. [24] Toran Richards. Auto-gpt: An experimental open-source attempt to make gpt-4 fully autonomous. https://github. com/Significant-Gravitas/Auto-GPT , 2023. [25] Timo Schick, Jane Dwivedi-Yu, Roberto Dess` ı, Roberta Raileanu, Maria Lomeli, Luke Zettlemoyer, Nicola Can-cedda, and Thomas Scialom. Toolformer: Language mod-els can teach themselves to use tools. arXiv preprint arXiv:2302.04761 , 2023. [26] Fred B. Schneider. Implementing fault-tolerant services using the state machine replication approach: A tutorial. 
+
+ACM Computing Surveys (CSUR) , 22(4):299–319, 1990. [27] Fred B. Schneider. Enforceable security policies. ACM Transactions on Information and System Security (TIS-SEC) , 3(1):30–50, 2000. [28] Shunyu Yao, Jeffrey Zhao, Deying Yu, Nan Du, Izhak Shafran, Karthik Narasimhan, and Yuan Cao. React: Syn-ergizing reasoning and acting in language models. arXiv preprint arXiv:2210.03629 , 2022. 
+
+8

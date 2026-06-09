@@ -1,0 +1,1053 @@
+Title: UltraEP: Unleash MoE Training and Inference on Rack-Scale Nodes with Near-Optimal Load Balancing
+
+URL Source: https://arxiv.org/pdf/2606.04101v1
+
+Published Time: Thu, 04 Jun 2026 00:04:18 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+# UltraEP : Unleash MoE Training and Inference on Rack-Scale Nodes with Near-Optimal Load Balancing 
+
+## Xinming Wei 1∗ Chao Jin 1 Tuo Dai 2 Yinmin Zhong 1 Shan Yu 3 Chengxu Yang 4 Bingyang Wu 1
+
+## Zili Zhang 1 Jing Mai 1 Qianchao Zhu 4 Zhouyang Li 4 Yuliang Liu 4† Guojie Luo 1†
+
+1School of Computer Science, Peking University 2RedNote 
+
+3Shanghai AI Laboratory 4Independent Researcher 
+
+## Abstract 
+
+Large-scale expert parallelism (EP) is becoming pivotal for training and serving frontier MoE models, but it also ampli-fies device-level expert load imbalance into compute strag-glers, token all-to-all bottlenecks, and activation-memory spikes. Existing balancers redistribute experts periodically based on historical load, which becomes unreliable for pro-duction deployments with non-stationary load patterns. We present UltraEP , the first exact-load, real-time bal-ancer for large-EP MoE training and serving prefill on rack-scale nodes (RSNs). Built upon the extended scale-up con-nectivity of RSNs, UltraEP rebalances every microbatch and layer on critical paths, which requires nontrivial co-design of plan solving and expert replication communication to mini-mize exposed overhead. To this end, UltraEP eagerly reacts to post-gating load with efficient quota-driven planning, and executes the resulting irregular expert-state transfers with RSN-native persistent tile streaming and relay-based fan-out mitigation. Averaged across MoE models from 106B to 671B parameters in training and prefill, UltraEP achieves 94.3 % of the force-balanced ideal throughput, delivering 1.49 × improvement over non-balancing, while reducing the final inter-rank imbalance from 1.30–4.01 to 1.01–1.04. Addi-tionally, we validate UltraEP ’s scalability and robustness in production MoE training with 2560 GPUs. 
+
+## 1 Introduction 
+
+Mixture-of-Experts (MoE) models have become a dominant paradigm for scaling large language models (LLMs), offering high model capacity with sparse activation [ 6 , 8 , 15 , 26 , 53 ,62 , 63 ]. To accommodate larger MoE models, expert paral-lelism (EP) is widely adopted, where experts are distributed across devices and tokens are dynamically routed via all-to-all communication [ 16 , 20 , 26 , 47 ]. Compared to other forms of model parallelism, EP scales more efficiently, expos-ing abundant parallelism while maintaining high arithmetic intensity. In production, large-scale expert parallelism (large-EP), such as 32- or 64-way EP, has been indispensable for training and serving MoE models with hundreds of billions of parameters [8, 35, 50, 61].    
+
+> ∗Work done during internship at RedNote.
+> †Corresponding authors. Attention A2A Experts A2A
+> Exact Load
+> Historical Statistics
+> Periodic Balancing
+> Amortizable overhead
+
+Ours Existing Stale Load 
+
+> Hot-Path Balancing
+> Exposed overhead (~300 us)
+> Balancing Operations (planning + expert rearrangement)
+> Gate
+> Time
+
+Figure 1. UltraEP differs from prior solutions in load fidelity, decision timing, and balancing frequency. However, large-EP amplifies a fundamental challenge: ex-pert load imbalance. As illustrated in Fig. 3, tokens are un-evenly distributed across experts due to input diversity and routing dynamics, leading to skewed workload across de-vices [ 38 , 60 , 66 ]. This imbalance manifests in expert compu-tation stragglers, token all-to-all bottlenecks, and activation memory spikes on overloaded devices. As the EP degree in-creases, these effects compound, significantly widening the gap between achieved and ideal performance [61]. Existing solutions mainly mitigate imbalance by predict-ing incoming load and adjusting expert-to-device placement accordingly [ 12 , 64 , 67 , 68 ]. EPLB [ 12 ], a widely used balancer, adopts a redundant expert strategy, heuristically replicating high-load experts on multiple devices. Although EPLB is ag-nostic to load estimator, common deployments [ 51 , 59 ] use recent routing history and rebalance periodically to amor-tize the planning and rearrangement overhead (Fig. 1). Its effectiveness, however, depends on the stationarity of the load patterns. On frontier MoE models with hundreds of ex-perts, we observe that expert popularity shifts sharply across microbatches, layers, and data domains in both training and serving ( §3 ). Stale predictions then produce inaccurate place-ments, leaving substantial residual imbalance (Fig. 6). This observation motivates a shift from prediction-based to exact-load balancing (Fig. 1). However, exact load becomes available only after gating, forcing balancing operations onto the critical path. The exposed overhead includes plan solv-ing and expert rearrangement communication, with weight transfers in forward execution and additional gradient or 
+
+> 1
+> arXiv:2606.04101v1 [cs.DC] 2 Jun 2026 Wei et al.
+
+optimizer-state movement in training. In standard RDMA clusters, high-bandwidth scale-up connectivity is confined to a single 4/8-GPU node, while inter-node traffic relies on slower scale-out networks. Under large-EP, moving substan-tial expert states across multiple nodes is prohibitively ex-pensive and impractical on the hot path. The emergence of rack-scale nodes (RSNs) [ 2, 39 , 42 , 73 ]fundamentally changes this design space. By extending the scale-up links across dozens of GPUs in a full rack, RSNs can keep an entire EP group on a high-bandwidth domain, making hot-path balancing physically viable. Fig. 2 depicts this paradigm shift. However, RSNs are necessary but not sufficient, with two pivotal challenges: The control plane 
+
+must make a high-quality balancing decision within the short window between gating and token dispatch. The data plane 
+
+must then execute irregular, volatile expert state transfers that are poorly backed by static collectives, underutilizing RSN bandwidth. Without careful co-design, these overheads can easily negate the balancing gain. We present UltraEP , the first system to achieve exact ex-pert load balancing in real-time for large-EP MoE training and serving prefill on RSNs, attaining near force-balanced ideal throughput. As shown in Fig. 1, it rebalances eagerly at the granularity of each microbatch and layer with minimal hot-path latency. It is GPU-native without host-side bottle-necks, and optimized for the unique communication patterns of expert replication on RSNs. With dedicated memory lay-out (e.g., reusing redundant expert buffers across layers), it reduces memory overhead by dozens of times. It preserves training equivalence by reducing replica gradients back to main experts before optimizer updates. 
+
+UltraEP comprises two key innovations to tackle the control- and data-plane challenges. First, we propose a quota-driven planner that jointly optimizes expert replication and token reroute (which redirects each token of a replicated ex-pert to one of its physical instances). Each quota specifies the final token load assigned to an expert instance. These quotas couple replica creation and token reroute: a replica is mate-rialized only when it carries useful load, and reroute then realizes the solved quota split with locality. Unlike EPLB, which rebalances on stale load and leaves reroute to a sepa-rate heuristic (e.g., round-robin), UltraEP directly optimizes the post-reroute load with an efficient threshold-based binary search. Second, UltraEP tailors RSN-native communication for dynamic expert traffic induced by real-time replication. It streams expert transfers as device-side tile-level tasks to saturate the bandwidth. For hot experts with many repli-cas, UltraEP builds chunk-streaming relay trees that split hotspot fan-out traffic across ranks with spare bandwidth. 
+
+UltraEP is designed for production deployment. It is com-patible with common tensor, pipeline, and data parallelism. We implement UltraEP as a standalone runtime, allowing seamless integration into established training and serving stacks. On cutting-edge MoE models from 106B to 671B CPU Host RAM                     
+
+> GPU GPU GPU
+> (a) Standard RDMA Cluster
+> Scale-Out Network (400 Gbps) Scale-Up Link (900 GB/s)
+> CPU Host RAM
+> GPU GPU GPU
+> CPU Host RAM
+> GPU GPU GPU
+> (b) Rack-Scale Nodes
+> CPU Host RAM
+> GPU GPU GPU
+> CPU Host RAM
+> GPU GPU GPU
+> CPU Host RAM
+> GPU GPU GPU
+> CPU Host RAM
+> GPU GPU GPU
+> Rack
+
+Figure 2. Illustration of expanded scale-up domain within a rack-scale node, compared with the standard RDMA cluster. parameters, UltraEP sustains 94.6 % of the force-balanced ideal throughput in training and 93.9 % in serving prefill on average. It also improves training throughput by an av-erage of 1.42 × over Megatron-LM [ 56 ] and serving prefill throughput by 1.56 × over SGLang [ 70 ], while keeping post-balancing inter-rank imbalance around 1.01–1.04. UltraEP 
+
+outperforms prevalent balancers, even strengthened EPLB with exact load, validating quota-driven planning. It also accelerates expert replication by 3.1 ×–5.5 × over mainstream communication backends, showing the advantage of RSN-tailored communication. In 2560-GPU production MoE train-ing on 15T tokens, UltraEP stabilizes training with over 92 % of ideal throughput while preserving convergence. This paper makes the following contributions. 
+
+• We characterize non-stationary expert load imbalance in MoE training and serving prefill at scale (§3). 
+
+• We design UltraEP , the first exact-load balancer in real time for large-EP MoE deployment on RSNs (§4). 
+
+• We build quota-based planning ( §5 ) and RSN-native expert-state communication (§6) for hot-path balancing. 
+
+• We validate UltraEP ’s near-optimal balancing quality, near-ideal throughput, and production scalability (§8). 
+
+## 2 Background 
+
+2.1 Rack-Scale Node 
+
+As shown in Fig. 2, a rack-scale node (RSN) expands the scale-up domain from a single 4/8-GPU server to a full rack, typi-cally spanning 64 + GPUs [ 2, 39 , 42 , 73 ]. An RSN is still com-posed of multiple servers, but GPUs across servers remain directly connected via a rack-wide scale-up fabric [ 29 , 40 , 58 ]. Compared with scale-out, scale-up offers much higher per-GPU bandwidth (hundreds of GB/s to ∼TB/s) and load/store-style memory semantics, whereas scale-out uses network message passing and typically provides only tens of GB/s per NIC. For MoE models, an EP group can often be contained      
+
+> 2UltraEP : Unleash MoE Training and Inference on Rack-Scale Nodes with Near-Optimal Load Balancing Tokens
+> GPU 0
+> Attention Gate Expert 0
+> Expert 1
+> Expert 2
+> Expert 3
+> Dispatch Combine
+> 🧊
+> 🔥
+> Tokens Attention Gate
+> GPU 1
+
+Figure 3. An illustrative example of MoE forward under expert parallelism (EP): 4 experts, EP = 2, and top-𝑘 = 2.within one RSN, keeping expert dispatch on the fast scale-up fabric rather than the slower scale-out network. 
+
+2.2 Distributed MoE Training and Inference MoE Architecture Evolution. Early MoE models (e.g., GShard [ 26 ], Mixtral [ 21 ], Switch Transformer [ 15 ]) adopt a coarse-grained design with a small number of large experts. Each expert is a wide feed-forward network, and the gating network produces expert scores, selects a small top-𝑘 subset of experts for each token, and uses the corresponding top-𝑘 
+
+weights to scale and combine expert outputs. Currently, frontier MoE models, including Google’s Gemini-3 Pro [ 7 ] and GLaM [ 14 ], OpenAI’s GPT-OSS [ 43 ], DeepSeek’s DeepSeekMoE [ 6 ] and DeepSeek-V3/R1 [ 8 , 11 ], Qwen MoE families [ 62 , 63 ], and Meta’s Llama-4 [ 34 ], have evolved to-ward fine-grained MoE models, utilizing hundreds of experts where each individual expert is smaller and computationally lighter. This trend improves expert specialization and scaling flexibility, but it also makes routing distribution and expert load balancing much more dynamic. 
+
+LLM Inference. LLM inference consists of two phases: pre-fill and decode . Prefill is compute-bound, processing the prompt in parallel and filling the KV cache. Decode is memory-bound because each step must repeatedly fetch large model weights and KV cache entries from memory, while the per-token computation is too small to hide these transfers. These phases directly shape user-visible latency metrics such as time to first token (TTFT) and time per output token (TPOT), where TTFT is largely determined by prefill and TPOT re-flects steady-state decode speed. Established improvements include prefill-decode (PD) disaggregation [ 45 , 71 ] or chun-ked prefill [ 1] to reduce PD interference. PD disaggregation isolates the two phases on different resources or execution paths, while chunked prefill breaks long prompts into smaller pieces and batches them together with decode requests. 
+
+Expert Parallelism (EP) . As illustrated in Fig. 3, EP [ 26 ] par-titions experts across GPUs and routes tokens to the GPUs that host their selected experts. Each rank first computes gat-ing decisions for its local tokens, performs a global exchange of routing metadata to determine per-peer send/receive sizes and offsets, and then dispatches tokens via all-to-all commu-nication. Upon receiving tokens, each rank groups them by expert, executes grouped GEMM over the resulting expert batches, and returns the tokens through a combine phase that mirrors dispatch. Compared with general-purpose com-munication libraries, DeepEP [ 9 ] optimizes token all-to-all with high-performance kernels, topology-aware scheduling, and potential deduplication or overlapping. MoE training and inference typically combine tensor paral-lelism (TP) [ 56 ], pipeline parallelism (PP) [ 19 , 27 , 36 , 46 ], and data parallelism (DP) [ 48 , 52 ], with EP as the primary scaling axis for experts. EP improves (1) computational efficiency by aggregating tokens to increase per-expert GEMM batch size, and (2) communication efficiency by keeping all-to-all vol-ume independent of expert count. In practice, EP is usually an inner parallel mode nested within an outer PP/DP layout, where each MoE layer forms an EP group. Within each EP group, attention blocks are often replicated (attention-side DP [ 23 , 30 ]), while experts are partitioned across GPUs and participate in the all-to-all token exchange. 
+
+Relationship between Algorithm- and System-Side Load Balancing in MoE Training. Algorithm-side routing reg-ularization and system-side balancing are complementary rather than interchangeable. Training-time auxiliary routing losses primarily stabilize optimization, prevent routing col-lapse [ 53 ], and preserve expert specialization. For example, GShard encourages balanced utilization in expectation via an auxiliary loss that aligns each expert’s average router proba-bility with its realized token fraction [ 26 ], while DeepSeek-MoE updates an expert-wise routing bias from recent load to downweight overloaded experts and upweight underutilized ones without interference gradients [ 8 , 60 ]. Both promote balance over time but cannot ensure per-microbatch realized load balance, especially for fine-grained MoE models at large-EP scale. System-side techniques therefore correct runtime imbalance; they cannot replace routing losses because they do not serve the modeling objectives. 
+
+## 3 Expert Load Analysis 
+
+We observe highly skewed , heterogeneous , and dynamic ex-pert load distributions in both serving and training. This section illustrates these load patterns and evaluates the ef-fectiveness of EPLB under such load and large-EP. 
+
+Serving Prefill (Fig. 4). In serving, the prefill stage is the primary source of expert load imbalance. For memory-bound decode, we discover that the impact of compute-side imbal-ance is largely diluted by memory access latency. Increasing the batch size can improve compute intensity, but that con-flicts with strict SLOs for decode TPOT [ 71 ]. Therefore, the practical balancing target is prefill, where throughput is pri-oritized to reduce TTFT. As shown in Fig. 4, expert popularity varies sharply across semantic transitions, including science, coding, and mixed-domain traffic. Even within a single do-main, the hot experts drift from one batch to the next, while mixed-domain inputs superimpose multiple routing patterns 
+
+> 3
+
+Wei et al. 0             
+
+> 25
+> 50
+> 75
+> 100
+> Expert Load Share (%)
+> Science Code Mixed
+> Layer 13 Science Code Mixed
+> Layer 68
+> 050 100 150 200
+> Prefill Batch Index
+> 10
+> 20
+> Imbalance
+> (max/mean)
+> 050 100 150 200
+> Prefill Batch Index
+
+Figure 4. Prefill-time expert load distribution shifts across forward steps, data domains, and layers. Sampled on Qwen3-235B [ 62 ] (top-8 activated of 128 experts) with EP=64. The imbalance ratio denotes the max per-expert load by mean. GLM4.5-106B-A12B (Layer 8)                  
+
+> 0
+> 25
+> 50
+> 75
+> 100
+> Expert
+> Load Share (%)
+> 012 24
+> 5
+> 10
+> 15
+> Imbalance
+> (max/mean)
+> 3500 3505 3510
+> 4
+> 6
+> 8
+> GLM4.5-106B-A12B (Layer 31)
+> 0
+> 25
+> 50
+> 75
+> 100
+> 012 24
+> 5
+> 10
+> 15
+> 3500 3505 3510
+> 1.2
+> 1.6
+> 2.0
+> DeepSeek-V3-671B-A37B (Layer 8)
+> 0
+> 25
+> 50
+> 75
+> 100
+> Expert
+> Load Share (%)
+> 012 24
+> 15
+> 30
+> Imbalance
+> (max/mean)
+> 3500 3505 3510
+> 1
+> 2
+> 3
+> 4
+> DeepSeek-V3-671B-A37B (Layer 57)
+> 0
+> 25
+> 50
+> 75
+> 100
+> 012 24
+> 15
+> 30
+> 3500 3505 3510
+> 1.2
+> 1.8
+> 2.4
+> Global Batch Index Global Batch Index
+
+Figure 5. Training-time expert load distributions in the ini-tial (first 25) and late (3500–3510 of 4500 total global batches) stages. Sampled on GLM4.5-106B-A12B [ 57 ] (top-8 activated of 128 experts, trained with GShard-style auxiliary loss) and DeepSeek-V3 [ 8 ] (top-8 activated of 256 experts, using DeepSeek-style auxiliary loss) within one EP64 group. and make the imbalance even less predictable. This yields a workload that is both highly skewed and non-stationary. 
+
+Training (Fig. 5). Training exhibits a different yet equally challenging pattern. Early in training, expert loads are highly unstable because router specialization has not yet stabi-lized. As training proceeds, the average distribution becomes smoother, but strong dynamics remain. Across global batches ,auxiliary-loss negative feedback continually re-adjusts ex-pert utilization; even DeepSeek-style router compensation 0 50 100 150     
+
+> Prefill Batch Index
+> 1.0
+> 3.5
+> 6.0
+> 8.5
+> Imbalance by Rank  Qwen3-235B (Layer 68)
+> 050 100 150
+> Training Microbatch Index
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+> DeepSeek-V3 (Layer 57)
+> No Balancing EPLB
+
+Figure 6. Rank -level imbalance before and after EPLB, com-puted from previously recorded loads with EP=64. EPLB rebalancing interval is 50 batches for prefill and 3 global batches for training, respectively. Prefill (left) uses mixed data, while training (right) shows the 3510 th global batch. that proactively equalizes experts does not eliminate the os-cillation. Inter-microbatch jitter from sampling randomness also remains visible at a finer granularity, which is even more pronounced on DeepSeek-V3 training. 
+
+Limitations of History-Based Balancing (Fig. 6). We study how EPLB mitigates rank-level imbalance under large-EP. With fewer experts per EP rank, large-EP directly trans-lates routing dynamics across experts into pronounced inter-rank skew. However, EPLB relies on historical load statistics and cannot track fast, non-stationary load shifts in either prefill or training. When the realized load deviates from the statistics used to derive the expert layout, EPLB can even worsen imbalance, creating spikes and new stragglers. This motivates a real-time design that reacts to the instantaneous load rather than extrapolating from stale measurements. 
+
+## 4 UltraEP System Design 
+
+UltraEP targets real-time expert load balancing with exact load. Each EP group is inside an RSN scale-up domain, while cross-rack scale-out expansion uses PP and DP. UltraEP 
+
+is tailored for both training and serving prefill. It solves expert replication and token rerouting plans on the fly, per-forms weight distribution to materialize redundant experts, and aggregates replicas’ gradients during the correspond-ing backward passes in training. This section first intro-duces UltraEP ’s expert placement and memory manage-ment ( §4.1 ), then overviews the forward/backward execu-tion pipeline ( §4.2 ), formulates the per-layer real-time op-timization problem ( §4.3 ), and finally distills the practical control-plane and data-plane challenges (§4.4). 
+
+4.1 Expert Layout and Memory Management 
+
+As illustrated in Fig. 7, we use logical expert to denote the expert identity defined by the model, and physical expert 
+
+to denote a concrete storage slot on a rank. Every rank re-serves the same number of main and redundant slots. A main slot hosts the original physical instance of a logical expert, whereas a redundant slot either hosts one replica of a logical 
+
+4UltraEP : Unleash MoE Training and Inference on Rack-Scale Nodes with Near-Optimal Load Balancing 
+
+Table 1. Notation used in UltraEP .
+
+Symbol Meaning 
+
+R All ranks in one EP group, with size 𝑅 := | R | .
+
+ℎ (𝑒 ) Home rank of logical expert 𝑒 , hosting its main instance. 
+
+H ( 𝑒 ) Host ranks of expert 𝑒 ’s physical instances. 
+
+𝑁 layers Number of MoE layers in the underlying model. 
+
+𝑁 slot Number of redundant slots on each rank. 
+
+E All logical experts in one EP group. 
+
+E𝑟 Main experts on rank 𝑟 , i.e., {𝑒 ∈ E | ℎ (𝑒 ) = 𝑟 }.
+
+Λ = {𝜆 𝑟,𝑒 } Global load matrix; 𝜆 𝑟,𝑒 is the token load from source rank 
+
+𝑟 assigned to logical expert 𝑒 .
+
+𝑈 = {𝑢 𝑒,𝑟 } Solved load quota table; 𝑢 𝑒,𝑟 > 0 iff rank 𝑟 hosts a physical instance of expert 𝑒 , which carries post-reroute load 𝑢 𝑒,𝑟 .
+
+𝑋 = {𝑥 𝑟,𝑠 } Redundant slot assignment; 𝑠 ∈ [ 𝑁 slot ], 𝑥 𝑟,𝑠 = 𝑒 if slot 𝑠 on rank 𝑟 hosts a replica of expert 𝑒 , and otherwise ∅.
+
+𝑄 = {𝑞 𝑟,𝑒,𝑡 } Reroute split from source rank 𝑟 to expert 𝑒 ’s physical instance on rank 𝑡 , satisfying Í𝑡 ∈H ( 𝑒 ) 𝑞 𝑟,𝑒,𝑡 = 𝜆 𝑟,𝑒 and 
+
+Í𝑟 ∈R 𝑞 𝑟,𝑒,𝑡 = 𝑢 𝑒,𝑡 .
+
+𝑢 min Minimum useful quota of a newly created replica. Main Experts (Persistent)        
+
+> E2
+> E1
+> E0
+> E3
+> E2
+> E2
+> E5
+> E4
+> E4
+> E7
+> E6 012345678910 11
+> EP Rank 0 EP Rank 1 EP Rank 2 EP Rank 3
+> Redundant Slots (Transient)
+> Weight
+> Grad.
+> Optim.
+> Weight
+> Grad.
+> Optim. (Layer-independent) (Layer-reused)
+> Logical Experts: E0, E1, ..., E7 Physical Experts: 0, 1, ..., 11
+> Physical Slots
+
+Figure 7. Expert layout and buffer management (example: 8 experts, single layer, EP = 4, 𝑁 slot = 1). Redundant expert slots reuse weight and gradient buffers across layers, with no optimizer state. Main experts retain the full set of buffers. expert or remains empty. This fixed layout keeps the runtime clean and deterministic, and yields a one-to-many logical-to-physical mapping: each logical expert has one fixed main instance and zero or more redundant replicas. 
+
+Replication Only. UltraEP adopts replication-only balanc-ing. It never reorders main experts. This reordering-free design is effective because large-EP reduces the number of local main experts per rank (often two or four). At that point, reordering brings diminishing marginal benefits; it can only reshuffle a tiny local set while incurring substantial state migration, control complexity, and locality disruption. In contrast, the cost-effective replication expands the service capacity of the actual bottlenecks. 
+
+Cross-Layer Buffer Reuse. For main experts, UltraEP pre-serves the standard training/serving memory layout. For each redundant slot, it keeps no optimizer state (optimizer updates are applied only on main experts) while sharing weight/gradient buffer across layers. In Qwen3-235B-A22B Gate Replication Planning Reroute 
+
+> Token Dispatch
+> Notify Dispatch
+> Weight Distribution
+> Comp. Stream Comm. Stream
+> Additional overhead upon standard MoE forward
+
+Figure 8. MoE forward pass with UltraEP enabled. Disp.   
+
+> MoE (Wgrad)
+> MoE (Dgrad)
+> Comb.
+> Gate Attention
+> Weight Distribution Replica Wgrad Reduction
+> MoE (Wgrad)
+> Disp.
+> Comp. Stream Comm. Stream
+> Layer i Layer i - 1
+
+Figure 9. MoE backward pass with UltraEP enabled. (94 MoE layers, 128 experts), this reduces a single redun-dant slot from 3.3 GB weights and 6.6 GB gradients to 36 MB and 72 MB per rank, at the cost of a tight, per-layer weight-materialization deadline on the forward critical path (§4.2). 
+
+4.2 Computation-Communication Pipelines Forward: Eager Planning and Expert Replication (Fig. 8). 
+
+UltraEP first reuses the existing notify-dispatch for later to-ken all-to-all, to gather global routing information. Given this exact load, every rank deterministically computes an identical replication and reroute plan with no extra synchro-nization. Reroute converts the router output from token-to-logical-expert assignments into token-to-physical-expert. Both are fully on-device without host boundedness. Once replication is decided, UltraEP distributes main-expert weights to their remote replicas on each rank. This synchronization can overlap with reroute, but token dispatch should wait for it to finish to avoid bandwidth contention. As a result, planning and weight replication both stay on the critical path. This imposes strict timeliness requirements. 
+
+Backward: Weight Rematerialization and Gradient Re-duction (Fig. 9). Backward execution starts by restoring the redundant expert weights to the same state in forward pass. This communication can overlap with weight gradient (Wgrad) computation, until the start of data gradient (Dgrad) to avoid race conditions. After MoE backward finishes, every main expert aggregates the gradients contributed by all of its remote replicas into the main gradient buffer. This reduction preserves equivalence with the no-replica formulation and must finish before the next MoE layer begins, since the redun-dant gradient buffer is also reused across layers. Backward execution does not solve replication again, and it reuses the cached metadata from the forward pass. The reverse reroute is effectively a scatter-to-gather inversion of the forward assignment with negligible overhead. 
+
+5Wei et al. 
+
+4.3 Problem Formulation 
+
+We formulate an online optimization problem solved inde-pendently for each EP group. Table 1 introduces the notation. 
+
+Input. Static metadata (R , E, ℎ, 𝑁 slot ) and runtime load Λ.
+
+Output. A quota-aware replication plan 𝑈 = {𝑢 𝑒,𝑡 } and a reroute split 𝑞 𝑟,𝑒,𝑡 consistent with 𝑈 .
+
+Objective. The forward objective is to minimize 
+
+𝑇 𝑓 𝑤𝑑  
+
+> solve_rep
+
++ max 
+
+
+
+𝑇 𝑓 𝑤𝑑 
+
+> reroute
+
+,𝑇 𝑓 𝑤𝑑 𝑤 _distr 
+
+
+
++ 𝑇 𝑓 𝑤𝑑  
+
+> tok_a2a
+
++ 𝑇 𝑓 𝑤𝑑  
+
+> moe
+
+. (1) Here the terms denote the latencies of plan solving, reroute, weight distribution, token all-to-all, and MoE compute. The corresponding backward objective is 
+
+min 𝑇 𝑏𝑤𝑑  
+
+> tok_a2a
+
++ 𝑇 𝑏𝑤𝑑  
+
+> moe
+
+. (2) Backward reuses forward replication and reroute meta-data, with replica-specific communication hidden under com-putation. Thus, only token all-to-all and MoE compute re-main on the exposed path, as shown in Fig. 9. We model the MoE compute terms using the busiest post-reroute rank, with 𝑇 𝑏𝑤𝑑  
+
+> moe
+
+≈ 2𝑇 𝑓 𝑤𝑑  
+
+> moe
+
+to account for both Wgrad and Dgrad computation. 
+
+𝑇 𝑓 𝑤𝑑 /𝑏𝑤𝑑  
+
+> moe
+
+∝ max  
+
+> 𝑟 ∈ R
+
+∑︁ 𝑒 ∈ E 
+
+𝑢 𝑒,𝑟 . (3) Similarly, token all-to-all is dominated by the busiest sender or receiver rank, and backward follows the same imbalance pattern as forward under the same load distribution. 
+
+𝑇 𝑓 𝑤𝑑 /𝑏𝑤𝑑  
+
+> tok_a2a
+
+∝ max   
+
+> 𝑟 ∈ R
+
+max  ∑︁  
+
+> 𝑒 ∈ E
+
+𝜆 𝑟,𝑒 ,∑︁  
+
+> 𝑒 ∈ E
+
+𝑢 𝑒,𝑟 
+
+!
+
+. (4) In training, the number of tokens sent by each rank Í𝑒 𝜆 𝑟,𝑒 is fixed by the microbatch shape and parallelism configuration; in prefill, it is upper-bounded by the chunked-prefill size. Since weight-distribution latency is dominated by the rank hosting the hottest main experts, we approximate its cost by 
+
+𝑇 𝑓 𝑤𝑑 𝑤 _distr ∝ max  
+
+> 𝑟 ∈ R
+
+∑︁ 𝑒 ∈ E 𝑟 
+
+(|H ( 𝑒 )| − 1) , (5) 
+
+Constraints. First, main expert placement is immutable. Second, each rank has a redundant-slot budget of 𝑁 slot , and no logical expert may appear more than once on the same rank. Third, the backward communication introduced by replicas must be fully hidden to ensure no visible overhead is created in backward. Fourth, we additionally require every newly created replica to carry at least a quota of 𝑢 min .
+
+4.4 Practical Challenges Control Plane: Tiny Decision Window. Real-time balanc-ing uses exact load and thus avoids prediction error. However, solving the plan must deliver high balancing quality under a tight latency budget. We resolve this challenge in §5. 
+
+• Combinatorial Decision Space at Large-EP. Prior systems decouple placement and reroute. Placement is planned ahead with sufficient budget, while online reroute either applies round-robin allocation or patches prediction drift under strict replica-count constraints [ 13 ]. With exact load, optimal balance requires replication to provision reroute capacity with flexible replica candidates, substan-tially enlarging the decision space at large-EP. 
+
+• Robustness to Non-Stationary Loads. Hot experts can shift quickly across microbatches. The solver must remain sta-ble and fast under frequent distribution changes, rather than overfitting to transient patterns. 
+
+Data Plane: RSN Bandwidth Underutilization. RSNs of-fer high scale-up bandwidth, yet balancing traffic is asymmet-ric and highly dynamic, exposing new system bottlenecks. Existing communication stacks are optimized for static, pre-dictable collectives and adapt poorly to the irregular traffic in UltraEP . We resolve this challenge in §6. 
+
+• Magnified Non-Payload Overhead. For irregular weight or gradient synchronization on RSNs, the bottleneck shifts from link bandwidth to control-path overheads, includ-ing task tiling and pipelining, data staging, and dynamic addressing, preventing bandwidth saturation. Blindly scal-ing up parallelism is wasteful and can contend with over-lapped backward computation for the same resources. 
+
+• Fan-Out Bottleneck of Hot Experts. Expert replication in-duces a dynamic subgroup multicast pattern. Under large-EP and skewed load, popular main experts with consider-able replicas can incur large fan-out overhead that offsets balancing gains. Some RSNs support offloading multicast to the switch, but this typically assumes predetermined communication groups and delivery modes. In contrast, expert replication yields sparse and volatile groups that can change across layers and microbatches. 
+
+## 5 Quota-Driven Planning 
+
+UltraEP plans balancing as a joint replication-reroute prob-lem driven by exact runtime load. Instead of deciding replicas first and then patching them with a separate reroute policy, we directly solve the final per-instance load quota 𝑈 . Repli-cation materializes the physical instances needed to realize 
+
+𝑈 , and reroute then induces a rank-wise split 𝑞 consistent with the quota targets. Algorithm 1 depicts the full picture. 
+
+5.1 Replication Threshold Formulation. Let 𝜆 𝑒 = Í𝑟 ∈ R 𝜆 𝑟,𝑒 denote the total load of expert 𝑒 , and ℓ𝑟 = Í𝑒 ∈ E 𝑟 𝜆 𝑒 the initial load on rank 𝑟 . We seek the smallest load threshold 𝜏 such that every rank can be brought below 𝜏 using replications alone. For a candidate 𝜏 , define 
+
+exc 𝑟 (𝜏 ) = max (ℓ𝑟 − 𝜏, 0), slk 𝑟 (𝜏 ) = max (𝜏 − ℓ𝑟 , 0). (6)  
+
+> 6UltraEP : Unleash MoE Training and Inference on Rack-Scale Nodes with Near-Optimal Load Balancing
+
+Here exc 𝑟 (𝜏 ) and slk 𝑟 (𝜏 ) denote the excess load rank 𝑟 must shed and slack load it can still absorb, respectively. A thresh-old 𝜏 is feasible if excess load can be reassigned from over-loaded ranks to admissible ranks without violating slack, the per-rank slot budget, or the no-duplicate constraint, such that every rank ends with load at most 𝜏 .
+
+Quota Construction. UltraEP binary-searches 𝜏 between the average rank load and the initial maximum rank load, and runs a greedy feasibility oracle for each probe. For a candidate 𝜏 , the oracle visits overloaded ranks by descending residual excess and their main experts by descending 𝜆 𝑒 . It transfers as much load as possible from the hottest remaining expert to the admissible rank with the largest slack, subject to quota floor 𝑢 min . Accepted transfers both create a replica and update its quota in the temporary plan ˜𝑈 , so the placement already encodes useful reroute capacity. If all residual excess is drained, the probe records ˜𝑈 and searches for a smaller threshold; otherwise the probe is infeasible and the search moves upward. Why efficient: By using quota as the coupling variable, each probe reserves reroute capacity while choosing replicas. This avoids enumerating replica sets or token-level routes, and prevents ineffective replicas that would satisfy placement heuristics but receive little traffic. 
+
+5.2 Reroute Quota Decomposition with Locality. Once 𝑈 is fixed, reroute no longer revisits the balancing objective; it only ma-terializes a source-wise split 𝑄 whose aggregate load matches the solved quotas. For each expert, UltraEP first lets tokens originating from the same host rank consume that host’s quota. Prioritizing local quota only changes which source rank consumes a solved quota, not the quota itself. Therefore, token locality reduces cross-rank traffic without breaking the solved threshold. Reroute then distributes the residual source demand over the remaining quotas in proportion to their residual capacity, with deterministic rounding to preserve both per-source demand and per-instance quota. 
+
+Token Assignment. Quotas specify aggregate source-to-instance counts, whereas all-to-all dispatch requires a per-token destination. Each rank stores the resulting decomposi-tion as cumulative quotas ordered by the physical instances of each logical expert with a lightweight prefix scan. During dispatch, the 𝑗 -th local token of pair (𝑟, 𝑒 ) is sent to the first physical instance whose cumulative quota covers 𝑗 . This reduces token assignment to a small, rank-localized upper-bound lookup, independent of the optimization procedures. 
+
+5.3 GPU-Native Solving 
+
+UltraEP implements quota solving fully on device, avoiding CPU synchronization and device-host metadata movement on the hot path. The main challenge is that the algorithm is not a simple data-parallel scan: each binary-search probe mutates excess, slack, slot occupancy, and per-expert replica 
+
+Algorithm 1: Replication&Reroute Joint Solving                                                                                                                                                                                                                                                            
+
+> Input: Load Λ={𝜆 𝑟,𝑒 },𝑁 slot , quota floor 𝑢 min
+> Output: Slot assignment 𝑋 , quotas 𝑈 , reroute split 𝑄
+> 1Function SolveReplication( Λ, 𝑁 slot , 𝑢 min )
+> 2Precompute 𝜆 𝑒 ←Í𝑟 𝜆 𝑟,𝑒 and ℓ𝑟 ←Í𝑒 ∈E 𝑟 𝜆 𝑒
+> 3𝜏 lo ←1
+> 𝑅
+> Í𝑟 ℓ𝑟
+> ,𝜏 hi ←max 𝑟 ℓ𝑟
+> 4while 𝜏 lo <𝜏 hi do
+> 5𝜏 ←
+> j𝜏 lo +𝜏 hi
+> 2
+> k
+> 6exc 𝑟 ←max (ℓ𝑟 −𝜏, 0),slk 𝑟 ←max (𝜏 −ℓ𝑟 ,0)
+> 7Initialize ˜𝑢 𝑒,ℎ (𝑒 )←𝜆 𝑒 and ˜𝑢 𝑒,𝑡 ←0for 𝑡 ≠ℎ(𝑒 )
+> 8foreach overloaded rank 𝑟 in descending exc 𝑟 do
+> 9foreach main expert 𝑒 ∈ E 𝑟 in descending 𝜆 𝑒 do
+> 10 cap 𝑒 ←remaining transferable load of 𝑒
+> 11 while exc 𝑟 >0and cap 𝑒 >0do
+> 12 T ← admissible host ranks under slack, slot, and no-duplicate constraints
+> 13 if T=∅then break
+> 14 𝑡 ★←arg max 𝑡 ∈T slk 𝑡
+> 15 𝛿 ←min (exc 𝑟 ,slk 𝑡 ★,cap 𝑒 )
+> 16 if 𝛿 <𝑢 min then break
+> 17 ˜𝑢 𝑒,ℎ (𝑒 )←˜𝑢 𝑒,ℎ (𝑒 )−𝛿
+> 18 ˜𝑢 𝑒,𝑡 ★←˜𝑢 𝑒,𝑡 ★+𝛿
+> 19 exc 𝑟 −=𝛿 ,slk 𝑡 ★−=𝛿 ,cap 𝑒 −=𝛿
+> 20 if Í𝑟 exc 𝑟 =0then
+> 21 𝑈 ←˜𝑈 ,𝜏 hi ←𝜏 // Feasible
+> 22 Materialize ˜𝑈 into slot assignment 𝑋
+> 23 else
+> 24 𝜏 lo ←𝜏 +1// Infeasible
+> 25 return 𝑋 , 𝑈
+> 26 Function SolveReroute( Λ, 𝑈 )
+> 27 foreach logical expert 𝑒 do
+> 28 foreach host rank 𝑡 ∈ H ( 𝑒 )do
+> 29 𝑞 𝑡,𝑒,𝑡 ←min (𝜆 𝑡,𝑒 , 𝑢 𝑒,𝑡 )// Consume local quota
+> 30 ˆ𝜆 𝑡,𝑒 ←𝜆 𝑡,𝑒 −𝑞 𝑡,𝑒,𝑡 // Residual demand
+> 31 ˆ𝑢 𝑒,𝑡 ←𝑢 𝑒,𝑡 −𝑞 𝑡,𝑒,𝑡 // Residual quota
+> 32 foreach source rank 𝑟 with ˆ𝜆 𝑟,𝑒 >0do
+> 33 foreach host rank 𝑡 ∈ H ( 𝑒 )with ˆ𝑢 𝑒,𝑡 >0do
+> 34 𝑞 𝑟,𝑒,𝑡 ←round
+> ˆ𝜆 𝑟,𝑒 ×ˆ𝑢 𝑒,𝑡 Í
+> 𝑡 ′ˆ𝑢 𝑒,𝑡 ′
+> 
+> 35 Materialize 𝑄 ={𝑞 𝑟,𝑒,𝑡 }with per-token assignment.
+> 36 return 𝑄
+> 37 (𝑋 , 𝑈 ) ← SolveReplication (Λ, 𝑁 slot , 𝑢 min )
+> 38 𝑄 ←SolveReroute (Λ, 𝑈 )
+> 39 return 𝑋 , 𝑈 , 𝑄
+
+sets, while the greedy oracle has sequential dependencies across accepted transfers. UltraEP exploits warp-level par-allelism and data locality. With one cooperative thread block on a single SM, it stages the load matrix and placement state in shared memory, evaluates multiple threshold probes across warps, and uses warp-level reductions to find ad-missible high-slack targets under the slot and no-duplicate constraints. The same kernel emits the final slot mapping, 
+
+> 7Wei et al.
+
+quotas, and cumulative reroute metadata, turning quota solv-ing from a CPU-side combinatorial search into a compact GPU-resident feasibility problem. 
+
+## 6 RSN-Native Balancing Communication 
+
+UltraEP ’s balancing traffic is a runtime-adaptive sparse trans-fer graph over RSN scale-up fabrics, rather than a regular collective. It serves two paths: (1) both forward weight dis-tribution and backward redistribution from each main ex-pert to remote replicas, and (2) backward gradient reduction from those replicas back to main experts. The main goal is therefore high effective bandwidth under a volatile per-layer plan, not merely peak link rate. We optimize the two bottle-necks identified in §4.4 : non-payload overhead ( §6.1 ) and hot-expert fan-out (§6.2). 
+
+6.1 Persistent Tile Streaming for Data Transfers 
+
+Both weight distribution and gradient reduction use the same execution unit: the weight or gradient of each expert is di-vided into fixed-size tiles , and the solved placement plan is compiled into device-resident transfer tasks over these tiles. Instead of issuing a transfer per replica, UltraEP runs a persistent kernel whose thread blocks repeatedly pull the next tile from the global task stream. For weight distribu-tion, each source tile is staged once into shared memory and stored to all remote replica destinations. For gradient reduction, gradient tiles from remote replicas are loaded and accumulated into the local gradient buffer of main ex-perts, and then cleared in place for reuse in later layers. The kernels double-buffer the shared-memory tile within each thread block: while tile 𝑖 is being stored or reduced, the block fetches the next tile index and starts the load for tile 𝑖 +1.Thus, plan-dependent task lookup, address translation, and synchronization overhead are folded into the tile pipeline and hidden by data movement, rather than exposed as sepa-rate control steps for every replica transfer. 
+
+Overlap-Aware Footprint. The tile-streaming kernels ex-pose the number of resident thread blocks as the main re-source knob, which is sized with the overlap window. On the forward critical path, weight distribution launches sufficient thread blocks to increase in-flight tile loads and remote stores. On overlapped backward paths, the footprint is bounded ex-plicitly with configurable SM residency. The shared memory usage is also bounded to the active pipeline buffers, to mini-mize the contention with other compute-intensive backward kernels scheduled on the same SM. Thus UltraEP can spend more occupancy on the hot path to saturate RSN scale-up bandwidth, while preserving enough headroom for concur-rent overlapped kernels during backward. 
+
+6.2 Chunk Streaming Relay for Hotspot Fan-Out 
+
+Persistent tile streaming keeps each single transfer efficient, but a hot expert can still bottleneck on fan-out traffic. The 2, 5, 8        
+
+> 1, 2, 3, 4, 5, 6, 7, 8, 9 (Destination Ranks)
+> 1
+> 3, 9
+> 4
+> 6, 7
+> 2, 5, 8
+> 1, 3, 6 1, 3, 6 1, 3, 6
+> 7, 9 7, 9 7, 9
+> 444
+> (a) No Relay (b) Synchronous Two-Stage Relay
+> (c) Chunk Streaming Two-Stage Relay
+> Barrier
+> Rank 0 Rank 0
+> Rank 2 Rank 5 Rank 8
+> Rank 0
+> Rank 2 Rank 5 Rank 8
+> Send Recv Send Recv Send Recv Send Recv Send Recv Send Recv Send Recv Send Recv Send Recv
+> Time
+
+Figure 10. Relay schemes for hot expert fan-out, supposing one expert on rank 0 that multicasts to replica ranks 1–9, with ranks 2, 5, and 8 selected as relays. For clarity, the figure omits leaf ranks and finer-grained tiles. Each rank displays the state of send/receive channels along the timeline. exposed bound is sender-side: each rank has at most 𝑁 slot 
+
+inbound replicas, but may need to push several hot experts to many destinations. For experts whose replica count exceeds the relay threshold, UltraEP builds a lightweight two-stage relay: the source rank first seeds a small relay set, and each relay then forwards to its assigned leaves. The relay frontier is chosen near √︁ |H ( 𝑒 )| − 1, which approximately balances the two stages and reduces the source’s critical fan-out ac-cordingly. The relay scheduling works on chunks of con-secutive tiles rather than whole experts, so a relay rank can forward a chunk immediately after it arrives. After all tiles of a stage-one chunk reach the relay rank, the kernel writes the per-chunk ready flag; stage two waits on the corresponding flag and immediately sends that chunk from the local relay buffer to its leaves. As shown in Fig. 10, this chunk-level streaming pipelines the two stages without waiting for the whole expert or introducing global inter-stage barriers. 
+
+Load-Aware Relay Scheduling. The kernel builds the relay topology that balances outgoing traffic of all ranks. It first tracks the volume of sending bytes assigned to each rank by the replication plan, then processes relay-eligible hot experts one by one. For each, it selects first-stage relays from the expert’s replica ranks with the smallest sending volume. The remaining replicas are attached to the relays whose send-ing volume would remain smallest after taking the new leaf. Before moving to the next hot expert, the sending volumes of the source rank and its relays are updated to the send  
+
+> 8UltraEP : Unleash MoE Training and Inference on Rack-Scale Nodes with Near-Optimal Load Balancing
+
+Table 2. RSN configuration.        
+
+> Metric Value GPUs per rack | server 64 | 4 Peak BF16 FLOPs 2250 TFLOPS/GPU GPU memory | bandwidth 190 GB | 8 TB/s CPU memory | bandwidth 960 GB | up to 512 GB/s Intra-rack bandwidth 900 GB/s Inter-rack bandwidth 400 Gbps
+
+Table 3. Evaluated models and parallelism settings.                                     
+
+> Model (Params) Layers (All/MoE) Experts (Top-𝑘 )Parallelism (Training | Serving) 𝑁 slot
+> GLM4.5-106B-A12B [57] 46 / 45 128 (8) EP64-DP2 (128 GPUs) | – 2
+> Qwen3-235B-A22B [62] 94 / 92 128 (8) EP64-DP4 (256 GPUs) | EP64 (64 GPUs) 2
+> GLM4.7-358B-A32B [17] 92 / 89 160 (8) – | EP40 (40 GPUs) 4
+> DeepSeek-V3-671B-A37B [8] 61 / 60 256 (8) EP64-PP4 (256 GPUs) | – 2
+> RefMoE-288B-A16B 46 / 45 256 (8) EP32-PP4-DP20 (2560 GPUs) | – 4
+
+for relays and leaves, respectively. This scheduling only de-cides the relay trees, and each edge still adopts the chunk streaming transfer. In this way, the hot expert’s fan-out is split across ranks with spare sending capacity. 
+
+## 7 Implementation 
+
+We design UltraEP as a standalone runtime decoupled from both training/serving frameworks and MoE token all-to-all backends. The core library contains about 9.6K lines of C++ (including device kernels) and Python code. We in-tegrate UltraEP into Megatron-LM [ 56 ] for training and SGLang [ 70 ] for serving; both stay below 1K lines of ad-ditional code. We use DeepEP [ 9 ] ( hybrid-ep branch op-timized for intra-rack communication, v1.2.1+7febc6e) for token dispatch/combine in both frameworks. Being fully on-device, UltraEP avoids host-device transfers and preserves the graph capturing of device operations. 
+
+RSN Memory Semantics. For communication over RSN scale-up fabrics, we adopt GPU-initialized, one-sided peer-memory access. At initialization, all ranks allocate symmet-ric buffers for redundant weights/gradients, placement/load metadata, and other flags, then resolve intra-RSN peer han-dles into device-resident address tables. Transfer kernels consume compact task descriptors and access peer buffers through load/store primitives. 
+
+End-to-End Integration. UltraEP maintains redundant ex-perts as layer-shared internal buffers, while persistent model states of main experts are backed by external frameworks. These redundant experts are excluded from framework-side parameter/gradient buckets, optimizer state, and checkpoints. After weight initialization in SGLang or bucket construction in Megatron-LM, UltraEP lazily registers the weight and gradient pointers of main experts during model forward. For backward, UltraEP dynamically assigns each in-flight MoE invocation a virtual layer ID , which hashes the placement and reroute metadata with the specific (real layer, micro-batch) in a ring buffer. Carried through torch.autograd ,this ID allows backward weight re-materialization and gra-dient reduction to retrieve the matching forward balancing plan from UltraEP ’s internal state. By setting the ring size to the maximum in-flight microbatches, we accommodate PP and virtual PP [ 37 ] while keeping UltraEP agnostic to PP scheduling details across microbatches and stages. Be-cause UltraEP only operates within EP groups, it remains orthogonal to attention-side DP, TP, and model-wide DP. 
+
+## 8 Evaluation 
+
+8.1 Setup Testbed Our evaluation runs on a public-cloud RSN cluster, where each rack contains 64 GPUs (16 servers). Table 2 sum-marizes the hardware attributes of the RSNs. For research prototyping, serving prefill uses one rack, whereas training uses two or four racks. We also perform a production-scale MoE training with 2560 GPUs. 
+
+Models and Parallelism We evaluate five MoE models spanning diverse scales, sparsity levels, and parallelism con-figurations. Table 3 summarizes their key characteristics. All experiments use bf16 precision. For serving, we evaluate Qwen3-235B [ 62 ] and GLM4.7-358B [ 17 ]. Each runs a prefill server within one rack, under EP64 or EP40, DP attention, and a chunked prefill size of 4K. For training, we bench-mark GLM4.5-106B [ 57 ] on 128 GPUs (2 racks), and Qwen3-235B [ 62 ] plus DeepSeek-V3 [ 8] on 256 GPUs (4 racks). In production, we train an in-house model called RefMoE-288B on 2560 GPUs (40 racks). Training uses intra-rack EP, with DP- or PP-based inter-rack scaling. 
+
+Training Recipes. For prototyping, we train the three open-source models with Megatron-LM, disabling system-side balancing while saving intermediate checkpoints for eval-uation. Each run lasts about 4500 global batches, with the batch size ramping from 1024 to 5120. For production scal-ability, we train RefMoE-288B with our internal training stack and enable UltraEP . The prototyping and production training runs use 200B and 15T tokens, respectively, sam-pled from our high-quality in-house corpus. GLM4.5-106B and Qwen3-235B use the GShard load-balancing loss with weight 10 −2, whereas DeepSeek-V3 and RefMoE follow the DeepSeek recipe with routing bias update speed 10 −3 and sequence-level loss weight 10 −4. Training the three proto-typing models consumes about 77.7K GPU hours in total, while the production run consumes about 1.5M GPU hours. 
+
+Serving Workloads. We construct queries from realistic reasoning workloads: (1) STEM, including coding (Code-forces [ 5 ], SWE-bench [ 22 ]), mathematics (DAPO-Math-17K 
+
+> 9
+
+Wei et al. 3504 3508 3512 3516 3520 3524 
+
+> 560
+> 640
+> 720
+> 800
+> TFLOPS / GPU
+
+Iter:             
+
+> Ideal (785.4)
+> MELE+ O
+> 560
+> 640
+> 720
+> Avg TFLOPS / GPU
+> 545
+> 646
+> 618
+> 695
+> 757
+> MELE+ O
+> 1.0
+> 1.5
+> 2.0
+> Avg Imbalance
+> 2.23
+> 1.34 1.29
+> 1.10 1.02
+> 3505 3510 3515 3520 3525
+> 320
+> 400
+> 480
+> 560
+
+Iter:             
+
+> Ideal (574.7)
+> MELE+ O
+> 320
+> 400
+> 480
+> 560
+> Avg TFLOPS / GPU
+> 315
+> 449
+> 385
+> 474
+> 524
+> MELE+ O
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> Avg Imbalance
+> 2.86
+> 1.34
+> 1.58
+> 1.17 1.03
+> 3504 3508 3512 3516 3520
+> 420
+> 480
+> 540
+> 600
+
+Iter:           
+
+> Ideal (637.6)
+> MELE+ O
+> 520
+> 560
+> 600
+> Avg TFLOPS / GPU
+> 509 505 516
+> 553
+> 613
+> MELE+ O
+> 1.0
+> 1.1
+> 1.2
+> 1.3
+> Avg Imbalance
+> 1.30 1.28
+> 1.09
+> 1.18
+> 1.01
+
+(a) GLM4.5-106B-A12B (b) Qwen3-235B-A22B (c) DeepSeek-V3-671B-A37B 
+
+M: Megatron-LM E: EPLB L: LPLB E+: EPLB+ O: Ours Ideal 
+
+Figure 11. End-to-End Training Performance: Varying throughput across 20 training iterations on three models. 150 200 250 300 350 400                                
+
+> 1.2
+> 1.8
+> 2.4
+> 3
+> 3.6
+> Avg TTFT (s)
+> SEE+ O
+> 1.0
+> 2.0
+> 3.0
+> 4.0
+> Avg Imbalance
+> 3.68
+> 2.59
+> 1.11 1.04
+> 200 300 400 500 600
+> 1.2
+> 1.8
+> 2.4
+> 3
+> 3.6
+> Avg TTFT (s)
+> SEE+ O
+> 1.0
+> 2.0
+> 3.0
+> Avg Imbalance
+> 3.09
+> 2.05
+> 1.08 1.01
+> 100 110 120 130 140 150 160
+> RPS
+> 1.5
+> 3
+> 4.5
+> 6
+> 7.5
+> Avg TTFT (s)
+> SEE+ O
+> 1.0
+> 2.0
+> 3.0
+> 4.0
+> Avg Imbalance
+> 4.01
+> 2.56
+> 1.11 1.03
+> 60 70 80 90 100 110
+> RPS
+> 1.5
+> 3
+> 4.5
+> 6
+> 7.5
+> Avg TTFT (s)
+> SEE+ O
+> 1.0
+> 1.5
+> 2.0
+> Avg Imbalance
+> 2.06
+> 1.80
+> 1.06 1.01
+> STEM Mixed
+
+(a) Qwen3-235B-A22B (b) GLM4.7-358B-A32B     
+
+> S: SGLang E: EPLB E+: EPLB+ O: Ours Ideal
+
+Figure 12. End-to-End Prefill Performance: RPS–mean TTFT trade-offs on two data domains and two models. [ 65 ]), science (GPQA [ 49 ], OpenScience [ 41 ]), and (2) Mixed, with additional multi-task, long-context queries from Long-Bench [ 3]. Input lengths range from several hundred to tens of thousands of tokens. We generate traces with a Poisson arrival process at different request rates. 
+
+Baselines. We compare UltraEP against the following base-lines, with tuned compatibility on the underlying RSNs. 
+
+• Megatron-LM [56]: dev branch, commit e93814b .
+
+• SGLang [70]: main branch, v0.5.9+bbe9c7e .
+
+• EPLB [ 12 ]: a widely used algorithm for computing bal-anced expert placement plans, based on recent load. We optimize its integration into SGLang and Megatron-LM on RSNs for negligible balancing overhead. We use 50 pre-fill steps and 3 global batches as the rebalancing frequency for serving and training, respectively. 
+
+• LPLB [ 13 ]: a linear-programming solver that augments EPLB with reroute adjustment for each microbatch in training. It enforces at most one replica per expert to reduce overhead. We pair it with EPLB in Megatron-LM. 
+
+• EPLB + (w/ exact load): to isolate the benefit of our exact-load quota solving, we replace UltraEP ’s planning with standard EPLB and round-robin reroute while keeping the communication mechanism unchanged. 
+
+• Ideal : a force-balanced upper bound in Megatron-LM and SGLang, where we modify the router to dispatch tokens evenly across experts for perfect balancing. 
+
+Metrics. For training, we report achieved throughput in TFLOPS/GPU by resuming late-stage checkpoints and run-ning a short continuation window representative of the whole training process. This avoids resource-intensive full training of every balancing baseline. For serving, we report overall prefill latency, i.e., TTFT as a function of requests per second (RPS). We also report per-rank max/mean imbalance ratios, averaged across all layers and batches. 
+
+8.2 End-to-End Performance 
+
+Across training and serving prefill, UltraEP sustains an av-erage 94.6 % and 93.9 % of the ideal performance and consis-tently outperforms all baselines under varying load. 
+
+Training (Fig. 11). To evaluate steady-state training perfor-mance, each baseline resumes the same model checkpoint at the 3500 th global batch and runs for 20 more, which is long 
+
+10 UltraEP : Unleash MoE Training and Inference on Rack-Scale Nodes with Near-Optimal Load Balancing Ideal Megatron-LM Ours           
+
+> 0
+> 4
+> 8
+> 12
+> 16
+> Avg Latency per Layer (ms)
+> (a) Forward
+> 2.83 2.88 3.16
+> 1.68
+> 6.94
+> 2.24
+> 1.89
+> 5.95
+> 2.11
+> Ideal Megatron-LM Ours
+> 0
+> 5
+> 10
+> 15
+> 20
+> (b) Backward
+> 4.49 4.52 4.58
+> 1.62 4.75 1.79
+> 4.32
+> 10.41
+> 4.43
+> MoE Compute Token All-to-All Others
+
+Figure 13. Latency breakdown of forward and backward passes during Qwen3-235B-A22B training. enough to cover multiple EPLB balancing intervals and cap-ture the dynamic load changes. On all three models, UltraEP 
+
+keeps the average per-rank imbalance at only 1.01–1.03 af-ter balancing and delivers stable throughput across global batches. In contrast, baseline throughput oscillates visibly because their balancing plans lag the realized hot experts and the resulting stragglers change over time. Averaged across three models, EPLB, LPLB, EPLB +, and UltraEP improve throughput by 20 %, 12 %, 29 %, and 42 % over Megatron-LM, respectively. LPLB is constrained by its limited replica budget and solving overhead. For DeepSeek-V3 (c), routing compen-sation reduces the overall imbalance but enlarges short-term load swings ( §3 ), where EPLB and LPLB show similar or even worse performance than Megatron-LM, while UltraEP 
+
+remains above 96 % of the ideal. The remaining gap to force-balancing mainly comes from uneven routing in realistic MoE training, instead of rank-level imbalance or hot-path balancing overhead; we further analyze this in §8.3. 
+
+Serving Prefill (Fig. 12) Prefill load is even more skewed and non-stationary than training because request seman-tic domains, prompt lengths, batch composition, and ar-rival times all change drastically. Under this stronger tur-bulence, UltraEP yields larger gains, and still reaches 90 %– 97 % of ideal throughput. Compared with SGLang and EPLB, 
+
+UltraEP achieves 1.56 × and 1.29 × throughput, respectively. 
+
+UltraEP also consistently outperforms EPLB +, with 5 %– 24 % gains. To ensure identical load conditions in balanc-ing quality comparisons, we record the full routing trace of SGLang under full load, and replay it under other evaluated balancing algorithms. UltraEP sustains 1.01–1.04 realized imbalance across all models and domains. 
+
+8.3 Latency Breakdown 
+
+In Fig. 13, we decompose the forward and backward latency of Qwen3-235B-A22B training, averaged per MoE layer, to illustrate the impact of UltraEP in depth. Without balancing, Megatron-LM suffers large inflation in both MoE compute and token all-to-all. With UltraEP , we first inspect the non-MoE part. Compared with the ideal, the extra latency is 0.33 ms in forward and negligible in backward, which constitutes Ideal Megatron-LM Ours           
+
+> 40
+> 80
+> 120
+> 160
+> GPU Memory (GB)
+> (a) Training (GLM4.5-106B-A12B)
+> 56.1 56.1 56.3
+> 41.6 41.6 42.0
+> 39.2
+> 79.4
+> 42.2
+> Ideal SGLang Ours
+> 166
+> 168
+> 170
+> 172
+> 174
+> (b) Prefill (Qwen3-235B-A22B)
+> 166.5 166.5 166.5
+> 6.89
+> MoE Activations Dense Activations Static Footprint
+
+Figure 14. Breakdown of peak GPU memory. only 1.8 % of the total latency. This indicates minimized hot-path overhead and the effectiveness of overlapping. The MoE compute term is already close to the ideal, with slight con-trol overhead induced by redundant physical experts. This confirms that rank-level load imbalance is mostly removed. For the remaining token all-to-all term, UltraEP increases la-tency by 33 % and 10 % in forward and backward, respectively. This stems from uneven token routing in reality, distinct from synthetic uniform dispatch in the ideal. For DeepEP, this irregularity translates into minor stalls within its inter-nal token dispatch pipelines. Overall, UltraEP eliminates most load imbalance with negligible hot-path overhead and moderate increase in compute and communication latency. 
+
+8.4 Activation Memory Footprint 
+
+Besides latency, balancing also reshapes the peak activation footprint, especially on the hottest receiving ranks. Fig. 14 breaks down the peak GPU memory in both training and pre-fill for two models and highlights the MoE-related activation component. For training, we disable activation checkpoint-ing 1 to expose the layer-accumulated activation upper bound, and the witnessed peak is during initial stages with high load skewness. In contrast, serving only keeps transient activa-tion of the current layer during forward. Without balancing, we observe 2 × and 11 × higher peak memory of MoE activa-tion than the ideal for training and serving, respectively. By flattening receive-side hot spots, UltraEP substantially re-duces the MoE activation peak and remains close to the ideal. This directly lowers out-of-memory risk, improves model scaling headroom, and can avoid the extra performance loss from activation checkpointing. 
+
+8.5 Ablation Study Balancing Quality. We compare our quota solver with EPLB + to isolate its benefits. Fig. 15 shows comprehensive balancing quality, while Table 4 summarizes other relevant metrics. Across all training and prefill evaluations, UltraEP 
+
+demonstrates a distribution closer to the ideal and a much smaller tail than EPLB +. Under severe initial imbalance and                   
+
+> 1Activation checkpointing trades memory saving with extra compute: it discards some forward activations and recomputes them in backward [4]. 11 Wei et al. 1.0 1.2 1.4
+> Result Imbalance
+> Training
+> 1.0 1.2 1.4
+> Result Imbalance
+> Prefill
+> 1.5 2.0 4.0 6.0 8.0 1.0
+> 1.1
+> 1.2
+> 1.3
+> 1.4
+> Result Imbalance
+> (128,64,1)
+> 1.5 2.0 4.0 6.0 8.0
+> (128,64,2)
+> 1.5 2.0 4.0 6.0 8.0
+> (256,64,2)
+> (Total Experts, EP Size, Nslot ) × Init Imbalance
+> EPLB+ Ours
+
+Figure 15. In-depth comparison of balancing quality be-tween EPLB + and UltraEP . Upper: imbalance distribution of all training and prefill evaluations; Lower: simulated balanc-ing effect across various MoE, EP, and redundancy settings. The initial load is synthesized with a power-law distribution that resembles realistic skewness in MoE routing. 
+
+Table 4. Balancing metrics averaged across simulations in Fig. 15, including solving time, consumed redundant slots, maximum replica fan-out, and traffic ratio (which denotes effective in-flight tokens not absorbed by local ranks). 
+
+Metrics (Avg) EPLB + Ours 
+
+Result Imbalance 1.19 1.03 Solving Time (ms) 0.153 0.111 
+
+Í𝑒 |H ( 𝑒 )| 107 45 
+
+max 𝑒 |H ( 𝑒 )| 8.5 6.8 In-flight Token Ratio 99.9 % 96.0 % (98.4 % w/o locality) 
+
+tighter replica budget, EPLB + shows much higher imbalance up to 1.4, while UltraEP still keeps it below 1.1. At the same time, UltraEP saves solving latency by 27.4 %, consumes 57.9 % fewer redundant slots, and reduces token traffic by 3.9 % with locality. This comes from UltraEP ’s direct opti-mization of the post-reroute load bound, which is the actual objective of balancing, rather than the pre-reroute imbalance that EPLB + focuses on. Unlike EPLB +, which blindly repli-cates experts based on pre-reroute hotness, UltraEP only materializes a replica when it brings sufficient balancing gain. This accounts for UltraEP ’s resource efficiency, which significantly reduces expert replication traffic. 
+
+Communication Performance. To isolate the effectiveness of our purpose-built, RSN-oriented communication optimiza-tions, we adapt mainstream communication backends with RSN support for expert replication and compare them with 
+
+UltraEP under identical balancing plans. We tune DeepEP for expert transfer on top of its original token-dispatch sub-strate, and use PyTorch distributed [ 28 ] batch send/recv as a more general baseline. As shown in Fig. 16, UltraEP shows 3.1 ×–5.5 × speedup over torch.distributed and DeepEP under all imbalance levels. For large-fan-out experts under 1.5 | 0 2.0 | 0 4.0 | 1 6.0 | 2 8.0 | 3     
+
+> 0.0
+> 0.4
+> 0.8
+> 1.2
+> 1.6
+> Latency (ms)
+> Init Imbalance | # of Relay-enabled Main Experts (Ours)
+> torch.distributed DeepEP Ours w/o Relay Ours
+
+Figure 16. Communication latency of expert-weight distri-bution under various imbalance levels (as in Fig. 15), compar-ing PyTorch distributed [ 28 ] batch send/recv, DeepEP, the no-relay ablation, and UltraEP , on Qwen3-235B and EP64. 0 1 2         
+
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+> LM Loss
+> 13 14 15 910 11 12 13 14 15
+> Tokens (T)
+> 350
+> 400
+> 450
+> 500
+> TFLOPS / GPU  Ideal (504)
+> w/o balancing
+> (mean: 425.0)
+> (b) Throughput
+> Tokens (T)
+> (a) LM Loss
+
+Figure 17. Throughput and loss of 2560-GPU RefMoE-288B training with UltraEP enabled. Panel (b) plots the stable training phase after batch-size ramp-up. We sample no-balancing throughput from continuation-run intervals with 
+
+UltraEP disabled. For the ideal, we report the best measured force-balanced throughput to factor out environmental vari-ability in thousand-GPU training. high imbalance, enabling relay further provides 1.3 ×–1.8 ×
+
+gains. As the fan-out degree grows, UltraEP sustains near-constant latency around 0.28 ms, while the no-relay variant shows linearly increasing latency. Under lower imbalance, the adaptive policy keeps relay inactive and incurs only neg-ligible control-path overhead for relay logic. The relay design effectively mitigates the fan-out bottleneck. 
+
+8.6 Production-Scale MoE Training 
+
+To evaluate production scalability, we deploy UltraEP in RefMoE-288B training on 2560 GPUs with intra-RSN EP and inter-RSN DP/PP. As shown in Fig. 17, despite the hardware and network variability at this scale, UltraEP sustains over 92 % of the force-balanced throughput, significantly enhanc-ing stability with an average gain of 9.6 % compared to no-balancing. The loss curve follows the expected pretraining trajectory because UltraEP changes only the physical execu-tion logic while preserving training semantics. These results demonstrate that UltraEP can scale smoothly to thousand-GPU MoE training on larger RSN clusters, while maintaining near-optimal load balancing and convergence. 
+
+> 12
+
+UltraEP : Unleash MoE Training and Inference on Rack-Scale Nodes with Near-Optimal Load Balancing 
+
+## 9 Related Work 
+
+System-Side MoE Load Balancing. EPLB [ 12 ] and LPLB [ 13 ]are standalone balancers agnostic to load acquisition, com-puting expert layouts or reroutes with given load. They are widely deployed, e.g., EPLB is fully supported in SGLang [ 70 ]and vLLM [ 25 ] for MoE EP serving. Most research systems instead focus on providing such load estimates from history, cross-layer correlation, or profiled execution, then prefetch or re-layout expert shards before exact load is known [ 18 , 31 ,32 , 38 , 64 , 67 , 68 , 72 ]. These predictive designs lack practical-ity for highly dynamic fine-grained MoE models at large EP and RSN settings, whereas UltraEP reacts to realized load to achieve near-optimal balancing. 
+
+MoE Computation and Communication Optimization. 
+
+MoE communication libraries [ 9 , 24 , 33 ] focus on specialized token all-to-all kernels across heterogeneous GPU and NIC platforms. Computation optimizations mainly utilize kernel fusion to improve grouped-GEMM efficiency, or further fuse FFN execution with token dispatch and combine [ 10 , 16 ]. Other systems overlap MoE compute and token communica-tion with fine-grained scheduling [ 8 , 18 , 20 , 23 , 44 , 54 , 55 , 69 ]. These optimizations are orthogonal to and can be stacked with UltraEP for cumulative gains. 
+
+## 10 Conclusion 
+
+UltraEP enables exact-load expert balancing for large-EP MoE training and serving prefill on RSNs. By coupling quota-based planning with RSN-native expert-state communica-tion, UltraEP reacts to realized routing and performs real-time balancing, while keeping hot-path overhead small. Our evaluation validates its near-ideal throughput, near-optimal balancing quality, and production scalability. Because UltraEP 
+
+covers both training and inference, the same abstraction can naturally extend to reinforcement learning (RL) pipelines that alternate these two procedures. 
+
+## References 
+
+[1] Amey Agrawal, Nitin Kedia, Ashish Panwar, Jayashree Mohan, Nipun Kwatra, Bhargav S. Gulavani, Alexey Tumanov, and Ramachandran Ramjee. 2024. Taming Throughput-Latency Tradeoff in LLM Inference with Sarathi-Serve. In 18th USENIX Symposium on Operating Systems Design and Implementation (OSDI) . 117–134. [2] AMD. 2025. AMD Helios: Advancing Openness in AI Infrastructure Built on Meta’s 2025 OCP Open Rack for AI Design . Technical Report. Advanced Micro Devices, Inc. https://www.amd.com/en/blogs/2025/ amd-helios-ai-rack-built-on-metas-2025-ocp-design.html 
+
+[3] Yushi Bai, Xin Lv, Jiajie Zhang, Hongchang Lyu, Jiankai Tang, Zhidian Huang, Zhengxiao Du, Xiao Liu, Aohan Zeng, Lei Hou, Yuxiao Dong, Jie Tang, and Juanzi Li. 2024. LongBench: A Bilingual, Multitask Benchmark for Long Context Understanding. In Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (ACL) . 3119–3137. doi: 10.18653/v1/2024.acl-long.172 
+
+[4] Tianqi Chen, Bing Xu, Chiyuan Zhang, and Carlos Guestrin. 2016. Training Deep Nets with Sublinear Memory Cost. arXiv preprint arXiv:1604.06174 (2016). doi: 10.48550/arXiv.1604.06174 
+
+[5] Codeforces. 2026. Codeforces. https://codeforces.com/ . Official website. [6] Damai Dai, Chengqi Deng, Chenggang Zhao, R.X. Xu, Huazuo Gao, Deli Chen, Jiashi Li, Wangding Zeng, Xingkai Yu, Y. Wu, et al . 2024. DeepSeekMoE: Towards Ultimate Expert Specialization in Mixture-of-Experts Language Models. In Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (ACL) . 1280–1297. [7] Google DeepMind. 2025. Gemini 3 Pro Model Card. https://deepmind. google/models/model-cards/gemini-3-pro/ 
+
+[8] DeepSeek-AI. 2024. DeepSeek-V3 Technical Report. arXiv preprint arXiv:2412.19437 (2024). [9] DeepSeek-AI. 2025. DeepEP: A high-performance communication library for MoE training and inference. https://github.com/deepseek-ai/DeepEP .[10] DeepSeek-AI. 2025. DeepGEMM: Clean and Efficient FP8 GEMM Kernels with Fine-Grained Scaling. https://github.com/deepseek-ai/ DeepGEMM .[11] DeepSeek-AI. 2025. DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning. arXiv preprint arXiv:2501.12948 
+
+(2025). [12] DeepSeek-AI. 2025. EPLB: Expert Parallelism Load Balancer. https: //github.com/deepseek-ai/EPLB .[13] DeepSeek-AI. 2025. LPLB: An early research stage expert-parallel load balancer based on linear programming. https://github.com/deepseek-ai/LPLB .[14] Nan Du, Yanping Huang, Andrew M. Dai, Simon Tong, Dmitry Lep-ikhin, Yuanzhong Xu, Maxim Krikun, Yanqi Zhou, Adams Wei Yu, Orhan Firat, Barret Zoph, Liam Fedus, Maarten P. Bosma, Zongwei Zhou, Tao Wang, Emma Wang, Kellie Webster, Marie Pellat, Kevin Robinson, Kathleen Meier-Hellstern, Toju Duke, Lucas Dixon, Kun Zhang, Quoc V. Le, Yonghui Wu, Zhifeng Chen, and Claire Cui. 2022. GLaM: Efficient Scaling of Language Models with Mixture-of-Experts. In Proceedings of the 39th International Conference on Machine Learning (ICML) . PMLR, 5547–5569. [15] William Fedus, Barret Zoph, and Noam Shazeer. 2022. Switch Trans-formers: Scaling to Trillion Parameter Models with Simple and Effi-cient Sparsity. Journal of Machine Learning Research (JMLR) 23, 120 (2022), 1–40. [16] Trevor Gale, Deepak Narayanan, Cliff Young, and Matei Zaharia. 2023. MegaBlocks: Efficient Sparse Training with Mixture-of-Experts. In 
+
+Proceedings of the 6th MLSys Conference .[17] GLM Team. 2026. GLM-4.7: Advanced Agentic and Reasoning Founda-tion Models . Technical Report. Zhipu AI. https://docs.z.ai/guides/llm/ glm-4.7 
+
+13 Wei et al. 
+
+[18] Jiaao He, Jidong Zhai, Tiago Antunes, Haojie Wang, Fuwen Luo, Shangfeng Shi, and Qin Li. 2022. FasterMoE: Modeling and Optimizing Training of Large-Scale Dynamic Pre-Trained Models. In Proceedings of the 27th ACM SIGPLAN Symposium on Principles and Practice of Parallel Programming (PPoPP) . 120–134. doi: 10.1145/3503221.3508418 
+
+[19] Yanping Huang, Youlong Cheng, Ankur Bapna, Orhan Orhan, Prafulla Dhariwal, Mia Xu Chen, Yonghui Chen, Quoc V Lee, Jiquan Ngiam, and Quoc V Le. 2019. GPipe: Efficient Training of Giant Neural Net-works using Pipeline Parallelism. In Advances in Neural Information Processing Systems (NeurIPS) .[20] Changho Hwang, Yongqiang Xiong, Mao Yang, Fan Yang, Peng Cheng, Joe Chau, Prabhat Ram, Jithin Jose, Rafael Salas, Zilong Wang, et al .2023. Tutel: Adaptive Mixture-of-Experts at Scale. In Proceedings of the 6th MLSys Conference .[21] Albert Q. Jiang, Alexandre Sablayrolles, Antoine Roux, Arthur Mensch, Blanche Savary, Chris Bamford, Devendra Singh Chaplot, Diego de las Casas, Emma Bou Hanna, Florian Bressand, et al . 2024. Mixtral of Experts. arXiv preprint arXiv:2401.04088 (2024). [22] Carlos E. Jimenez, John Yang, Alexander Wettig, Shunyu Yao, Kexin Pei, Ofir Press, and Karthik R. Narasimhan. 2024. SWE-bench: Can Language Models Resolve Real-world GitHub Issues?. In International Conference on Learning Representations (ICLR) . https://openreview. net/forum?id=VTF8yNQM66 
+
+[23] Chao Jin, Ziheng Jiang, Zhihao Bai, Zheng Zhong, Juncai Liu, Xiang Li, Ningxin Zheng, Xi Wang, Cong Xie, Qi Huang, et al . 2025. Megascale-moe: Large-scale communication-efficient training of mixture-of-experts models in production. arXiv preprint arXiv:2505.11432 (2025). [24] kvcache-ai. 2026. Mooncake EP and Mooncake Backend. https:// github.com/kvcache-ai/Mooncake .[25] Woosuk Kwon, Zhuohan Li, Siyuan Zhuang, Ying Sheng, Lianmin Zheng, Cody Hao Yu, Joseph E. Gonzalez, Hao Zhang, and Ion Stoica. 2023. Efficient Memory Management for Large Language Model Serving with PagedAttention. In Proceedings of the 29th Symposium on Operating Systems Principles (SOSP) . 611–626. doi: 10.1145/3600006. 3613165 
+
+[26] Dmitry Lepikhin, HyoukJoong Lee, Yuanzhong Xu, Dehao Chen, Orhan Firat, Yanping Huang, Maxim Krikun, Noam Shazeer, and Zhifeng Chen. 2021. GShard: Scaling Giant Models with Conditional Computation and Automatic Sharding. In International Conference on Learning Representations (ICLR) .[27] Shigang Li and Torsten Hoefler. 2021. Chimera: Efficiently Training Large-Scale Neural Networks with Bidirectional Pipelines. In Proceed-ings of the International Conference for High Performance Computing, Networking, Storage and Analysis (SC) . ACM. doi: 10.1145/3458817. 3476145 
+
+[28] Shen Li, Yanli Zhao, Rohan Varma, Omkar Salpekar, Pieter Noordhuis, Teng Li, Adam Paszke, Jeff Smith, Brian Vaughan, Pritam Damania, et al . 2020. PyTorch distributed: experiences on accelerating data parallel training. Proceedings of the VLDB Endowment 13, 12 (2020), 3005–3018. [29] Heng Liao, Bingyang Liu, Xianping Chen, Zhigang Guo, Chuanning Cheng, Jianbing Wang, Xiangyu Chen, Peng Dong, Rui Meng, Wen-jie Liu, et al . 2025. Ub-mesh: a hierarchically localized nd-fullmesh datacenter network architecture. IEEE Micro (2025). [30] Dennis Liu, Zijie Yan, Xin Yao, et al . 2025. MoE Parallel Folding: Heterogeneous Parallelism Mappings for Efficient Large-Scale MoE Model Training with Megatron Core. arXiv preprint arXiv:2504.14960 
+
+(2025). doi: 10.48550/arXiv.2504.14960 
+
+[31] Juncai Liu, Jessie Hui Wang, and Yimin Jiang. 2023. Janus: A Unified Distributed Training Framework for Sparse Mixture-of-Experts Mod-els. In Proceedings of the ACM SIGCOMM 2023 Conference . 486–498. doi: 10.1145/3603269.3604869 
+
+[32] Xinyi Liu, Yujie Wang, Fangcheng Fu, et al . 2026. LAER-MoE: Load-Adaptive Expert Re-Layout for Efficient Mixture-of-Experts Training. In Proceedings of the 31st International Conference on Architectural Support for Programming Languages and Operating Systems (ASPLOS) .doi: 10.1145/3779212.3790180 
+
+[33] Ziming Mao, Yihan Zhang, Chihan Cui, Kaichao You, Zhongjie Chen, Zhiying Xu, Scott Shenker, Costin Raiciu, Yang Zhou, and Ion Stoica. 2026. UCCL-EP: Portable Expert-Parallel Communication. arXiv:2512.19849 [cs.DC] doi: 10.48550/arXiv.2512.19849 
+
+[34] Meta. 2025. Llama 4 Model Card. http://llama.meta.com/docs/model-cards-and-prompt-formats/llama4/ 
+
+[35] Meta and NVIDIA Team. 2026. Driving vLLM WideEP and Large-Scale Serving Toward Maturity on Blackwell (Part I) . Technical Report. 
+
+https://vllm.ai/blog/dsr1-gb200-part1 
+
+[36] Deepak Narayanan, Aaron Harlap, Amar Phanishayee, Vivek Seshadri, Nikhil R Devanur, Gregory R Ganger, Phillip B Gibbons, and Matei Zaharia. 2019. PipeDream: Generalized Pipeline Parallelism for DNN Training. In Proceedings of the 27th ACM Symposium on Operating Systems Principles (SOSP) . 1–15. doi: 10.1145/3341301.3359490 
+
+[37] Deepak Narayanan, Mohammad Shoeybi, Jared Casper, Patrick LeGres-ley, Mostofa Patwary, Vijay Korthikanti, Dmitri Vainbrand, Prethvi Kashinkunti, Julie Bernauer, Bryan Catanzaro, et al . 2021. Efficient large-scale language model training on gpu clusters using megatron-lm. In Proceedings of the international conference for high performance computing, networking, storage and analysis . 1–15. [38] Xiaonan Nie, Xupeng Miao, Zilong Wang, et al . 2023. FlexMoE: Scaling Large-Scale Sparse Pre-Trained Model Training via Dynamic Device Placement. Proceedings of the ACM on Management of Data (SIGMOD) 
+
+1, 1 (2023), 1–19. doi: 10.1145/3588964 
+
+[39] NVIDIA. 2024. NVIDIA Blackwell Architecture Technical Overview .Technical Report. NVIDIA Corporation. https://www.nvidia.com/en-us/data-center/gb200-nvl72/ 
+
+[40] NVIDIA. 2025. NVIDIA NVLink and NVLink Switch . Technical Report. NVIDIA Corporation. https://www.nvidia.com/en-us/data-center/ nvlink/ 
+
+[41] NVIDIA. 2025. OpenScience. https://huggingface.co/datasets/nvidia/ OpenScience . Dataset card. [42] NVIDIA. 2026. NVIDIA Vera Rubin POD: Seven Chips, Five Rack-Scale Systems, One AI Supercomputer . Technical Report. NVIDIA Corpora-tion. https://developer.nvidia.com/blog/nvidia-vera-rubin-pod-seven-chips-five-rack-scale-systems-one-ai-supercomputer/ 
+
+[43] OpenAI. 2025. gpt-oss-120b & gpt-oss-20b Model Card. arXiv preprint arXiv:2508.10925 (2025). [44] Xinglin Pan, Wenxiang Lin, Lin Zhang, Shaohuai Shi, Zhenheng Tang, Rui Wang, Bo Li, and Xiaowen Chu. 2025. FSMoE: A Flexible and Scalable Training System for Sparse Mixture-of-Experts Models. In 
+
+Proceedings of the 30th ACM International Conference on Architectural Support for Programming Languages and Operating Systems (ASPLOS) .524–539. doi: 10.1145/3669940.3707272 
+
+[45] Pratyush Patel, Esha Choukse, Chaojie Zhang, Aashaka Shah, Íñigo Goiri, Saeed Maleki, and Ricardo Bianchini. 2024. Splitwise: Efficient Generative LLM Inference Using Phase Splitting. In 51st ACM/IEEE Annual International Symposium on Computer Architecture (ISCA) . 118– 132. [46] Penghui Qi, Xinyi Wan, Guangxing Huang, and Min Lin. 2024. Zero Bubble (Almost) Pipeline Parallelism. In International Conference on Learning Representations (ICLR) .[47] Samyam Rajbhandari, Conglong Li, Zhewei Yao, Minjia Zhang, Reza Yazdani Aminabadi, Ammar Ahmad Awan, Jeff Rasley, and Yux-iong He. 2022. DeepSpeed-MoE: Advancing Mixture-of-Experts Infer-ence and Training to Power Next-Generation AI Scale. In International Conference on Machine Learning (ICML) . PMLR, 18332–18346. [48] Samyam Rajbhandari, Jeff Rasley, Olatunji Ruwase, and Yuxiong He. 2020. ZeRO: Memory optimizations toward training trillion param-eter models. In Proceedings of the International Conference for High Performance Computing, Networking, Storage and Analysis (SC) . 1–16. 14 UltraEP : Unleash MoE Training and Inference on Rack-Scale Nodes with Near-Optimal Load Balancing 
+
+doi: 10.1109/SC41405.2020.00024 
+
+[49] David Rein, Betty Li Hou, Asa Cooper Stickland, Jackson Petty, Richard Yuanzhe Pang, Julien Dirani, Julian Michael, and Samuel R. Bowman. 2024. GPQA: A Graduate-Level Google-Proof Q&A Bench-mark. In Conference on Language Modeling (COLM) . https:// openreview.net/forum?id=Ti67584b98 
+
+[50] SGLang. 2025. Deploying DeepSeek with PD Disaggregation and Large-Scale Expert Parallelism on 96 H100 GPUs . Technical Report. The SGLang Team. https://lmsys.org/blog/2025-05-05-large-scale-ep/ 
+
+[51] SGLang. 2025. EPLB Deployment in SGLang. https://www.lmsys.org/ blog/2025-05-05-large-scale-ep/#expert-parallelism-load-balancer 
+
+[52] Christopher J Shallue, Jaehoon Lee, Joseph Antognini, Jascha Sohl-Dickstein, Roy Frostig, and George E Dahl. 2019. Measuring the effects of data parallelism on neural network training. Journal of Machine Learning Research (JMLR) 20, 1 (2019), 1–49. [53] Noam Shazeer, Azalia Mirhoseini, Krzysztof Maziarz, Andy Davis, Quoc Le, Geoffrey Hinton, and Jeff Dean. 2017. Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer. In 
+
+International Conference on Learning Representations (ICLR) .[54] Shaohuai Shi, Xinglin Pan, Xiaowen Chu, and Bo Li. 2023. PipeMoE: Accelerating Mixture-of-Experts through Adaptive Pipelining. In IEEE Conference on Computer Communications (INFOCOM) . 1–10. doi: 10. 1109/INFOCOM53939.2023.10228874 
+
+[55] Shaohuai Shi, Xinglin Pan, Qiang Wang, Chengjian Liu, Xiaozhe Ren, Zhongzhe Hu, Yu Yang, Bo Li, and Xiaowen Chu. 2024. ScheMoE: An Extensible Mixture-of-Experts Distributed Training System with Tasks Scheduling over Heterogeneous Networks. In Proceedings of the Nineteenth European Conference on Computer Systems (EuroSys) .236–249. doi: 10.1145/3627703.3650083 
+
+[56] Mohammad Shoeybi, Mostofa Patwary, Raul Puri, Patrick LeGresley, Jared Casper, and Bryan Catanzaro. 2019. Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism. doi: 10.48550/arXiv.1909.08053 
+
+[57] GLM-4.5 Team, Zhipu AI, and Tsinghua University. 2025. GLM-4.5: Agentic, Reasoning, and Coding (ARC) Foundation Models. arXiv preprint arXiv:2508.06471 (2025). [58] UALink Consortium 2025. UALink 200G 1.0 Specification . UALink Consortium. Open industry standard for scale-up accelerator inter-connects. [59] vLLM. 2025. EPLB Configuration in vLLM. https://docs.vllm.ai/en/ latest/serving/expert_parallel_deployment/#expert-parallel-load-balancer-eplb 
+
+[60] Lean Wang, Huazuo Gao, Chenggang Zhao, Xu Sun, and Damai Dai. 2024. Auxiliary-loss-free load balancing strategy for mixture-of-experts. arXiv preprint arXiv:2408.15664 (2024). [61] Zijie Yan, Hongxiao Bai, Xin Yao, Dennis Liu, Tong Liu, Hongbin Liu, Pingtian Li, Evan Wu, Shiqing Fan, Li Tao, et al . 2026. Scalable Training of Mixture-of-Experts Models with Megatron Core. arXiv preprint arXiv:2603.07685 (2026). [62] An Yang, Anfeng Li, Baosong Yang, Beichen Zhang, Binyuan Hui, Bo Zheng, Bowen Yu, Chang Gao, Chengen Huang, Chenxu Lv, et al . 2025. Qwen3 technical report. arXiv preprint arXiv:2505.09388 (2025). [63] An Yang, Baosong Yang, Binyuan Hui, Bo Zheng, Bowen Yu, Chang Zhou, Chengqiang Li, Chengyuan Li, Dayihao Liu, Fei Huang, et al .2024. Qwen2 Technical Report. arXiv preprint arXiv:2407.10671 (2024). [64] Jaehoon Yang, Yushin Kim, Seokwon Moon, Yeonhong Park, and Jae W. Lee. 2026. LIBRA: EFFECTIVE YET EFFICIENT LOAD BALANCING FOR LARGE-SCALE MOE INFERENCE. In International Conference on Learning Representations (ICLR) .[65] Qiying Yu, Zheng Zhang, Ruofei Zhu, Yufeng Yuan, Xiaochen Zuo, Yu Yue, Tiantian Fan, Gaohong Liu, et al . 2025. DAPO: An Open-Source LLM Reinforcement Learning System at Scale. arXiv preprint arXiv:2503.14476 (2025). doi: 10.48550/arXiv.2503.14476 
+
+[66] Yan Zeng, Chengchuang Huang, Yipeng Mei, et al . 2025. EfficientMoE: Optimizing Mixture-of-Experts Model Training With Adaptive Load Balance. IEEE Transactions on Parallel and Distributed Systems (TPDS) 
+
+36, 4 (2025), 677–688. doi: 10.1109/TPDS.2025.3539297 
+
+[67] Mingshu Zhai, Jiaao He, Zixuan Ma, Zan Zong, Runqing Zhang, and Jidong Zhai. 2023. SmartMoE: Efficiently Training Sparsely-Activated Models through Combining Offline and Online Parallelization. In 
+
+USENIX Annual Technical Conference (ATC) . 961–975. [68] Junyi Zhang, Chuanhu Ma, Xiong Wang, and Yuntao Nie. 2025. PopFetcher: Towards Accelerated Mixture-of-Experts Training Via Popularity Based Expert-Wise Prefetch. In USENIX Annual Technical Conference (ATC) .[69] Shulai Zhang, Ningxin Zheng, Haibin Lin, Ziheng Jiang, Wenlei Bao, Chengquan Jiang, Qi Hou, Weihao Cui, Size Zheng, Li-Wen Chang, et al . 2025. Comet: Fine-grained computation-communication over-lapping for mixture-of-experts. Proceedings of Machine Learning and Systems 7 (2025). [70] Lianmin Zheng, Liangsheng Yin, Zhiqiang Xie, Chuyue Sun, Jeff Huang, Cody Hao Yu, Shiyi Cao, Christos Kozyrakis, Ion Stoica, Joseph E. Gonzalez, Clark Barrett, and Ying Sheng. 2024. SGLang: Effi-cient Execution of Structured Language Model Programs. In Advances in Neural Information Processing Systems (NeurIPS) .[71] Yinmin Zhong, Shengyu Liu, Junda Chen, Jianbo Hu, Yibo Zhu, Xu-anzhe Liu, Xin Jin, and Hao Zhang. 2024. DistServe: Disaggregating prefill and decoding for goodput-optimized large language model serving. In 18th USENIX Symposium on Operating Systems Design and Implementation (OSDI 24) . 193–210. [72] Qianchao Zhu, Xucheng Ye, Yuliang Liu, Haodong Ouyang, and Chengru Song. 2026. PROBE: Co-Balancing Computation and Com-munication in MoE Inference via Real-Time Predictive Prefetching. arXiv:2602.00509 [cs.DC] doi: 10.48550/arXiv.2602.00509 
+
+[73] Pengfei Zuo, Huimin Lin, Junbo Deng, Nan Zou, Xingkun Yang, Yingyu Diao, Weifeng Gao, Ke Xu, Zhangyu Chen, Shirui Lu, et al . 2025. Serving large language models on huawei cloudmatrix384. arXiv preprint arXiv:2506.12708 (2025). 15

@@ -1,0 +1,567 @@
+Title: EES-CND: Collaborative Neural Decision-Making for Drift-Aware Fault-Tolerant Edge-Cloud Service Placement
+
+URL Source: https://arxiv.org/pdf/2606.02259v1
+
+Published Time: Tue, 02 Jun 2026 02:47:55 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+# EES-CND: Collaborative Neural Decision-Making for Drift-Aware Fault-Tolerant Edge-Cloud Service Placement 
+
+Mohammadsadeq G. Herabad 1 a , Javid Taheri 1,2 b , Bestoun S. Ahmed 1 c and Calin Curescu 4 d
+
+> 1
+
+Department of Mathematics and Computer Science , Karlstad University, Karlstad, Sweden 
+
+> 2
+
+School of Electronics, Electrical Engineering and Computer Science, Queen’s University Belfast, Belfast, UK 
+
+> 4
+
+Ericsson AB, Stockholm, Sweden {mohammadsadeq.garshasbi.herabad, bestoun, javid.taheri}@kau.se, j.taheri@qub.ac.uk, calin.curescu@ericsson.com Keywords: Edge Computing, Fault-Tolerant Service Placement, Collaborative Neural Decision, Evolution Strategies. Abstract: The edge-cloud paradigm improves service delivery by orchestrating resources across edge nodes and cloud data centres. These environments consist of heterogeneous, interconnected computing nodes that cooperate to deliver continuous services. However, their scale and complexity increase vulnerability to failures from hardware malfunctions, software defects, and dynamic operating con-ditions. These failures can disrupt system configurations and service execution, leading to reduced reliability, performance degradation, and violations of service-level objectives. Ensuring service execution requires adaptive service placement strategies across edge-cloud resources. This study introduces a fault-tolerant service placement approach (Enhanced Evolution Strategy for Collab-orative Neural Decision-making, EES-CND) for edge-cloud environments. The method employs collaborative decision-making, wherein multiple lightweight neural networks jointly infer redeploy-ment strategies during failure events. To address the system dynamics and mitigate performance drift, adaptive models are updated online using an enhanced evolution strategy. Extensive sim-ulations show that EES-CND effectively handles performance drift and significantly outperforms existing methods in service recovery time, response time, and reliability, achieving a 44.8% reduc-tion in fault-tolerance cost compared to standalone models. 
+
+# 1 INTRODUCTION 
+
+Edge-cloud computing distributes computation across edge and cloud layers to support latency-sensitive applications. By bringing processing closer to users, it improves the Quality of Ser-vice (QoS) and reduces network congestion com-pared to cloud models. However, this paradigm introduces complexity, as distributed nodes op-erate under dynamic conditions and resource constraints, making them susceptible to failures  
+
+> a
+
+https://orcid.org/0000-0002-2336-2077  
+
+> b
+
+https://orcid.org/0000-0001-9194-010X  
+
+> c
+
+https://orcid.org/0000-0001-9051-7609  
+
+> d
+
+https://orcid.org/0000-0001-5129-2718 
+
+caused by hardware faults, software defects, and workload fluctuations. These disruptions can lead to service-level agreement (SLA) violations, making fault-tolerant service placement critical in edge-cloud infrastructures (Mudassar et al., 2022). Designing an effective service redeployment strategy is challenging in failure-prone edge–cloud environments. Placement decisions must balance competing objectives (e.g., latency, resource util-isation, and reliability) under strict constraints, such as limited edge capacity and bandwidth. Optimising these objectives in dynamic and un-certain environments renders the problem highly complex and computationally intensive (Jia et al., 2023). A key challenge arises from the nonsta-
+
+> arXiv:2606.02259v1 [cs.DC] 1 Jun 2026
+
+tionarity of edge–cloud systems, in which fail-ure patterns, resource availability, and work-load characteristics evolve owing to hardware ag-ing, software updates, fluctuating demand, and changing network conditions. These dynamics in-troduce data and concept drift, leading to perfor-mance degradation over time. Conventional fault-tolerant service placement approaches mostly use static and offline optimi-sation models or heuristic rules based on fixed system assumptions. Although they are effective in short-term scenarios, they often lack the abil-ity to adapt to changing failure patterns, work-load fluctuations, and dynamic resource condi-tions. As drift occurs, these methods become mis-aligned with the operational environment, leading to suboptimal decisions and gradual performance degradation. In contrast, online learning-based approaches enable continuous system monitor-ing, iterative model updates, and adaptive place-ment decisions. Nevertheless, they introduce ad-ditional computational overhead, require stabil-ity control, and may face convergence challenges in highly non-stationary environments (Bhowmik et al., 2024). To address the aforementioned concerns, this study introduces a learning-driven fault-tolerant service placement algorithm based on Collabora-tive Neural Decision-making (CND) for dynamic edge–cloud environments. The proposed method formulates service placement as an online adap-tive optimisation problem and employs a collab-orative decision-making mechanism composed of multiple cooperating lightweight neural network models. Unlike existing approaches that depend on a single static or periodically retrained model, the proposed algorithm includes two parts: aset of pretrained models that capture stable sys-tem knowledge and a set of adaptive models that evolve online. The adaptive models are updated during system operation using an Enhanced Evo-lution Strategy (EES), enabling selective and effi-cient parameter adaptation in response to system dynamics. This design allows the algorithm to mitigate performance degradation and preserve decision stability. The main contributions of this study are as follows: • Formulating fault-tolerant service placement in edge–cloud environments as an online adap-tive optimisation problem under dynamic fail-ures, uncertainty, and performance drift. • Proposing a learning-driven fault-tolerant placement approach using multiple cooperat-ing neural networks in a unified architecture. • Developing an enhanced evolution strategy to update adaptive models at runtime to miti-gate performance drift. • Conducting extensive experiments across di-verse scenarios to demonstrate the effective-ness of the proposed approach. The remainder of this paper is organised as follows. Section 2 reviews related work. Sections 3–4 present the system model and the proposed approach. Section 5 describes the performance metrics used in this study. Sections 6–7 present the experimental results and conclusions, respec-tively. 
+
+# 2 Related Work 
+
+In the literature, edge-cloud fault tolerance is mostly categorised into reactive and proactive strategies. Many of them focus on generic faults without addressing drifts; this is one of the re-search gaps that is addressed in this study. 
+
+## 2.1 Reactive Fault-tolerant Techniques 
+
+Reactive methods are generally used in systems in which failures are difficult to predict or occur unpredictably. They use failure-detection mech-anisms and trigger recovery actions. All comput-ing systems are equipped with reactive recovery mechanisms, even when proactive strategies are used, because reactive handling is necessary when unexpected failures occur. Various reactive fault tolerance strategies for edge computing have been proposed. (Mudassar et al., 2022) developed a hybrid checkpointing– replication mechanism, but it uses heuristic se-lection and assumes independent failures. It does not consider drift in system conditions over time. (Droob et al., 2023) introduced an optimal Docker-based checkpointing model, though its evaluation was limited to small-scale Raspberry Pi clusters and does not address dynamic changes in large-scale environments. (Long et al., 2025) applied a Duelling DQN for offloading optimisa-tion under Poisson-distributed server faults. This approach assumes stationary failure behaviour and does not consider online drift in system char-acteristics. Similarly, (Jia et al., 2023) utilised causal logging to reduce the microservice over-head; however, it was limited to single-node fail-ures and did not address evolving system con-ditions or workload drift. (Ray and Banerjee, 2022) introduced a prioritised recovery frame-work based on stochastic multi-player games and probabilistic model checking. This method is computationally expensive and does not account for drift in system dynamics. (Bhowmik et al., 2024) proposed a fault-tolerant approach based on dynamic load balancing for parallel applica-tions to redistribute tasks upon failures, but the method assumes homogeneous environments and does not handle time-varying system behaviour. (Javed et al., 2020) introduced an edge-based framework that uses subscription-based replica-tion and container orchestration to handle net-work failures, but it was evaluated only on a ho-mogeneous and small-scale setup and did not ad-dress online changes in system conditions. Reactive methods are simple and resource-efficient because they do not require continuous monitoring, prediction models, or redundancy during normal operation. They are effective in handling unpredictable failures and are com-monly used as baseline recovery mechanisms in most systems. However, because actions are trig-gered only after a failure occurs, they cause tem-porary service interruptions, latency spikes, or performance degradation during recovery. 
+
+## 2.2 Proactive Fault-tolerant Techniques 
+
+Proactive methods aim to anticipate and prevent failures before their occurrence. They utilise pre-diction models and system analytics to detect early signs of potential failures and undertake preventive actions. These approaches are used in environments where failure patterns can be esti-mated or predicted, allowing the system to main-tain service continuity and reduce the likelihood of disruptions. (Tuli et al., 2022) proposed a proactive GAN-based fault-tolerance framework for edge–cloud systems that predicts preemptive migration using graph attention and prototype-based fault classi-fication. It assumes relatively stable system con-ditions without addressing the drift in system dy-namics. In another study, (Tuli et al., 2023b) developed a semi-supervised variant that inte-grates graph attention, temporal modelling, and transformer-based fine-tuning to improve fault detection. It further increases the architectural complexity and overhead, but does not consider evolving system conditions or drift. (Sahu et al., 2025) presented a proactive method for Digital Twins using a hybrid Genetic–PSO algorithm to optimise recovery metrics. It incurs consider-able computational overhead because of meta-heuristic optimisation, yet does not address the non-stationary system behaviour. (Liu et al., 2023) proposed a two-phase method combining time-series fault prediction with GA-based con-tainer migration to enhance edge service reliabil-ity. It assumes homogeneous devices, depends on labelled historical failure data, without con-sidering drift or changing system conditions over time. (Arun et al., 2019) proposed a proactive replication-based protocol in which any replica can act as a leader, using dependency tracking and speculative execution to reduce communica-tion steps and latency. It assumes synchronous and homogeneous networks without considering the evolving operational conditions. (Theodor-opoulos et al., 2022) used multi-step deep learning to manage workload-induced congestion instead of node failures. They also did not address drift in the system behaviour. (Tuli et al., 2023a) pro-posed a self-supervised surrogate model to pre-dict overloads, though it introduces high com-putational complexity through online fine-tuning and does not consider system drift. (Long et al., 2022) utilised a Deep Q-Network for Primary– Backup replication in IoT environments, but it uses predefined failure mechanisms and station-ary assumptions that may lack flexibility in dy-namic environments. The main advantage of proactive methods is that they can reduce service interruptions and im-prove system reliability by acting before failures occur. However, they require continuous moni-toring, prediction mechanisms, and redundancy, which introduce additional computational, com-munication, and resource overheads. Moreover, their effectiveness depends on the accuracy of fail-ure prediction, and incorrect predictions may lead to unnecessary recovery actions. 
+
+## 2.3 Research Gaps 
+
+Despite the significant body of work on both reac-tive and proactive fault-tolerance mechanisms for edge–cloud computing, system drift and evolving operational conditions have not been sufficiently addressed in the literature. Many existing ap-proaches consider the assumptions of stationary system behaviour and fixed resource and work-load patterns. However, real-world edge–cloud environments are dynamic and non-stationary, in which resource availability, network condi-tions, workload characteristics, and service in-teractions may change over time. Under these Constrained      
+
+> devices
+> (APs)
+> On-prem
+> edge data
+> centre
+> Cloud
+> server
+> Failure-prone edge-cloud continuum
+> User 1 User 2 User 3 User N
+> Helper 1
+> Helper 2
+> Helper M
+> Service components
+
+Figure 1: Failure-Prone Edge–Cloud Continuum 
+
+conditions, models trained offline or designed for static environments would gradually lose their ef-ficacy, and drift-aware and online-adaptive fault-tolerance mechanisms remain an open research problem. This motivates the need for approaches that can adapt to continuously evolving system conditions. 
+
+# 3 SYSTEM MODEL 
+
+This study considers a failure-prone edge–cloud architecture modelled as a distributed system of heterogeneous computing nodes. Although this system can be applied to various edge–cloud com-puting scenarios, we consider a use case to demon-strate our solution. This use case was devel-oped with our industrial partner (Ericsson) as a representative scenario (Figure 1). In our use case, users interact with remote helpers for re-pair tasks through service components across the edge–cloud continuum. Table 1 presents the no-tations used in this section. 
+
+## 3.1 Computing Nodes 
+
+The infrastructure comprises three logical lay-ers: (i) access points (APs), (ii) edge servers, and (iii) a cloud layer. C N (t) = 
+
+{CN 1(t),CN 2(t), ..., CN K (t)} defines the set of com-puting nodes at time t. Each computing node is characterised by a multidimensional vector, 
+
+CN k(t) = ⟨CC k(t), MC k(t), DC k(t), RS k(t)⟩, where 
+
+CC k(t), MC k(t), and DC k(t) denote the computa-tional, memory, and disk capacities of node k,respectively, and RS k(t) ∈ (0, 1] shows its reliabil-ity score. All computing nodes are assumed to be vulnerable to unexpected failures, including those with high reliability (Javed et al., 2020). 
+
+## 3.2 User and Helper Nodes 
+
+An edge-cloud scenario is considered in which users collaborate with remote helpers for mainte-nance and repair tasks. U = {u1, . . . , uN } and H =
+
+{h1, . . . , hM } denote the sets of user and helper de-vices, respectively. Each user/helper node is de-fined by a resource tuple ⟨CC i, MC i, DC i, RS i⟩, rep-resenting the computing, memory, disk capaci-ties, and reliability score. An active session at time t is denoted by pn,m(t) which represents a real-time connection between user un and helper 
+
+hm.
+
+## 3.3 Network Communications 
+
+The available bandwidth and transmission delay are observable or estimable for any directed link at time t (Cozzolino et al., 2022). We model the communication links as a weighted directed graph, G = ( K , E), where E ⊆ K × K repre-sents the set of communication links between the nodes. K denotes the set of all network enti-ties. A single communication characteristic ma-trix is defined, L(t) = [ ℓi j (t)] , where each element is a two-dimensional vector: ℓi j (t) = ⟨bi j (t), di j (t)⟩,with bi j (t) denoting the available bandwidth and 
+
+di j (t) representing the observed transmission de-lay from entity i to entity j at time t. This repre-sentation reconciles structural node indexing with dynamic link properties (Equation (1)). 
+
+ℓi j (t) = 
+
+{
+
+(bi j (t), di j (t), if (i, j) ∈ E,
+
+(0, +∞), otherwise . (1) 
+
+## 3.4 Applications (Services) 
+
+The system hosts a set of services S = {S1, . . . , SX },where each service Sx is modelled as a Directed Acyclic Graph (DAG), Gx = ( Cx, Ex). Cx de-notes the service components, and Ex represents the data-flow dependencies. Each component 
+
+SC xy ∈ Cx is available in multiple versions SC xy =
+
+{SC xy,1, . . . , SC xy,V }, reflecting different implementa-tions. Each version is characterised by a resource demand profile (CPU, memory, and storage re-quirements) and a reliability score. Table 1: Summary of system model notations    
+
+> Notation Description
+> CN kkth computing node
+
+C N (t) Set of computing nodes and characteristics at t
+
+U User nodes {u1, . . . , uN }
+
+H Helper nodes {h1, . . . , hM }     
+
+> un/hmnth user / mth helper node
+> K/N/MNumber of nodes/users/helpers
+
+S Services {S1, . . . , SX }           
+
+> SxService of user–helper pair xSC xyyth component of Sx
+> SC xy,vVersion vof component yin Sx
+
+Cx Components of service Sx  
+
+> X/Y/VNumber of services/components/versions
+
+L(t) Communication link matrix             
+
+> bi j (t)Bandwidth between nodes iand jdi j (t)One-way delay between nodes iand j
+> ℓi j (t)Link characteristics bi j (t)and di j (t)
+
+## 3.5 DRIFT MODEL 
+
+Drift refers to the gradual change in edge-cloud system characteristics over time, wherein the main parameters, such as node resources, network conditions, and service demands, change gradu-ally and/or continuously (Mehmood et al., 2024). These changes modify the relationships between system components and alter the optimal service deployment configuration (Sunaga et al., 2024). To represent this behaviour, we applied a multi-level incremental drift to the system model (Wang et al., 2022), allowing the parameters to change gradually. At the node level, drift affects the computational and memory capacities and their interdependencies. At the network level, it al-ters the communication characteristics, including latency, bandwidth, and their statistical correla-tions. Service-level drift is also incorporated by varying the resource demands of service compo-nents over time. In this online setting, future characteristics are unknown, and redeployment decisions must be made based on the currently observable system state. 
+
+# 4 PROPOSED APPROACH 
+
+## 4.1 Monitoring and Fault Detection 
+
+In the proposed approach, a monitoring sys-tem tracks the health status and performance of computing nodes and deployed service com-ponents. Each node and component periodi-cally sends lightweight heartbeat signals to a cen-tralised controller, serving as liveness indicators. These heartbeats are generated at fixed inter-vals (e.g., every 10 s in Kubernetes-based systems (Kubernetes Documentation, 2026)). During the fault detection phase, the absence of heartbeat messages within a predefined timeout interval in-dicates failure. Once a fault is detected, the con-troller determines the scope of the failure by iden-tifying all affected entities. Subsequently, a con-solidated list of failed components is generated. This list serves as the recovery input for the pro-posed placement algorithm. The redeployment algorithm then computes a recovery strategy for the failed component. 
+
+## 4.2 EES-CND (our proposed solution) 
+
+4.2.1 Input and Output The proposed approach (enhanced evolution strategy for collaborative neural decision-making, EES-CND) is triggered upon failure and exe-cuted independently for each computing node. It takes as input a high-dimensional represen-tation of the system state at time t, defined as 
+
+s(t) = {CN k(t), L(t),Cx(t), RE CN k (t)}. CN k(t) de-notes the resource characteristics of candidate node k, L(t) represents the network state (band-width and delay), Cx(t) captures the demand for the failed component x, and RE CN k (t) is the re-configuration cost of deploying the component at node k. The EES-CND mechanism is executed for each candidate node to estimate its suitability for hosting failed components. For a given failure in-terval τ, the cost is computed for every candidate node, reflecting the impact of assigning the failed components under the current system state. The redeployment target is then selected via minimi-sation (i.e., choosing the node with the minimum deployment cost). 4.2.2 Architecture and Operation The EES-CND architecture follows a two-tier de-sign (a pretrained model group and an adaptive model group), both operating on the same system state input. Figure 2 illustrates the high-level op-erational workflow and architecture of the EES-CND. The objective is to generate a recovery deci-sion by evaluating candidate nodes and selecting the one that minimises the cost (node suitabil-ity). The pretrained models consist of multiple neural networks that are trained offline to cap-ture promising placement patterns or algorithms. Their parameters remain fixed during runtime, providing stable and historically informed deci-sions. The adaptive models contain the same number of networks, where each pretrained model has a structurally identical adaptive counterpart Adaptive models  
+
+> Pre-trained models
+> s(t)
+> cost 1
+> cost i
+> cost i+1
+> cost 2i
+> arg min (costs) Recovery
+> solution
+> Update the models
+> Replace
+> Rese t
+
+Figure 2: Collaborative neural decision-making ap-proach 
+
+(i.e., the same layers and neurones). Unlike pre-trained models, adaptive models are randomly initialised and updated online to adjust to evolv-ing system conditions (drifts). We empirically considered 12 models in each group: six pre-trained models and six corresponding adaptive counterparts. At each failure interval, every neu-ral network in both groups outputs the cost for its selected candidate node. These outputs are aggregated, and a global minimisation step se-lects the node with the lowest cost as the final recovery decision. This competitive selection en-ables cross-model comparisons and ensures that the redeployment target is determined by the best-performing model at that interval. The adaptive models are updated at each fail-ure interval. To avoid stagnation and preserve diversity, a reset mechanism is introduced: if an adaptive model does not win the global selec-tion for C consecutive intervals, its parameters are reinitialised to escape suboptimal regions. A con-trolled replacement mechanism is also applied be-tween model pairs: if a pre-trained model fails to outperform its adaptive counterpart for A+B con-secutive intervals, while the adaptive model wins at least A times within that time window, the pre-trained model is replaced. This allows successful adaptive models to update the base model pool and transfer the learned improvements into the stable group. Figure 3 illustrates the flowchart of the proposed approach. 4.2.3 Enhanced Evolution Strategy (EES) Evolution strategy (ES) (Salimans et al., 2017) is a gradient-free optimisation method that searches for better solutions using stochastic parameter perturbations and fitness-based updates. The proposed approach extends the standard ES by introducing parameter-wise adaptive exploration instead of a fixed isotropic exploration rate for updating the adaptive models. Unlike conven-tional ES, where all parameters share the same perturbation scale (which may lead to an ineffi-System monitoring 
+
+> Fault detection
+> Current state of failed components and
+> edge–cloud system
+> Pretrained
+> Model 1
+> Pretrained
+> Model L
+> Adaptive
+> Model 1
+> Adaptive
+> Model L
+> Select the best solution
+> Update the adaptive models
+> based on EES
+> Redeploy failed component
+> using the solution
+> Reset the
+> adaptive model
+> Failure interval t
+> t = t + 1
+> An adaptive model loses for C
+> consecutive intervals?
+> A pretrained fails for A+B
+> intervals?
+> Its adaptive wins A times in
+> the time window?
+> Replace the
+> pretrained model
+> Yes
+> No
+> Yes
+> Yes
+> No
+> No
+> t = 0
+> EES-CND
+
+Figure 3: EES-CND flowchart 
+
+cient search when different parameters have dif-ferent sensitivities), the proposed EES adjusts the exploration scale of each parameter based on its estimated importance during optimisation. In the proposed approach, the adaptive models are up-dated online at each failure interval using EES. As shown in Algorithm 1, EES-CND first generates symmetric candidate solutions around the current parameters using stochastic pertur-bations and antithetic sampling and evaluates them using the fault tolerance cost function de-fined in Equation (13) (lines 4–5). The obtained costs are then converted into utility values us-ing rank-based normalisation to improve robust-ness against scale variations and outliers (line 7). Based on these utilities, a stochastic gradient es-Table 2: Summary of EES notations 
+
+Notation Description 
+
+θt Model parameters at time t
+
+σt Exploration vector at time t
+
+εi Perturbation at interval i
+
+θ± 
+
+> i
+
+Symmetric parameters generated from θt
+
+c± 
+
+> i
+
+Fault-tolerance cost of θ±
+
+> i
+
+u+ 
+
+> i
+
+, u− 
+
+> i
+
+Utility values 
+
+gt Exploration direction in parameter space 
+
+It, j Importance of parameter j
+
+α Learning rate 
+
+K Number of samples 
+
+ησ Exploration learning rate 
+
+timate is computed to determine the search di-rection in the parameter space (line 8), and the model parameters are subsequently updated (line 9). Unlike the standard ES, the EES introduces an additional adaptive mechanism that estimates the importance of each parameter based on the magnitude of the gradient components (line 10). These importance scores are then used to update the exploration vector, thereby allowing each pa-rameter to adapt its perturbation scale during op-timisation (line 11). For numerical stability, the exploration values are bounded within predefined limits when such bounds are specified (lines 12– 14). Table 2 summarises the EES-related nota-tions. In the considered online setting, only a sin-gle sample is available per failure interval, mak-ing gradient-based methods, such as backpropa-gation, unreliable owing to unstable gradient es-timation. In contrast, the EES operates gradient-free through stochastic perturbations and direct cost evaluation, thereby enabling stable online adaptation at each failure interval. 4.2.4 Pretrained Models The pretrained models are trained through an of-fline procedure based on the approach introduced by (Garshasbi Herabad et al., 2025b). The model parameters are trained using a Genetic Algorithm (GA) that directly minimises the fault-tolerance cost. The neural network parameters are encoded as candidate solutions in the GA population. An initial population is randomly generated to ensure diversity, and each candidate is evaluated using the defined objective. The population is then it-eratively refined through selection, crossover, and mutation operators. The GA is adopted for of-fline pre-training to exploit its global search ca-pabilities in complex and gradient-free parame-ter spaces, because the GA’s high computational overhead makes it unsuitable for online use. Nev-ertheless, we use a GA (offline ) to learn robust                           
+
+> Data: θ0,σ0,α,ησ,K,σmin ,σmax
+> Result: Updated θand σ
+> 1Initialise τ←0;
+> 2while stopping criterion not met do
+> 3for i←1to Kdo
+> 4Sample εi∼
+
+N (0, I)                                                                
+
+> 5Evaluate c±
+> i←cost (θt±σt⊙εi);
+> 6end
+> 7Rank-normalise {c+
+> i,c−
+> i}to utilities
+> {u+
+> i,u−
+> i};
+> 8gt←1
+> K∑Ki=1(u+
+> i−u−
+> i)( εi⊘σt)
+> 9θt+1←θt+αgt
+> 10 ˜It←|gt|
+> mean (|gt|);
+> 11 σt+1←σt⊙exp (ησ(˜It−1));
+> 12 if bounds specified then
+> 13 σt+1←clip (σt+1,σmin ,σmax );
+> 14 end
+> 15 τ←τ+1;
+> 16 end Algorithm 1: Enhanced Evolution Strategies (EES)
+
+initial pre-training models and an EES for online adjustment, making it a lightweight mechanism for real-time (online) adaptation. 
+
+# 5 PERFORMANCE METRICS 
+
+## 5.1 Recovery Time 
+
+Two types of failures exist (Arun et al., 2019): computing node and service component failures. Node failure causes the hosted components to fail, whereas service components may fail inde-pendently. Service recovery ( RE S) involves fault detection, decision making, and reconfiguration. Fault detection occurs via heartbeat monitoring, in which components periodically send heartbeats to the monitoring controller. If the interval ex-ceeds the threshold tth , it is marked as Not Ready. The decision phase runs placement optimisation to determine the new deployment locations or component versions. For a failed service component in set F ,Equation (2) computes the reconfiguration time, where Size xy,v is the container image size, axy,v is the instantiation time, and Ixy,v ∈ { 0, 1} indicates whether the image is already available on the tar-get node. BW l (t) denotes the available bandwidth of link l at time t. Equation (3) provides the over-all reconfiguration time, which is dominated by the slowest redeployed component. CSC xy = axy,v + ( 1 − Ixy,v) Size xy,v
+
+BW l (t) (2) 
+
+C = max  
+
+> SC xy∈
+
+F CSC xy (3) 
+
+## 5.2 Response Time 
+
+Equation (4) (Cozzolino et al., 2022) computes transmission delay, where DS SC xy,v is the trans-mitted data size of the service components SC xy,v,
+
+bi j (t) is the available bandwidth between nodes i
+
+and j to transfer the data, and di j (t) is the prop-agation delay between nodes i and j at time t.
+
+T D SC xy,v = DS SC xy,v (t)
+
+bi j (t) + di j (t) (4) Equation (5) (Yeganeh et al., 2023) calculates the execution time of a service component, where 
+
+CR SC xy,v denotes the computational requirement of 
+
+SC xy,v and CC k(t) denotes the computational ca-pacity of node k at time t.
+
+ET SC xy,v = CR SC xy,v (t)
+
+CC k(t) (5) Provider delay PD SC xy,v captures the latency from the service provider (e.g., virtualisation or queuing) and is estimated using passive measure-ments. The encoding/decoding delay ( CD SC xy,v )represents the time required to compress and de-compress video streams. These delays are pro-vided by the codec provider. Equation (6) defines the response time of the service component SC xy,v
+
+deployed on the computing node. Equations (7) and (8) calculate the service-level response time and total response time across all services, respec-tively (Garshasbi Herabad et al., 2025a). 
+
+RT SC xy,v = T D SC xy,v + ET SC xy,v + PD SC xy,v +CD SC xy,v (6) 
+
+RT Sx =
+
+> Y
+
+# ∑
+
+> y=1
+
+RT SC xy,v (7) 
+
+RT S =
+
+> X
+
+# ∑
+
+> x=1
+
+RT Sx (8) 
+
+## 5.3 Service Reliability 
+
+For a component version or node with a failure rate λ, the reliability over the time horizon th is 
+
+Table 3: Summary of performance metric notations 
+
+Notation Description 
+
+RE S Service recovery time 
+
+CSC xy Reconfiguration time of SC xy
+
+BW l (t) Link bandwidth for image download at taxy,v Container launch time of SC xy
+
+Size xy,v Image size of SC xy
+
+F Set of failed components 
+
+DS xy,v Data size transferred by SC xy,v
+
+CR SC xy,v Compute requirement of SC xy,v
+
+CC k(t) Node k compute capacity at tT D SC xy,v Transmission delay of SC xy,v
+
+ET SC xy,v Execution time of SC xy,v
+
+PD SC xy,v Provider delay of SC xy,v
+
+CD SC xy,v Encoding/decoding delay of SC xy,v
+
+RT SC xy,v Response time of SC xy,v
+
+RT Sx Response time of Sx
+
+Rsoft  
+
+> Sx
+
+, Rhard  
+
+> Sx
+
+Software and hardware reliability of Sx
+
+RSx Overall reliability of Sx
+
+λ Failure rate 
+
+res (CN k) Resource capacity of CN k
+
+res (SC xy,v) Resource requirement of SC xy,v
+
+uSC n Components belonging to un
+
+hSC m Components belonging to hm
+
+w1, w2, w3 Objective weights 
+
+given by e−λth (Mudassar et al., 2022). The re-liability of SC xy,v is computed as e−λxy,v·th , and the reliability of CN k is computed as e−λk·th .The system is modelled as a component chain, in which any component failure causes a service outage. Therefore, Equation (9) estimates the software reliability, and Equation (10) computes the hardware reliability for node failures, respec-tively (Mudassar et al., 2022). 
+
+Rsoft  
+
+> Sx
+
+= exp 
+
+−th ∑
+
+> SC xy,v∈
+
+Cx
+
+λxy,v
+
+ (9) 
+
+Rhard  
+
+> Sx
+
+= exp 
+
+(
+
+−th ∑
+
+> CN k∈
+
+C N 
+
+λk
+
+)
+
+(10) Considering the interdependence between software and hardware failures, Equation (11) calculates the overall service reliability of Sx.Equation (12) computes the average reliability of all services. 
+
+RSx = Rsoft  
+
+> Sx
+
+· Rhard  
+
+> Sx
+
+(11) 
+
+RS S = 1
+
+X
+
+> X
+
+# ∑
+
+> x=1
+
+RSx (12) 
+
+## 5.4 Objective Function 
+
+The objective is to minimise the fault tolerance cost. Equation (13) computes the fault-tolerance cost by combining the normalised metrics using weighted-sum scalarization. ˜RT S, ˜RS S, and ˜RE S
+
+represent the normalised response time, reliabil-ity, and reconfiguration overhead, respectively. Equal weights ( wi = 0.33 ) are used by default but can be adjusted based on the system priorities. To establish a minimisation objective, the relia-bility metric is transformed into its complement, 
+
+1 − ˜RS S. Therefore, the redeployment problem is formulated as a constrained optimisation problem (Equation (14)). 
+
+FT cost = w1 · ˜RT S + w2 · (1 − ˜RS S) + w3 · ˜RE S (13) 
+
+min FT cost (14) subject to: 
+
+# ∑
+
+> v∈V
+
+SC xy,v = 1, ∀y ∈ Y, SC xy,v ∈ { 0, 1} (15) 
+
+# ∑
+
+> x,y∈X,Y
+
+res (SC xy,v) < res (CN k), ∀k ∈ K (16) 
+
+SC xy,v ∈ uSC n , ∀x ∈ X, ∀v ∈ V (17) 
+
+SC xy,v ∈ hSC m , ∀x ∈ X, ∀v ∈ V (18) Constraint (15) ensures that each service com-ponent is deployed with one version. Con-straint (16) limits the total resource demand on node k to its capacity. Constraints (17) and (18) restrict the deployment to user or helper nodes associated with the service. Table 3 summarises the performance metric notations. 
+
+# 6 EXPERIMENTAL SETUP 
+
+The evaluation was conducted using the simu-lator introduced in (Garshasbi Herabad et al., 2024), which reflects real-world edge–cloud en-vironments, particularly for remote repair and maintenance use cases. It models characteristics such as multi-version components, user–helper interactions, and multi-tier edge–cloud architec-tures (features rarely supported in existing sim-ulators). For reproducibility, all simulation arte-facts and implementation details are available on GitHub (Garshasbi Herabad, 2024). 
+
+## 6.1 Problem Instances 
+
+The evaluation employs two distinct problem sets: (i) an offline training set comprising small, medium, and large-scale instances to capture 
+
+Table 4: Evaluation scales                   
+
+> Specifications Small-scale Medium-scale Large-scale No. of user-helper pairs 25 50 100 No. of APs 25 50 100 No. of edge servers 12 25 50 No. of cloud nodes 612 25 No. of service comp./vers. 6/7 7/7 8/7
+
+varying system complexities (see Table 4) and (ii) an online test set of a comparable scale but differ-ing configurations to evaluate generalisation and prevent overfitting. To simulate non-stationary edge-cloud environments, the test instances incor-porate multilevel incremental drift, which affects node resources, network conditions, and service demands, introduced to model continuous sys-tem evolution. Instance characteristics, including network properties (bandwidth and delay), node attributes (CPU, memory, and storage), and ser-vice requirements (computational demand, mem-ory need, and data size), are aligned with the specifications in (Garshasbi Herabad, 2024). 
+
+## 6.2 Assumptions and Benchmarks 
+
+The system operates in discrete time intervals (Jagannathan et al., 2025). At each interval, a subset of entities fails (either randomly or based on reliability scores). Specifically, we assume a failure ratio of 1%–5% (Mudassar et al., 2022) in each interval for both computing nodes (trig-gering cascading component failures) and individ-ual service components (due to software-related faults). We also assume that edge–cloud re-sources are pre-provisioned and available prior to operation. Failures occur during execution with-out prior reconfiguration. It is assumed that a failure at interval τ is detected and recovered in 
+
+τ + 1. The system is equipped with reliable mon-itoring to ensure accurate status and utilisation measurements (Mudassar et al., 2022). To evaluate the proposed approach (EES-CND), we compared it with three comparative approaches with the same goals: (i) BP-CND, which uses gradient-based backpropagation for model updates; (ii) ES-CND, which employs stan-dard evolution strategies for model updates; and (iii) CND, which lacks an adaptive layer and uses only pretrained models. In addition, we tested a single-model configuration to isolate the im-pact of the collaborative mechanism. The hyper-parameters and model architectures of the EES-CND, obtained empirically, are listed in Table 5. Figure 4: Overall cost achieved by the algorithms (pale lines: actual data; plain lines: 10-point moving average). 
+
+Figure 5: Service reconfiguration time (pale lines: actual data; plain lines: 10-point moving average) Table 5: EES-CND architecture and configurations               
+
+> Hyperparameter Value Learning and exploration rate ( α,ησ)0.1, 0.05 Sample size ( K)10 Initial exploration ( σ0)0.25 Exploration bounds ( σmin and σmax )1 and 1e-4 Reset threshold of adaptive models ( C)50 intervals Replacement parameters ( A,B)50, 25 intervals Number of the models in each group 6Model architecture (layers and neurons) Model 1 (M1): Input-5-output Model 2 (M2): Input-15-output Model 3 (M3): Input-8-4-output Model 4 (M4): Input-8-4-3-output Model 5 (M5): Input-16-8-output Model 6 (M6): Input-2-4-8-output
+
+## 6.3 Results 
+
+6.3.1 Overall Performance Cost Figure 4 illustrates the fault-tolerance cost across small, medium, and large scales under incremen-tal drift. Before the drift (indicated by the verti-cal dashed line), all algorithms showed compa-rable performance under stationary conditions. However, the introduction of drift triggered a clear divergence in the results. The CND, BP-CND, and ES-CND exhibited an increase in cost. In contrast, the EES-CND maintained the low-est cost and showed rapid stabilisation after the drift. These results confirm that the EES-CND effectively mitigates cumulative performance loss to provide enhanced stability and long-term ef-ficiency in non-stationary and failure-prone sys-tems. 
+
+Table 6: Algorithm runtime per failure interval (s) 
+
+Method Small-scale Medium-scale Large-scale EES-CND 0.05 0.18 0.78 ES-CND 0.05 0.18 0.71 BP-CND 0.03 0.09 0.49 CND 0.01 0.02 0.26 
+
+6.3.2 Service Recovery Time Reconfiguration Time: Figure 5 illustrates the service reconfiguration time. Before the drift, all the algorithms showed comparable perfor-mance. After the drift began, a clear divergence emerged. The CND, BP-CND, and ES-CND ex-perienced significant increases in reconfiguration time, whereas the EES-CND maintained the low-est value and was more stable. Computational Overhead: Table 6 details the runtime per failure interval across all system scales. The CND exhibits the lowest overhead be-cause it lacks an adaptive layer. BP-CND benefits from the low computational cost of single-sample backpropagation updates compared with that of evolutionary approaches. ES-CND and EES-CND incur higher computational overheads ow-ing to perturbation sampling and multiple evalu-ations. However, their runtimes remain modest, reaching only 0.71 s and 0.78 s, respectively, in large-scale scenarios. This shows that even with a large number of failures (e.g., over 60 simulta-neous component failures), the runtime remains below 1 s. Downtime: Table 7 summarises the average ser-vice recovery times per failure interval across all Table 7: Downtime per failure interval (s)                
+
+> Method Small-scale Medium-scale Large-scale EES-CND 3.19 3.60 4.32 ES-CND 3.45 3.89 4.52 BP-CND 3.50 44.48 CND 3.78 4.1 4.49
+
+scales. Despite the slightly higher runtime noted in Table 6, EES-CND achieved the lowest over-all recovery time (downtime) in every scenario. Although CND and BP-CND are computation-ally faster, they yield inferior placement strate-gies that increase reconfiguration delays. Thus, the modest computational overhead of EES-CND is offset by a reduction in downtime, resulting in superior end-to-end performance. 6.3.3 Service Response Time As shown in Figure 6, EES-CND achieved the lowest response time across all scales, indicating that its reconfigurations are better aligned with evolving system conditions. After the drift, the response times of the other techniques shifted up-ward, as their adaptation mechanisms failed to track the changing system correlations. In con-trast, EES-CND maintained a stable response time throughout the drift phase. These re-sults demonstrate that EES-CND preserves the post-recovery QoS, which is critical for real-time failure-prone edge-cloud systems. 6.3.4 Service Reliability Figure 7 shows that once the incremental drift begins, the reliability of the CND, BP-CND, and ES-CND exhibits a continuous downward trend across all scales. In contrast, the EES-CND demonstrates strong drift resilience, maintain-ing the highest post-recovery reliability with only moderate fluctuations. By maintaining high reli-ability, the EES-CND ensures long-term service stability and significantly mitigates the risk of cascading failures. 6.3.5 Impact of Model Collaboration This section compares EES-CND with its indi-vidual models by evaluating each one indepen-dently under the same experimental conditions. To maintain conciseness and avoid redundancy, we focused our analysis on large-scale scenarios because similar trends were observed across all scales. Figure 8 shows the average fault toler-ance cost after 500 failure events for collaborative mechanisms versus individual models (M1–M6). EES-CND achieved the lowest cost, significantly outperforming all alternatives. Standalone mod-els had much higher costs. On average, EES-CND reduced cost by 44 .8% , showing that its collabo-rative strategy uses complementary decision pat-terns compared to single models. 6.3.6 Impact of Collaboration Size The effectiveness of collaborative decision-making depends on the number of models. Although adding more models improves decision quality through complementary knowledge, it also in-creases computational cost and redundancy. As shown in Figure 9, the performance improves sig-nificantly from a single model, but the gains di-minish as more models are added. Based on this empirical analysis, we set the number of collabo-rative models to six. 
+
+# 7 CONCLUSION 
+
+This study formulates fault-tolerant service place-ment in dynamic edge–cloud environments as an online adaptive optimisation problem under mul-tilevel drift. To mitigate performance degrada-tion, we propose EES-CND, which integrates pre-trained models with adaptive models updated us-ing an enhanced evolution strategy. The simu-lation results show that EES-CND reduces the cost by 44.8% compared with standalone mod-els and maintains stable post-recovery response times and reliability. These findings confirm that the combination of collaborative decision-making with adaptive evolutionary updates en-sures long-term stability in non-stationary envi-ronments. Future research will explore hybrid proactive–reactive strategies to further enhance the resilience of large-scale edge-cloud infrastruc-tures. 
+
+# ACKNOWLEDGEMENTS 
+
+Parts of this study were supported by the Knowl-edge Foundation of Sweden (KKS). 
+
+# REFERENCES           
+
+> Arun, B., Peluso, S., and Ravindran, B. (2019). ezbft: Decentralizing byzantine fault-tolerant
+
+Figure 6: Service response time after recovery (pale lines: actual data; plain lines: 10-point moving average). 
+
+Figure 7: Service reliability after recovery (pale lines: actual data; plain lines: 10-point moving average). 
+
+Figure 8: EES-CND vs individual models cost 
+
+Figure 9: Cost versus number of models state machine replication. In 2019 IEEE 39th International Conference on Distributed Com-puting Systems (ICDCS), pages 565–577. IEEE. Bhowmik, B., Verma, T., Dineshbhai, N. D., Reddy, M. R. V., and KK, G. (2024). Dynamic check-pointing: Fault tolerance in high-performance computing. In 2024 International Conference on Communication, Control, and Intelligent Sys-tems (CCIS), pages 1–6. IEEE. Cozzolino, V., Tonetto, L., Mohan, N., Ding, A. Y., and Ott, J. (2022). Nimbus: Towards latency-energy efficient task offloading for ar ser-vices. IEEE Transactions on Cloud Computing, 11(2):1530–1545. Droob, A., Morratz, D., Jakobsen, F. L., Carstensen, J., Mathiesen, M., Bohnstedt, R., Albano, M., Moreschini, S., and Taibi, D. (2023). Workrs: Fault tolerant horizontal computation offload-ing. arXiv preprint arXiv:2305.18219. Garshasbi Herabad, M. (2024). service-placement-simulator. https://github.com/ms-garshasbi/service-placement-simulator. Garshasbi Herabad, M., Taheri, J., Ahmed, B. S., and Curescu, C. (2024). Optimizing service placement in edge-to-cloud ar/vr systems us-ing a multi-objective genetic algorithm. In 14th International Conference on Cloud Computing and Services Science (CLOSER 2024), Angers, France, May 2-4, 2024., volume 1, pages 77–91. Science and Technology Publications. Garshasbi Herabad, M., Taheri, J., Ahmed, B. S., and Curescu, C. (2025a). E-psoga: An enhanced hybrid metaheuristic for optimal edge-to-cloud placement of services with multi-version compo-nents. IEEE Access. Garshasbi Herabad, M., Taheri, J., Ahmed, B. S., and Curescu, C. (2025b). A lightweight learning-based approach for online edge-to-cloud service placement. Electronics, 15(1):65. Jagannathan, S., Sharma, Y., and Taheri, J. (2025). Towards generic failure-prediction models in large-scale distributed computing systems. Elec-tronics, 14(17):3386. Javed, A., Malhi, A., and Främling, K. (2020). Edge computing-based fault-tolerant framework: Acase study on vehicular networks. In 2020 Inter-national Wireless Communications and Mobile Computing (IWCMC), pages 1541–1548. IEEE. Jia, Y., Wang, T., Qiu, T., Zhang, X., Wang, R., and Wo, T. (2023). Fault tolerance of stateful mi-croservices for industrial edge scenarios. In 2023 IEEE International Conference on Joint Cloud Computing (JCC), pages 50–56. IEEE. Kubernetes Documentation (2026). Pod lifecycle. Liu, L., Kang, L., Li, X., and Zhou, Z. (2023). Ser-vice reliability based on fault prediction and con-tainer migration in edge computing. Applied Sci-ences, 13(23):12865. Long, T., Ma, Y., Wu, L., Xia, Y., Jiang, N., Li, J., Fu, X., You, X., and Zhang, B. (2022). A novel fault-tolerant scheduling approach for collabora-tive workflows in an edge-iot environment. Dig-ital Communications and Networks, 8(6):911– 922. Long, T., Xia, Y., Zhou, M., Li, J., Ma, Y., and AI-Turki, Y. (2025). Fault-tolerant mobile ser-vice offloading in mobile edge computing. IEEE Transactions on Automation Science and Engi-neering. Mehmood, T., Latif, S., Jamail, N. S. M., Malik, A., and Latif, R. (2024). Lstmdd: an optimised lstm-based drift detector for concept drift in dy-namic cloud computing. PeerJ Computer Sci-ence, 10:e1827. Mudassar, M., Zhai, Y., and Lejian, L. (2022). Adap-tive fault-tolerant strategy for latency-aware iot application executing in edge computing envi-ronment. IEEE Internet of Things Journal, 9(15):13250–13262. Ray, K. and Banerjee, A. (2022). Prioritized fault re-covery strategies for multi-access edge comput-ing using probabilistic model checking. IEEE Transactions on Dependable and Secure Com-puting, 20(1):797–812. Sahu, D., Nidhi, Prakash, S., Yang, T., Rathore, R. S., Wang, L., Sharma, U., and Alsolbi, I. (2025). Adaptive fault tolerance mechanisms for ensuring high availability of digital twins in dis-tributed edge computing systems. Scientific Re-ports, 15(1):41676. Salimans, T., Ho, J., Chen, X., Sidor, S., and Sutskever, I. (2017). Evolution strategies as a scalable alternative to reinforcement learning. arXiv preprint arXiv:1703.03864. Sunaga, K., Yamada, T., and Matsutani, H. (2024). A sequential approach to detect drifts and re-train neural networks on resource-limited edge devices. IEICE TRANSACTIONS on Informa-tion and Systems, 107(6):741–750. Theodoropoulos, T., Makris, A., Violos, J., and Tser-pes, K. (2022). An automated pipeline for ad-vanced fault tolerance in edge computing infras-tructures. In Proceedings of the 2nd Workshop on Flexible Resource and Application Manage-ment on the Edge, pages 19–24. Tuli, S., Casale, G., Cherkasova, L., and Jennings, N. R. (2023a). Deepft: Fault-tolerant edge com-puting using a self-supervised deep surrogate model. In IEEE INFOCOM 2023-IEEE Confer-ence on Computer Communications, pages 1–10. IEEE. Tuli, S., Casale, G., and Jennings, N. R. (2022). Pregan: Preemptive migration prediction net-work for proactive fault-tolerant edge comput-ing. In IEEE INFOCOM 2022-IEEE Conference on Computer Communications, pages 670–679. IEEE. Tuli, S., Csale, G., and Jennings, N. R. (2023b). Pre-gan+: semi-supervised fault prediction and pre-emptive migration in dynamic mobile edge envi-ronments. IEEE Transactions on Mobile Com-puting, 23(6):6881–6895. Wang, L., Liu, J., and He, Q. (2022). Concept drift-based checkpoint-restart for edge services reju-venation. IEEE Transactions on Services Com-puting, 16(3):1713–1725. Yeganeh, S., Sangar, A. B., and Azizi, S. (2023). Anovel q-learning-based hybrid algorithm for the optimal offloading and scheduling in mobile edge computing environments. Journal of Network and Computer Applications, 214:103617.
