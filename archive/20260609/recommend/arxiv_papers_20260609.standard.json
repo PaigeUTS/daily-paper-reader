@@ -1,0 +1,612 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-09T21:30:04.160704+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 6,
+    "deep_cap": 6,
+    "deep_selected": 6,
+    "quick_candidates": 9,
+    "quick_skim_target": 11,
+    "quick_selected": 9
+  },
+  "deep_dive": [
+    {
+      "id": "2606.05271v1",
+      "source": "arxiv",
+      "title": "BIDENT: Heterogeneous Operator-level Mapping for Efficient Edge Inference",
+      "abstract": "Modern edge System-on-Chips (SoCs) integrate heterogeneous processing units (PUs) such as CPUs, GPUs, and NPUs, yet current inference stacks map entire models to a single PU, leaving significant performance and energy efficiency on the table. This is exacerbated by emerging architectures such as state-space models (SSMs), Kolmogorov-Arnold networks (KANs), and multi-stage vision-language-action (VLA) pipelines, whose diverse operator characteristics are not uniformly suited to any single PU. We present BIDENT, a unified operator-level orchestration framework for heterogeneous edge inference that maps individual operators to the most suitable PU based on profiled execution characteristics. BIDENT formulates operator-to-PU assignment as a shortest-path problem over a weighted execution graph, enabling efficient and optimal scheduling under the cost model for both latency- and energy-minimization objectives. Unlike prior work relying on model-specific heuristics or coarse-grained partitioning, BIDENT is model-agnostic and jointly supports sequential execution, intra-model parallelism across independent operators, and multi-model concurrent scheduling in a single formulation. We implement BIDENT on an Intel Core Ultra SoC and evaluate it across 10 model families spanning CNNs, Transformers, SSMs, KANs, spiking networks, and multi-stage pipelines. BIDENT achieves up to 1.60x speedup via intra-model parallelism and a 3.42x geometric mean speedup across 190 multi-model combinations by utilizing otherwise idle compute. Sequential heterogeneous mapping yields more modest gains (up to 1.58x, 1.09x geometric mean), while energy-aware scheduling reduces energy consumption by 48.2% on average in concurrent settings. These results show that operator-level orchestration, not model-level mapping, is the key abstraction for fully exploiting heterogeneity in next-generation edge AI.",
+      "authors": [
+        "Hoseok Kim",
+        "Arghadip Das",
+        "Soumendu Ghosh",
+        "Arnab Raha",
+        "Vijay Raghunathan"
+      ],
+      "primary_category": "cs.AR",
+      "categories": [
+        "cs.AR"
+      ],
+      "published": "2026-06-03T17:09:41+00:00",
+      "link": "https://arxiv.org/pdf/2606.05271v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "operator-level heterogeneous mapping for efficient edge inference",
+      "llm_evidence_cn": "面向异构计算资源的算子级编排方法",
+      "llm_evidence": "面向异构计算资源的算子级编排方法",
+      "canonical_evidence": "面向异构计算资源的算子级编排方法",
+      "llm_tldr_en": "BIDENT proposes a unified operator-level orchestration framework that maps individual operators to the most suitable processing unit in heterogeneous SoCs, formulated as a shortest-path problem for inference efficiency on edge devices.",
+      "llm_tldr_cn": "现代边缘SoC集成了CPU、GPU、NPU等多种处理单元，但现有推理框架将整个模型映射到单一处理单元，无法充分利用异构资源。BIDENT提出统一的算子级编排框架，通过分析每个算子的执行特性，将其映射到最合适的处理单元，并建模为最短路径问题进行求解。实验表明，相比单PU映射，该方法显著提升了推理速度和能效，为AI操作系统中的异构资源调度提供了直接可用的方法。",
+      "llm_tldr": "现代边缘SoC集成了CPU、GPU、NPU等多种处理单元，但现有推理框架将整个模型映射到单一处理单元，无法充分利用异构资源。BIDENT提出统一的算子级编排框架，通过分析每个算子的执行特性，将其映射到最合适的处理单元，并建模为最短路径问题进行求解。实验表明，相比单PU映射，该方法显著提升了推理速度和能效，为AI操作系统中的异构资源调度提供了直接可用的方法。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How do AI operating systems handle heterogeneous compute resources?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.05362v2",
+      "source": "arxiv",
+      "title": "MOSAIC: A Workload-Driven Simulation and Design-Space Exploration Framework for Heterogeneous NPUs",
+      "abstract": "AI model architectures are diversifying rapidly. Although dense matrix multiplication underlies today's CNNs and transformers, emerging architectures (state-space models, long convolutions via the fast Fourier transform (FFT), Kolmogorov-Arnold networks, and spiking networks) are not multiply-accumulate (MAC) dominated; they spend much of their computation on vector and non-MAC primitives that homogeneous, MAC-centric neural processing units (NPUs) serve poorly. This has motivated heterogeneous NPUs (HPUs) built from non-identical tiles. Prior heterogeneous designs vary only one or two coarse knobs (typically MAC precision or array size) and are evaluated on narrow workloads; no existing framework supports fine-grained HPU design, where tiles differ across many architectural dimensions at once. We present MOSAIC, an analytical simulator and design-space-exploration (DSE) framework for HPU microarchitecture design. MOSAIC searches the joint space of tile-level heterogeneity: beyond array size and precision, it varies tile-type composition (large Big, small Little, and non-MAC Special-Function tiles), dataflow, sparsity mode, MAC engine type, and special-function units for non-MAC operators (FFT, spiking-integrate, polynomial). Unlike prior simulators that model a single homogeneous tile type, MOSAIC models non-MAC tiles with their own energy, area, and timing models and maps operators across a mix of tiles with a heterogeneity-aware compiler. A multi-seed pipeline pairing a stratified sweep with genetic-algorithm refinement returns Pareto-optimal designs, with cost models calibrated to a 7 nm node and cross-validated against NVIDIA's Deep Learning Accelerator (NVDLA). Across a 20-workload suite, the best general-purpose HPU found by MOSAIC (~200 mm^2 Big+Little+Special-Function) achieves +46.91% mean iso-area energy savings over the best iso-area homogeneous baseline.",
+      "authors": [
+        "Arghadip Das",
+        "Hoseok Kim",
+        "Soomin Lee",
+        "Arnab Raha",
+        "Deepak A Mathaikutty",
+        "Vijay Raghunathan"
+      ],
+      "primary_category": "cs.AR",
+      "categories": [
+        "cs.AR"
+      ],
+      "published": "2026-06-03T19:10:07+00:00",
+      "link": "https://arxiv.org/pdf/2606.05362v2",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "framework for designing heterogeneous NPUs for diverse AI workloads",
+      "llm_evidence_cn": "为多样化AI工作负载设计异构NPU的框架",
+      "llm_evidence": "为多样化AI工作负载设计异构NPU的框架",
+      "canonical_evidence": "为多样化AI工作负载设计异构NPU的框架",
+      "llm_tldr_en": "Presents MOSAIC, a simulation and design-space exploration framework for heterogeneous NPUs, supporting fine-grained tile heterogeneity and diverse emerging AI workloads.",
+      "llm_tldr_cn": "随着AI模型架构多样化（如状态空间模型、长卷积等），同构NPU难以高效支持非MAC密集型计算。本文提出MOSAIC框架，支持工作负载驱动的仿真和细粒度异构NPU设计。框架能够探索不同的异构策略，为新兴AI工作负载提供高效硬件方案，加速异构NPU的设计迭代。",
+      "llm_tldr": "随着AI模型架构多样化（如状态空间模型、长卷积等），同构NPU难以高效支持非MAC密集型计算。本文提出MOSAIC框架，支持工作负载驱动的仿真和细粒度异构NPU设计。框架能够探索不同的异构策略，为新兴AI工作负载提供高效硬件方案，加速异构NPU的设计迭代。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "heterogeneous computing infrastructure for AI workloads",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.08430v1",
+      "source": "arxiv",
+      "title": "Accuracy-Configurable Floating-Point Multiplier Design for SRAM-Based Compute-in-Memory",
+      "abstract": "Digital Compute-in-Memory (DCiM) reduces data movement and has become a promising solution for energy-efficient edge AI. However, most existing DCiM frameworks still primarily target integer or fixed-point arithmetic, and provide limited support for compiler-integrated and accuracy-configurable floating-point computation. Directly integrating conventional IEEE 754 floating-point units into dense SRAM-based DCiM arrays, however, incurs high area and power overhead. To address this challenge, this work presents an accuracy-configurable floating-point multiplier integrated into the OpenACM framework for SRAM-based DCiM. An exact IEEE~754-compliant multiplier is first implemented as a baseline, and a mantissa-segmentation-based approximate multiplier is then proposed to reduce hardware cost while preserving numerical fidelity. Post-layout results show up to 69% logic area reduction and 72% power savings over exact floating-point designs without delay overhead. Evaluations on image processing tasks and ResNet-18 inference further demonstrate negligible accuracy degradation. These results indicate that compiler-integrated approximate floating-point multiplication is a practical approach for enabling efficient and configurable floating-point support in SRAM-based DCiM systems. The Floating-Point Multiplier is available on https://github.com/ShenShan123/OpenACM",
+      "authors": [
+        "Yiqi Zhou",
+        "Junhao Lu",
+        "Jiale Yu",
+        "Zhuo Xu",
+        "Yang He",
+        "Yue Yuan",
+        "Shan Shen",
+        "Daying Sun"
+      ],
+      "primary_category": "cs.AR",
+      "categories": [
+        "cs.AR"
+      ],
+      "published": "2026-06-07T03:12:13+00:00",
+      "link": "https://arxiv.org/pdf/2606.08430v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Accuracy-configurable floating-point multiplier design for SRAM-based compute-in-memory targets neural network compute-in-memory architecture",
+      "llm_evidence_cn": "基于SRAM存内计算的精度可配置浮点乘法器设计，针对神经网络的存内计算架构",
+      "llm_evidence": "基于SRAM存内计算的精度可配置浮点乘法器设计，针对神经网络的存内计算架构",
+      "canonical_evidence": "基于SRAM存内计算的精度可配置浮点乘法器设计，针对神经网络的存内计算架构",
+      "llm_tldr_en": "Proposes an accuracy-configurable floating-point multiplier integrated into OpenACM for SRAM-based digital compute-in-memory, enabling efficient neural network inference.",
+      "llm_tldr_cn": "该论文针对现有数字存内计算框架缺乏对浮点运算支持的问题，提出了一种集成于OpenACM的精度可配置浮点乘法器。该乘法器基于SRAM存内计算阵列，通过尾数分段近似实现精度与效率的权衡。实验表明，该方法在保持可接受精度的前提下显著降低了面积和功耗，为神经网络的存内计算提供了灵活高效的浮点计算方案。",
+      "llm_tldr": "该论文针对现有数字存内计算框架缺乏对浮点运算支持的问题，提出了一种集成于OpenACM的精度可配置浮点乘法器。该乘法器基于SRAM存内计算阵列，通过尾数分段近似实现精度与效率的权衡。实验表明，该方法在保持可接受精度的前提下显著降低了面积和功耗，为神经网络的存内计算提供了灵活高效的浮点计算方案。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "compute in memory architecture for neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.04415v2",
+      "source": "arxiv",
+      "title": "FlexNPU: Transparent NPU Virtualization for Dynamic LLM Prefill-Decode Co-location",
+      "abstract": "Modern AI serving increasingly relies on NPUs for conventional inference and large language model serving. However, current NPU deployments commonly expose physical devices directly to applications, which limits runtime control over scheduling and makes it difficult to adapt execution to phase-level workload behavior. This limitation is particularly evident in LLM serving, where the prefill phase is compute-intensive while the decode phase is often constrained by memory bandwidth and KV-cache accesses. Static prefill-decode (PD) disaggregation reduces phase interference, but can introduce resource imbalance and unnecessary data movement. We present FlexNPU, a transparent user-space virtualization layer for Ascend NPUs. FlexNPU interposes on AscendCL APIs and routes NPU operations through per-device daemons, decoupling unmodified from physical NPU devices without modifying model code, AI frameworks, or NPU drivers. This runtime boundary allows FlexNPU to virtualize NPU objects, control operator dispatch, and support phase-aware scheduling for LLM serving. In particular, FlexNPU enables dynamic PD co-location, which adapts scheduling between prefill and decode according to their complementary resource characteristics. We implement FlexNPU on Huawei Ascend NPUs and evaluate it with typical LLM workloads. Compared with direct NPU passthrough, FlexNPU introduces no measurable inference overhead and slightly improves throughput in some scenarios. On a 384-card Ascend 910C deployment of DeepSeek-R1, FlexNPU improves throughput over static PD disaggregation by 5.15% and 26.33%. On Qwen2.5-7B, compared with static PD co-location, FlexNPU maintains comparable throughput while reducing TTFT by over 92% across tested workloads with nearly unchanged TPOT. These results show that transparent NPU virtualization is a practical substrate for efficient and responsive LLM serving.",
+      "authors": [
+        "Jiongjiong Gu",
+        "Jianfeng Wang",
+        "Zidong Han",
+        "Yongqiao Wang",
+        "Pengfei Xia",
+        "Mingjie Zhang",
+        "Hong Liu",
+        "Yuanyi Xia",
+        "Jiajia Chu",
+        "Yifeng Tang",
+        "Hui Zang",
+        "Xin Yao",
+        "Qijie Qiu",
+        "Yuzhao Wang",
+        "Chuanfei Xu",
+        "Lin Zhang",
+        "Zhuonan Lai",
+        "Hongming Huang",
+        "Jiawei Qiu",
+        "Gong Zhang",
+        "Weipeng Cao",
+        "Zhong Ming"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC"
+      ],
+      "published": "2026-06-03T03:49:34+00:00",
+      "link": "https://arxiv.org/pdf/2606.04415v2",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "NPU virtualization layer for dynamic scheduling of LLM phases, akin to AI OS resource management",
+      "llm_evidence_cn": "NPU虚拟化层实现LLM阶段的动态调度，类似AI操作系统的资源管理",
+      "llm_evidence": "NPU虚拟化层实现LLM阶段的动态调度，类似AI操作系统的资源管理",
+      "canonical_evidence": "NPU虚拟化层实现LLM阶段的动态调度，类似AI操作系统的资源管理",
+      "llm_tldr_en": "Presents FlexNPU, a transparent user-space virtualization layer for NPUs that enables dynamic co-location of prefill and decode phases in LLM serving.",
+      "llm_tldr_cn": "当前NPU直接暴露给应用，限制了运行时调度灵活性，尤其在LLM服务中预填充和解码阶段的计算特性不同。本文提出FlexNPU，一个透明的用户空间NPU虚拟化层，支持动态共置预填充和解码阶段。该设计减少了资源浪费和数据移动，提升了LLM服务吞吐，体现了AI操作系统在异构计算资源上的管理能力。",
+      "llm_tldr": "当前NPU直接暴露给应用，限制了运行时调度灵活性，尤其在LLM服务中预填充和解码阶段的计算特性不同。本文提出FlexNPU，一个透明的用户空间NPU虚拟化层，支持动态共置预填充和解码阶段。该设计减少了资源浪费和数据移动，提升了LLM服务吞吐，体现了AI操作系统在异构计算资源上的管理能力。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "AI operating system for heterogeneous computing",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.05741v1",
+      "source": "arxiv",
+      "title": "Space-CIM: Enabling Compute-In-Memory Accelerators for Thermally-Constrained Space Platforms",
+      "abstract": "The rapid growth in compute demand from artificial intelligence (AI) has driven a massive surge in data center construction, precipitating an energy and sustainability crisis. Motivated by the abundant solar energy in outer space and the recent sharp reduction in space launch costs, orbital data centers are emerging as a potential pathway for the future scaling of AI compute infrastructure. While the cold background in vacuum seems appealing for cooling, computing systems operating in space without convection ultimately rely on radiative cooling, requiring large-area radiators. Such limitations in thermal management pose a significant challenge for deploying the standard liquid/air-cooled computers in space. In this work, we investigate the impact of the thermal constraints in space on both graphics processing units (GPUs) with high-bandwidth memory (HBM) and the emerging compute-in-memory (CIM) accelerators. We develop a radiator-in-the-loop co-design methodology that directly links the permitted system TOPS (terra-operations per second) with the practical radiator cooling capacity in space. Our thermal simulations reveal that the separately located GPU die and HBMs create severe thermal hotspots under limited radiator capacity, necessitating GPU thermal throttling. In contrast, CIM accelerators exhibit a much more uniform heat distribution and consistently outperform GPUs in TOPS/W across a wide range of radiator budgets. We systematically evaluated the performance of CIM and GPU across various AI workloads and demonstrated that CIM has a magnified advantage for deployment in space under realistic thermal constraints.",
+      "authors": [
+        "Sohan Salahuddin Mugdho",
+        "Md. Shahedul Hasan",
+        "Cheng Wang"
+      ],
+      "primary_category": "cs.AR",
+      "categories": [
+        "cs.AR",
+        "cs.ET"
+      ],
+      "published": "2026-06-04T06:08:03+00:00",
+      "link": "https://arxiv.org/pdf/2606.05741v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "compute-in-memory accelerator for neural networks on thermally-constrained space platforms",
+      "llm_evidence_cn": "面向热约束空间平台的计算存储一体神经网路加速器",
+      "llm_evidence": "面向热约束空间平台的计算存储一体神经网路加速器",
+      "canonical_evidence": "面向热约束空间平台的计算存储一体神经网路加速器",
+      "llm_tldr_en": "Proposes Space-CIM, a compute-in-memory accelerator for neural networks designed for thermally-constrained space platforms, addressing thermal management via radiative cooling optimization.",
+      "llm_tldr_cn": "针对空间平台热约束问题，本文提出Space-CIM计算存储一体加速器，通过在存储阵列内直接执行矩阵乘法来减少数据搬移。该设计利用太空低温背景辐射进行散热，优化大型散热器面积约束。实验表明该架构能实现高效AI推理，为轨道数据中心提供可行方案。",
+      "llm_tldr": "针对空间平台热约束问题，本文提出Space-CIM计算存储一体加速器，通过在存储阵列内直接执行矩阵乘法来减少数据搬移。该设计利用太空低温背景辐射进行散热，优化大型散热器面积约束。实验表明该架构能实现高效AI推理，为轨道数据中心提供可行方案。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "compute in memory architecture for neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "carryover_cache",
+      "paper_id": "2606.05741v1"
+    },
+    {
+      "id": "2606.06697v1",
+      "source": "arxiv",
+      "title": "AgileOS: A GPU Operating System Layer for Protected CUDA Services",
+      "abstract": "Modern GPU applications increasingly interact with storage systems, network devices, vendor libraries, and GPU-resident services rather than executing only isolated compute kernels. This shift creates a need for operating-system-like protection around GPU services, where service metadata, device queues, memory-mapped I/O regions, and library-internal state should not be directly exposed to untrusted application kernels. However, today's CUDA programming model, by default, still gives each application direct ownership of its CUDA context, device pointers, runtime handles, module loading path, and kernel launches, leaving protected GPU services to build their own ad hoc interfaces and isolation mechanisms.   This paper presents the initial design and prototype scope of AgileOS, a GPU operating-system layer for protected CUDA services. AgileOS virtualizes CUDA at the library boundary: applications link against client-side CUDA Runtime, Driver, and selected library shims, while a trusted runtime worker owns the real CUDA context and mediates supported operations. To protect service state and module interfaces, AgileOS also defines a GPU memory-management model that separates user allocations from protected module/MMIO ranges, using pointer validation and memory access guards via PTX injection. AgileOS is modularized and flexible, supporting a range of protected services and existing libraries such as cuFFT and PyTorch. The prototype includes client-side interceptors, worker-side CUDA handlers, virtualized CUDA object tables, protected AgileOS modules, a GPU memory manager that separates user allocations from protected module/MMIO ranges, selected trusted library adapters, and the PTX-level kernel memory guard.",
+      "authors": [
+        "Zhuoping Yang",
+        "Yiyu Shi",
+        "Alex Jones",
+        "Peipei Zhou"
+      ],
+      "primary_category": "cs.CR",
+      "categories": [
+        "cs.CR",
+        "cs.OS"
+      ],
+      "published": "2026-06-04T20:34:56+00:00",
+      "link": "https://arxiv.org/pdf/2606.06697v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "GPU operating system layer for protected CUDA services, matches AI OS for heterogeneous computing",
+      "llm_evidence_cn": "GPU操作系统层为CUDA服务提供保护，匹配AI操作系统对异构计算的管理",
+      "llm_evidence": "GPU操作系统层为CUDA服务提供保护，匹配AI操作系统对异构计算的管理",
+      "canonical_evidence": "GPU操作系统层为CUDA服务提供保护，匹配AI操作系统对异构计算的管理",
+      "llm_tldr_en": "AgileOS provides an OS layer for GPUs to protect CUDA services, addressing need for OS-like isolation in heterogeneous GPU computing environments.",
+      "llm_tldr_cn": "现代GPU应用越来越多地交互存储、网络和库服务，但CUDA编程模型缺乏对这些服务的保护。本文提出AgileOS，一个GPU操作系统层，为CUDA服务提供类似操作系统的隔离机制，保护服务元数据、设备队列和内存映射I/O区域免受不可信应用内核的直接访问。该设计填补了异构GPU环境中操作系统级保护的空白，为AI操作系统管理多样计算资源提供了基础。",
+      "llm_tldr": "现代GPU应用越来越多地交互存储、网络和库服务，但CUDA编程模型缺乏对这些服务的保护。本文提出AgileOS，一个GPU操作系统层，为CUDA服务提供类似操作系统的隔离机制，保护服务元数据、设备队列和内存映射I/O区域免受不可信应用内核的直接访问。该设计填补了异构GPU环境中操作系统级保护的空白，为AI操作系统管理多样计算资源提供了基础。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "AI operating system for heterogeneous computing",
+      "matched_requirement_id": "req-2",
+      "selection_source": "carryover_cache",
+      "paper_id": "2606.06697v1"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.02836v1",
+      "source": "arxiv",
+      "title": "Fast Transformer Inference on ARM-Based HMPSoCs",
+      "abstract": "Transformer models have set new performance standards for machine learning (ML) tasks. However, their resource-intensive deployment on resource-constrained edge devices for cloud-free, on-chip transformer inference remains challenging. The ARM Compute Library (ARM-CL) framework provides low-latency CNN inference on ARM-based edge devices but lacks support for transformer inference. In this work, we implement several new transformer kernels in ARM-CL to support native transformer execution. Our extended ARM-CL achieves up to three times faster transformer inference compared to state-of-the-art CPU/GPU implementations on an ARM-based embedded board.   Furthermore, heterogeneous multi-processor system-on-chips (HMPSoCs) powering edge devices provide both embedded CPUs and GPUs. We introduce cooperative CPU-GPU transformer inference, which executes memory-intensive operations on the CPU while utilizing the GPU for highly parallelizable, compute-intensive operations. This cooperative execution, implemented with minimal overhead, further reduces transformer inference latency by up to 15.72% compared to the best single-processor inference on ARM-CL.",
+      "authors": [
+        "Hang Xu",
+        "Yixian Shen",
+        "Thanassis Giannetsos",
+        "Anuj Pathania"
+      ],
+      "primary_category": "cs.AR",
+      "categories": [
+        "cs.AR"
+      ],
+      "published": "2026-06-01T20:00:04+00:00",
+      "link": "https://arxiv.org/pdf/2606.02836v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "optimizes transformer inference on heterogeneous ARM MPSoCs for AI workloads",
+      "llm_evidence_cn": "在异构ARM多处理器系统芯片上优化Transformer推理，适合AI工作负载",
+      "llm_evidence": "在异构ARM多处理器系统芯片上优化Transformer推理，适合AI工作负载",
+      "canonical_evidence": "在异构ARM多处理器系统芯片上优化Transformer推理，适合AI工作负载",
+      "llm_tldr_en": "Implements new transformer kernels in ARM Compute Library to enable efficient inference on heterogeneous MPSoCs, achieving 3x speedup over CPU/GPU baselines.",
+      "llm_tldr_cn": "Transformer模型在资源受限的边缘设备上部署困难，而ARM计算库（ARM-CL）缺乏Transformer支持。本文在ARM-CL中实现了多种新型Transformer内核，支持原生执行。在ARM嵌入式板卡上，扩展后的ARM-CL相比最优CPU/GPU实现取得高达3倍加速。该工作利用了异构多处理器系统芯片（HMPSoC）的CPU和GPU资源，证明了异构计算对AI推理的有效性。",
+      "llm_tldr": "Transformer模型在资源受限的边缘设备上部署困难，而ARM计算库（ARM-CL）缺乏Transformer支持。本文在ARM-CL中实现了多种新型Transformer内核，支持原生执行。在ARM嵌入式板卡上，扩展后的ARM-CL相比最优CPU/GPU实现取得高达3倍加速。该工作利用了异构多处理器系统芯片（HMPSoC）的CPU和GPU资源，证明了异构计算对AI推理的有效性。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "heterogeneous computing infrastructure for AI workloads",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.03854v1",
+      "source": "arxiv",
+      "title": "CLI-Anything: Towards Agent-Native Computer Use",
+      "abstract": "As large language models advance in reasoning and tool use capabilities, researchers increasingly seek to leverage them for computer use agents that can interact with existing software. The dominant approach develops GUI agents that control applications through visual interfaces: interpreting screenshots, locating UI elements, and executing mouse clicks to mimic human interaction. This GUI-centric paradigm fundamentally misaligns with agent capabilities. Current GUI agents struggle with brittle pixel-level interactions, timing dependencies, and coordinate-based actions that break with interface changes. They force agents to emulate human perceptual limitations rather than leverage their computational strengths in structured data processing and programmatic control. CLI-Anything argues for agent-native computer use design. Instead of forcing agents to navigate visual layouts, we create interfaces aligned with how agents naturally operate: through structured commands, explicit state representations, and deterministic feedback. We transform existing applications into command-line harnesses that preserve functionality while exposing machine-readable protocols optimized for AI-native interaction. This eliminates the lossy visual-to-computational translation that plagues GUI agents. Rather than building sophisticated screen readers and click simulators, we should redesign interaction paradigms around agent strengths: precise programmatic control and deterministic execution. We examine the methodology, architecture, evidence, and future directions for this agent-native transformation of computer use. We have built CLI-Hub as a comprehensive platform that operationalizes this agent-native computer use vision. The platform provides methodology, architecture, and infrastructure for this fundamental transformation of computer use.",
+      "authors": [
+        "Yuhao Yang",
+        "Tianyu Fan",
+        "Chao Huang"
+      ],
+      "primary_category": "cs.HC",
+      "categories": [
+        "cs.HC"
+      ],
+      "published": "2026-06-02T16:30:33+00:00",
+      "link": "https://arxiv.org/pdf/2606.03854v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "proposes agent-native computer use through CLI, moving away from GUI-centric paradigm",
+      "llm_evidence_cn": "提出通过CLI实现智能体原生的计算机使用，偏离GUI中心范式",
+      "llm_evidence": "提出通过CLI实现智能体原生的计算机使用，偏离GUI中心范式",
+      "canonical_evidence": "提出通过CLI实现智能体原生的计算机使用，偏离GUI中心范式",
+      "llm_tldr_en": "Argues for a paradigm shift from GUI-based to CLI-based computer use agents, leveraging LLMs' strengths in structured data and programmatic control, and presents CLI-Anything framework.",
+      "llm_tldr_cn": "该论文批评以GUI为中心的智能体计算机使用范式，指出其脆弱性和与智能体能力的错位，主张采用CLI原生的方式，让智能体直接利用结构化数据处理和程序化控制优势。CLI-Anything框架使智能体通过命令行与系统交互，更适用于服务器基础设施。该工作直接支持智能体操作系统在人机交互层面的设计方向。",
+      "llm_tldr": "该论文批评以GUI为中心的智能体计算机使用范式，指出其脆弱性和与智能体能力的错位，主张采用CLI原生的方式，让智能体直接利用结构化数据处理和程序化控制优势。CLI-Anything框架使智能体通过命令行与系统交互，更适用于服务器基础设施。该工作直接支持智能体操作系统在人机交互层面的设计方向。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "Agents operating system for server infrastructure",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.06448v1",
+      "source": "arxiv",
+      "title": "Agent Memory: Characterization and System Implications of Stateful Long-Horizon Workloads",
+      "abstract": "LLM agents are increasingly deployed on long-horizon tasks requiring sustained reasoning over extended interaction histories. Realizing this at scale requires agents to persistently store, retrieve, and update their own memory across sessions. A rich ecosystem of agent memory systems has emerged spanning flat retrieval, LLM-mediated extraction, consolidating fact stores, and agentic control flows. Yet, their system-level behavior remains uncharacterized. We present the first systems characterization of agent memory. First, we introduce a system-oriented taxonomy classifying agent memory systems along four axes. Second, we build a phase-aware profiling harness attributing cost to construction, retrieval, and generation. Third, we characterize ten representative systems across two benchmark suites, uncovering how design choices shift cost across the write and read paths. Finally, we derive 10 system recommendations covering construction scheduling, capability floors, amortization via query volume, freshness-latency tradeoffs, and fleet-scale management.",
+      "authors": [
+        "Yasmine Omri",
+        "Ziyu Gan",
+        "Zachary Broveak",
+        "Robin Geens",
+        "Zexue He",
+        "Alex Pentland",
+        "Marian Verhelst",
+        "Tsachy Weissman",
+        "Thierry Tambe"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-06-04T17:44:18+00:00",
+      "link": "https://arxiv.org/pdf/2606.06448v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "characterization of agent memory systems for long-horizon workloads",
+      "llm_evidence_cn": "对长周期工作负载下智能体记忆系统的表征",
+      "llm_evidence": "对长周期工作负载下智能体记忆系统的表征",
+      "canonical_evidence": "对长周期工作负载下智能体记忆系统的表征",
+      "llm_tldr_en": "First systems characterization of agent memory, introducing a taxonomy and profiling harness to analyze cost of construction, retrieval, and generation in stateful agent workloads.",
+      "llm_tldr_cn": "LLM智能体越来越多地执行需要持续推理的长周期任务。本文首次对智能体记忆进行系统级表征，提出一种系统导向的分类法，并构建了相位感知的性能分析工具，用于归因构建、检索和生成的成本。该工作揭示了不同记忆系统的系统级行为差异，为设计高效智能体运行时系统提供了关键见解。",
+      "llm_tldr": "LLM智能体越来越多地执行需要持续推理的长周期任务。本文首次对智能体记忆进行系统级表征，提出一种系统导向的分类法，并构建了相位感知的性能分析工具，用于归因构建、检索和生成的成本。该工作揭示了不同记忆系统的系统级行为差异，为设计高效智能体运行时系统提供了关键见解。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "Agents operating system for server infrastructure",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.05637v1",
+      "source": "arxiv",
+      "title": "Availability-Aware and Efficiency-Driven AI Service Chain Provisioning in Multi-Domain Edge Intelligence Cloud",
+      "abstract": "In a multi-domain edge intelligence cloud (MDEIC) managed by multiple network operators, AI services are delivered by chains of virtual network functions (VNFs) executed in sequence, called AI service chains (AISCs). Therefore, achieving an efficient and economical AISC provisioning approach is essential. However, the interaction between the environmental characteristics (heterogeneity, resource constraints and limited information visibility) of MDEIC and the time-dependence of AISCs, introduces various challenges to AISC provisioning in MDEIC. In this paper, we first formulate the AISC provisioning problem as a partially observable stochastic game (POSG). Then, we propose a graph-and-time-based multi-agent AISC provisioning (GT-MAAISCP) approach to achieve the collaborative optimization of AISC provisioning cost, delay and availability. Specifically, each agent uses the graph-time dueling network (GTDN) architecture to extract network topology information and temporal relationships. Finally, the experimental results demonstrate that the proposed approach outperforms benchmark approaches in MDEIC and also illustrate its performance under varying network topologies and different numbers of local EICs (LEICs).",
+      "authors": [
+        "Hanzhi Chang",
+        "Jing Bai",
+        "Xin Tang",
+        "Xiaomei Liu",
+        "Yiming Chen"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI"
+      ],
+      "published": "2026-06-04T03:04:46+00:00",
+      "link": "https://arxiv.org/pdf/2606.05637v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "provisioning AI service chains across heterogeneous multi-domain edge clouds with resource constraints",
+      "llm_evidence_cn": "在异构多域边缘云中考虑资源约束的AI服务链部署",
+      "llm_evidence": "在异构多域边缘云中考虑资源约束的AI服务链部署",
+      "canonical_evidence": "在异构多域边缘云中考虑资源约束的AI服务链部署",
+      "llm_tldr_en": "This paper formulates AI service chain provisioning in multi-domain edge intelligence cloud as a stochastic game and proposes a graph-and-time-based multi-agent approach to optimize efficiency and availability.",
+      "llm_tldr_cn": "多域边缘智能云中AI服务链的部署面临异构性、资源约束和信息有限可见性等挑战。本文将问题建模为部分可观察随机博弈，并提出基于图和时间序列的多智能体调度方法。实验表明该方法在保证服务可用性的同时提高了资源利用效率。该工作服务于异构计算基础设施中的智能服务编排。",
+      "llm_tldr": "多域边缘智能云中AI服务链的部署面临异构性、资源约束和信息有限可见性等挑战。本文将问题建模为部分可观察随机博弈，并提出基于图和时间序列的多智能体调度方法。实验表明该方法在保证服务可用性的同时提高了资源利用效率。该工作服务于异构计算基础设施中的智能服务编排。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "heterogeneous compute resources for servers",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.06545v1",
+      "source": "arxiv",
+      "title": "Queen-Bee Agents: A BeeSpec-Centered Architecture for Governed Enterprise MCP Orchestration",
+      "abstract": "Enterprise agent systems increasingly need to connect large language models to private tools, internal knowledge, and Model Context Protocol (MCP) interfaces. In this setting, raw task capability is insufficient: organizations also require policy enforcement, tenant-scoped isolation, and execution that remains within explicit operational boundaries. We present Queen-Bee, a governed multi-agent architecture in which a Queen control plane retrieves capabilities, plans task-scoped execution, and compiles a structured BeeSpec that is executed by specialized Bee agents under constrained tool access. We implement a working prototype with tenant-scoped MCP connectors, audit-backed execution-time governance, retrieval-driven weak incubation, and multiple provisioning backends. We evaluate the system on 59 enterprise-style tasks spanning governance-sensitive requests, retrieval-driven provisioning, scoped local execution, and chemistry workflow integration. The retrieval-driven Queen-Bee variant achieves a task success rate of 0.964, zero governance failures, and substantially better scoped execution quality than both a static Queen-Bee baseline and a permissive single-agent baseline. We further show a multi-Bee chemistry workflow with explicit approval gating and a concrete top-3 shortlist grounded in real upstream evidence and screening artifacts. Additional comparisons with hybrid retrieval and LLM-guided provisioning show that richer provisioning backends are viable but do not outperform the lightweight structured retriever on the current small, highly structured capability registry. The results provide prototype-level systems evidence rather than a production deployment study, and suggest that enterprise agent platforms should be evaluated not only by capability, but also by governed provisioning, isolation behavior, scoped execution quality, and artifact-aware workflow coordination.",
+      "authors": [
+        "Dutao Zhang",
+        "Liaotian"
+      ],
+      "primary_category": "cs.SE",
+      "categories": [
+        "cs.SE",
+        "cs.AI"
+      ],
+      "published": "2026-06-04T07:12:00+00:00",
+      "link": "https://arxiv.org/pdf/2606.06545v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Governed multi-agent architecture for enterprise MCP orchestration with control plane",
+      "llm_evidence_cn": "企业级MCP编排的可治理多智能体架构，包含控制平面",
+      "llm_evidence": "企业级MCP编排的可治理多智能体架构，包含控制平面",
+      "canonical_evidence": "企业级MCP编排的可治理多智能体架构，包含控制平面",
+      "llm_tldr_en": "Queen-Bee presents a governed multi-agent architecture with a Queen control plane for capability retrieval, planning, and BeeSpec execution, ensuring policy enforcement and audit.",
+      "llm_tldr_cn": "企业代理系统需要连接LLM与私有工具，同时满足策略执行和租户隔离。Queen-Bee架构通过女王控制平面进行能力检索与规划，编译BeeSpec由蜜蜂代理执行，实现受限工具访问和可审计的运行时治理。原型验证了该架构在保障安全性的同时高效完成企业任务，为Agent OS中的治理提供了参考。",
+      "llm_tldr": "企业代理系统需要连接LLM与私有工具，同时满足策略执行和租户隔离。Queen-Bee架构通过女王控制平面进行能力检索与规划，编译BeeSpec由蜜蜂代理执行，实现受限工具访问和可审计的运行时治理。原型验证了该架构在保障安全性的同时高效完成企业任务，为Agent OS中的治理提供了参考。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "Agents operating system for server infrastructure",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.05679v1",
+      "source": "arxiv",
+      "title": "Data Flow Control: Data Safety Policies for AI Agents",
+      "abstract": "Agents increasingly generate SQL, orchestrate pipelines, and automate data analysis on behalf of users. While recent work improves query correctness, correctness is not safety. A query may be semantically valid yet violate regulatory, privacy, or business constraints that govern how data may be combined and released. We argue that enforcing such constraints is fundamentally a data infrastructure problem.   This paper introduces Data Flow Control (DFC), a framework to declaratively specify and guarantee policy enforcement over tuple-level data flows within a DBMS query. A key challenge is defining a policy language that is optimizer-invariant yet efficient to enforce at scale. We formalize data safety as aggregate predicates over provenance monomials and present Passant, a portable query rewriting layer that enforces DFC policies without materializing provenance. Across five DBMS engines -- DuckDB, Umbra, PostgreSQL, DataFusion, and SQLServer -- Passant achieves ~0% overhead and outperforms alternatives by orders of magnitude. As a result, Data Flow Control is the first step towards moving data safety from prompts and post-hoc checks into the data infrastructure. Data Flow Control is available open source at https://github.com/dataflowcontrol/data-flow-control.",
+      "authors": [
+        "Charlie Summers",
+        "Eugene Wu"
+      ],
+      "primary_category": "cs.DB",
+      "categories": [
+        "cs.DB",
+        "cs.AI"
+      ],
+      "published": "2026-06-04T04:01:24+00:00",
+      "link": "https://arxiv.org/pdf/2606.05679v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "addresses data safety for AI agents, matching composite theme of agent security",
+      "llm_evidence_cn": "针对AI智能体的数据安全，符合复合主题中的智能体安全演进",
+      "llm_evidence": "针对AI智能体的数据安全，符合复合主题中的智能体安全演进",
+      "canonical_evidence": "针对AI智能体的数据安全，符合复合主题中的智能体安全演进",
+      "llm_tldr_en": "Introduces Data Flow Control (DFC) framework for enforcing data safety policies on AI agent data flows within DBMS, addressing a critical infrastructure need.",
+      "llm_tldr_cn": "当前AI智能体在生成SQL、编排管道时，查询正确性不等于安全性，可能违反监管或隐私约束。本文提出数据流控制（DFC）框架，在DBMS查询中声明式地指定并保证元组级数据流上的策略执行。通过将数据安全形式化为对溯源单项的聚合谓词，并提出了Passant引擎，实现了优化器无关且可扩展的策略实施。该工作将数据安全定位为数据基础设施问题，为智能体安全提供了基础支撑。",
+      "llm_tldr": "当前AI智能体在生成SQL、编排管道时，查询正确性不等于安全性，可能违反监管或隐私约束。本文提出数据流控制（DFC）框架，在DBMS查询中声明式地指定并保证元组级数据流上的策略执行。通过将数据安全形式化为对溯源单项的聚合谓词，并提出了Passant引擎，实现了优化器无关且可扩展的策略实施。该工作将数据安全定位为数据基础设施问题，为智能体安全提供了基础支撑。",
+      "llm_tags": [
+        "query:agents-os:composite"
+      ],
+      "matched_query_tag": "query:agents-os:composite",
+      "matched_query_text": "Papers central to 生成服务器领域的洞察，侧重Agents OS、AI操作系统、异构算力基础设施、智能体安全演进、一体化算力网, especially work that connects or combines: Agents operating system for server infrastructure; AI operating system for heterogeneous computing; heterogeneous compute resources for servers; heterogeneous computing infrastructure for AI workloads; compute in memory architecture for neural networks; liquid cooling solutions for high density AI clusters; How do AI operating systems handle heterogeneous compute resources?; How to design heterogeneous computing infrastructure for intelligent agents?; What are the key technologies for building AI operating systems?; How does heterogeneous computing support large model training?.",
+      "matched_requirement_id": "req-composite-agents-os",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.09200v1",
+      "source": "arxiv",
+      "title": "Resource-aware Computation-Communication Overlap for multi-GPU ML Workloads",
+      "abstract": "The rapid growth of large-scale machine learning (ML) has made distributed training across multiple GPUs a fundamental component of modern ML systems. As model sizes and computational throughput continue to increase, communication overhead has become a dominant bottleneck in multi-GPU training, particularly when computation and communication are executed sequentially. This work explores concurrent execution of computation and collective communication using two portable runtime controls: shared-memory-driven occupancy shaping for computation kernels and elevated scheduling priority for communication kernels. Our approach regulates computation-kernel residency through per-block shared-memory allocation, leaving sufficient on-chip resources for communication kernels to make progress. In addition, assigning higher priority to communication streams ensures steady communication progress once resources become available. Experiments on NVIDIA A40, A100, H100, and AMD MI250X GPUs demonstrate that the proposed method enables effective computation-communication overlap and reduces total execution time by up to 25.5 percent, without modifying vendor libraries or kernel implementations.",
+      "authors": [
+        "Minyu Cui",
+        "Miquel Pericas"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC",
+        "cs.AI"
+      ],
+      "published": "2026-06-08T08:33:03+00:00",
+      "link": "https://arxiv.org/pdf/2606.09200v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Resource-aware computation-communication overlap for multi-GPU ML workloads addresses heterogeneous compute resource utilization in distributed training",
+      "llm_evidence_cn": "面向多GPU机器学习工作负载的资源感知计算-通信重叠，解决分布式训练中的异构计算资源利用问题",
+      "llm_evidence": "面向多GPU机器学习工作负载的资源感知计算-通信重叠，解决分布式训练中的异构计算资源利用问题",
+      "canonical_evidence": "面向多GPU机器学习工作负载的资源感知计算-通信重叠，解决分布式训练中的异构计算资源利用问题",
+      "llm_tldr_en": "Proposes runtime controls (shared-memory occupancy shaping and elevated scheduling priority) to overlap computation and collective communication in multi-GPU training, improving efficiency of heterogeneous compute resources.",
+      "llm_tldr_cn": "该论文针对大规模多GPU训练中通信开销成为瓶颈的问题，提出通过共享内存占用塑造和调度优先级提升两种运行时控制方法，实现计算与集体通信的并发执行。实验表明该方法有效提高了GPU利用率，减少了训练时间。该方法可应用于异构计算资源的高效调度，为AI操作系统管理异构算力提供参考。",
+      "llm_tldr": "该论文针对大规模多GPU训练中通信开销成为瓶颈的问题，提出通过共享内存占用塑造和调度优先级提升两种运行时控制方法，实现计算与集体通信的并发执行。实验表明该方法有效提高了GPU利用率，减少了训练时间。该方法可应用于异构计算资源的高效调度，为AI操作系统管理异构算力提供参考。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "heterogeneous compute resources for servers",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.07713v1",
+      "source": "arxiv",
+      "title": "Attention at the Theoretical Minimum: A Mathematics of Arrays Framework for Memory-Optimal Transformer Kernels",
+      "abstract": "The attention mechanism is the dominant computational bottleneck in modern transformer-based AI. Its standard implementation incurs quadratic memory traffic in the sequence length~$n$, and DRAM accesses cost 100--1000$\\times$ more energy than arithmetic operations on contemporary hardware, so any analysis focused solely on FLOP counts fundamentally mischaracterises the bottleneck.   We present a Mathematics of Arrays (MoA) reformulation of scaled dot-product attention and its numerically stable softmax, deriving a Denotational Normal Form (DNF) that eliminates all intermediate arrays -- including the implicit transposed-key buffer and every softmax temporary -- by algebraic construction rather than empirical tuning. The DNF achieves $O(n_{dk} + n{_{dv}})$ data movement versus $O(n^2 + n_{dk} + n_{dv})$ for the standard implementation, where $n$ is the sequence length, $dk$ is the key dimensionality and $dv$ the value dimensionality, and is verified numerically against PyTorch at full double-precision floating-point on concrete inputs.   Unlike hardware-specific accelerators or empirical tiling schemes such as FlashAttention, MoA simultaneously provides array fusion, shape-transformation correctness, and predictive cost models from a single algebraic framework. Memory minimality is a theorem established before any code is written. A predictive performance model projects $2$--$100\\times$ speedup and $2$--$50\\times$ energy reduction, with the advantage widening at exascale. The derivation establishes a formally verified pipeline from Python specification through (ONF) Operational Normal Form, and dimension-lifted hardware mapping, providing performance-portable AI kernels of direct relevance to DARPA edge-deployment and DOE exascale priorities.",
+      "authors": [
+        "Lenore Mullin",
+        "Gaetan Hains"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.PF"
+      ],
+      "published": "2026-06-05T14:44:49+00:00",
+      "link": "https://arxiv.org/pdf/2606.07713v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "memory-optimal transformer kernel design for efficient neural network computation",
+      "llm_evidence_cn": "针对神经网络的高效内存优化变换器核设计",
+      "llm_evidence": "针对神经网络的高效内存优化变换器核设计",
+      "canonical_evidence": "针对神经网络的高效内存优化变换器核设计",
+      "llm_tldr_en": "This paper uses a Mathematics of Arrays framework to derive a memory-optimal attention kernel that eliminates all intermediate arrays, drastically reducing DRAM traffic for transformer inference.",
+      "llm_tldr_cn": "注意力机制的内存访问是Transformer推理的主要瓶颈。本文基于数组数学框架重新推导了缩放点积注意力及其稳定softmax，通过代数构造消除了所有中间数组，包括隐式转置键缓冲区和softmax临时变量。该方法将内存流量降低到理论最小值，显著减少能耗。对于大规模神经网络部署尤其是内存受限环境具有重要意义。",
+      "llm_tldr": "注意力机制的内存访问是Transformer推理的主要瓶颈。本文基于数组数学框架重新推导了缩放点积注意力及其稳定softmax，通过代数构造消除了所有中间数组，包括隐式转置键缓冲区和softmax临时变量。该方法将内存流量降低到理论最小值，显著减少能耗。对于大规模神经网络部署尤其是内存受限环境具有重要意义。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "compute in memory architecture for neural networks",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.09613v1",
+      "source": "arxiv",
+      "title": "AGENTSERVESIM: A Hardware-aware Simulator for Multi-Turn LLM Agent Serving",
+      "abstract": "Multi-turn LLM agents interleave model calls with external tool invocations, shifting serving from stateless request processing to stateful program execution. Serving these workloads requires scheduling, KV-cache management, and routing policies that use program-level context, including turn dependencies, tool-induced gaps, and reusable KV state. Evaluating such policies directly on real systems is costly, since each design point may require dedicated accelerator time across arrival rates, model scales, serving-instance counts, and memory hierarchies. Simulation offers a scalable alternative, but existing LLM serving simulators target stateless request-level workloads and therefore omit the core dynamics of agent serving: multi-turn program execution, cross-turn cache locality, and KV-cache residency during tool gaps. We present AGENTSERVESIM, a hardware-aware simulator for multi-turn LLM agent serving. AGENTSERVESIM evaluates serving policies at program granularity through composable modules: a Program Orchestrator preserves program identity and turn order, a Tool Simulator materializes tool-induced gaps, a Session-Aware Router maintains program-to-instance affinity for cache-aware dispatch, and a KV Residency Model tracks policy-defined KV placement across HBM, host DRAM/CXL, and eviction. Across real serving deployments and hardware configurations, AGENTSERVESIM reproduces real-system behavior within 6% error across key performance metrics while running entirely on commodity CPUs. These results show that AGENTSERVESIM enables controlled, repeatable exploration of agent-serving policies without requiring exhaustive deployment on costly accelerators.",
+      "authors": [
+        "Rakibul Hasan Rajib",
+        "Mengxin Zheng",
+        "Qian Lou"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-06-08T15:20:23+00:00",
+      "link": "https://arxiv.org/pdf/2606.09613v1",
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "hardware-aware simulator for multi-turn LLM agent serving",
+      "llm_evidence_cn": "面向多轮LLM智能体服务的硬件感知仿真器",
+      "llm_evidence": "面向多轮LLM智能体服务的硬件感知仿真器",
+      "canonical_evidence": "面向多轮LLM智能体服务的硬件感知仿真器",
+      "llm_tldr_en": "Introduces AGENTSERVESIM, a hardware-aware simulator for evaluating scheduling, KV-cache management, and routing policies in multi-turn LLM agent serving, capturing program-level context and turn dependencies.",
+      "llm_tldr_cn": "该论文提出AGENTSERVESIM，一个硬件感知的仿真器，专门用于评估多轮LLM智能体服务中的调度、KV缓存管理和路由策略。与现有仅支持无状态请求的仿真器不同，它能够捕捉程序级上下文和轮次依赖关系。该工具直接支持智能体操作系统的设计与评估，为服务器基础设施上智能体服务的资源管理提供可扩展的测试平台。",
+      "llm_tldr": "该论文提出AGENTSERVESIM，一个硬件感知的仿真器，专门用于评估多轮LLM智能体服务中的调度、KV缓存管理和路由策略。与现有仅支持无状态请求的仿真器不同，它能够捕捉程序级上下文和轮次依赖关系。该工具直接支持智能体操作系统的设计与评估，为服务器基础设施上智能体服务的资源管理提供可扩展的测试平台。",
+      "llm_tags": [
+        "query:agents-os"
+      ],
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "Agents operating system for server infrastructure",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
