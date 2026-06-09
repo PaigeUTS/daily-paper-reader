@@ -1,0 +1,33 @@
+{
+  "version": 2,
+  "extractor": "papercropper",
+  "tables": [
+    {
+      "url": "assets/tables/openreview/openreview-icml-2025-dg24pyewsi/table-001.webp",
+      "caption": "",
+      "page": 0,
+      "index": 1,
+      "width": 856,
+      "height": 226,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-icml-2025-dg24pyewsi/table-002.webp",
+      "caption": "",
+      "page": 0,
+      "index": 2,
+      "width": 862,
+      "height": 390,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-icml-2025-dg24pyewsi/table-003.webp",
+      "caption": "",
+      "page": 0,
+      "index": 3,
+      "width": 817,
+      "height": 200,
+      "label": "Table"
+    }
+  ]
+}

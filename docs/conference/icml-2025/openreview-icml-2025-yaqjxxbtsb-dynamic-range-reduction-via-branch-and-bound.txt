@@ -1,0 +1,913 @@
+Title: Dynamic Range Reduction via Branch-and-Bound
+
+URL Source: https://openreview.net/pdf?id=yaqjXxbtSB
+
+Number of Pages: 13
+
+Markdown Content:
+000 001 002 003 004 005 006 007 008 009 010 011 012 013 014 015 016 017 018 019 020 021 022 023 024 025 026 027 028 029 030 031 032 033 034 035 036 037 038 039 040 041 042 043 044 045 046 047 048 049 050 051 052 053 054 
+
+# Dynamic Range Reduction via Branch-and-Bound 
+
+Anonymous Authors 1
+
+# Abstract 
+
+A key strategy to enhance specialized hardware accelerators, such as GPUs and FPGA, is to re-duce the numerical precision in arithmetic op-erations, which increases processing speed and lowers latency—both crucial for real-time AI ap-plications. In this work, we consider NP -hard Quadratic Unconstrained Binary Optimization (Q UBO ) problems, which arise in machine learn-ing and beyond. We show that these problems often require high numerical precision, posing challenges for hardware solvers. We introduce a principled Branch-and-Bound algorithm for re-ducing the precision requirements of Q UBO prob-lems by utilizing the dynamic range as a mea-sure of complexity. Experiments demonstrate that our method reduces the dynamic range in subset sum, clustering, and vector quantization problems, thereby increasing their solvability on actual quan-tum annealers and FPGA-based digital annealers. 
+
+# 1. Introduction 
+
+Hardware acceleration is a major driving force in the recent advent of artificial intelligence (AI). Virtually all large-scale AI models rely on hardware accelerated training via Ten-sor Processing Units (TPUs), Graphics Processing Units (GPUs), or Field-Programmable Gate Arrays (FPGAs). A key ingredient of these accelerators is parallelism—a large computation is split into smaller pieces, solved via multiple compute units. Clearly, each compute unit must read its inputs from memory. However, memory bandwidth is lim-ited. Hence, to achieve a large level of parallelism, the input that each compute unit needs must be as small as possible. To this end, model parameters with limited precision, e.g., 16-bit, 8-bit, or even smaller, are considered and special training procedures are employed to directly train models with low-precision parameters (Choukroun et al., 2019). AI     
+
+> 1Anonymous Institution, Anonymous City, Anonymous Region, Anonymous Country. Correspondence to: Anonymous Author
+> <anon.email@domain.com >.Preliminary work. Under review by the International Conference on Machine Learning (ICML). Do not distribute.
+> Original QHardware solver upload
+> ˜z∗= 10100011 ̸=z∗= 10110110
+> Perturbed problem
+
+Figure 1: Illustration of parameter perturbation for finite pre-cision hardware. The original Q UBO Q is perturbed through quantization errors which can lead to spurious optima. accelerators usually rely on parallel implementations of ba-sic linear algebra routines. There is, however, a multitude of AI problems whose inherent computational complexity does not stem from linear algebra operations. Examples include clustering (Aloise et al., 2009), probabilistic inference (Er-mon et al., 2013), or feature selection (Brown, 2009). At the core of these tasks lies a combinatorial optimization (CO) problem. As of today, solving such ML-related CO prob-lems exactly is out of reach for high-dimensional instances. However, analog devices (Yamamoto et al., 2020; Mohseni et al., 2022; Mastiyage Don et al., 2023), ASICs (Matsubara et al., 2020), FPGAs (M ¨ucke et al., 2019; Kagawa et al., 2020), and quantum computers (Albash & Lidar, 2018) have recently made promising progress when it comes to solving CO problems. In particular, we consider Quadratic Uncon-strained Binary Optimization (Q UBO ) (Punnen, 2022) and equivalent Ising problems 
+
+min  
+
+> z∈{ 0,1}n
+
+z⊤Qz ⇔ min  
+
+> s∈{− 1,1}n
+
+s⊤Js + h⊤s , (1) where Q, J and h are real (proper definitions follow in Sec. 3). Despite (1) ’s simple structure, it is NP -hard, and hence covers a plethora of real-world optimization chal-lenges, from problems like the traveling salesperson and graph coloring (Lucas, 2014) to machine learning (ML) (Bauckhage et al., 2018; M ¨ucke et al., 2023) and various other applications (Biesner et al., 2022; Chai et al., 2023). One common issue of Q UBO hardware solvers, also called Ising machines, is limited physical precision of the matrix entries, as real-world hardware devices use finite numerical representations. It turns out that simply truncating decimal 1055 056 057 058 059 060 061 062 063 064 065 066 067 068 069 070 071 072 073 074 075 076 077 078 079 080 081 082 083 084 085 086 087 088 089 090 091 092 093 094 095 096 097 098 099 100 101 102 103 104 105 106 107 108 109 
+
+> Dynamic Range Reduction via Branch-and-Bound
+
+digits of Q is not sufficient, since the resulting optimization problem will have different local and global optima (M ¨ucke et al., 2025) (see Fig. 1). In the paper at hand, we develop an algorithmic machinery for reducing the numeric preci-sion required to represent Q UBO instances. The proposed method relies on the dynamic range ( DR ) of any Q UBO 
+
+matrix as a measure of its complexity. We present a novel iterative procedure, which reduces the 
+
+DR while preserving the optimal solution of the underlying QUBO . Moreover, we explain why greedy methods are likely to produce sub-optimal results and propose a novel method that is based on policy rollout (Bertsekas et al., 1997; Silver et al., 2016) to adress the greedy nature of baseline methods. Our contributions can be summarized as follows: • We formulate the problem of reducing the required precision via a Markov decision process and introduce a fully principled Branch-and-Bound algorithm for ex-actly solving the problem in a finite number of steps. • We propose effective and efficiently computable bounds for pruning the search space. • Combining our algorithm with the well-known rollout policy, we further improve efficiency and performance. • We support our theoretical insights with an experimen-tal analysis for ML-related problems on quantum hard-ware and an FPGA-based digital annealer. The results demonstrate the effectiveness of our precision reduc-tion, its superiority over baseline methods, and the benefits it provides for hardware solvers. 
+
+# 2. Related Work 
+
+It is well known that hardware devices tailored towards solving Q UBO problems suffer from a limited parameter precision (Oku et al., 2020). While FPGA-based digital annealing devices ( S¸ eker et al., 2022) have a fixed bit-width 
+
+for representing problem parameters, e.g., 16-bit, quantum computers are prone to integrated control errors (Booth et al., 2017; Vysko ˇcil et al., 2019). For preserving global optima, in (Oku et al., 2020) the bit-width is reduced by introducing exponentially many auxiliary variables depen-dent on the number of reduced bits. This can be combined with the heuristic rounding of the parameters (Yachi et al., 2022), which however, can lead to different optima. A sim-ilar method respecting the underlying hardware topology of a D-Wave quantum annealer can be found in (Mooney et al., 2019). Instead of enlargening the problem size, (Yachi et al., 2023) follows the approach of solving topologically equivalent instances, each with reduced precision require-ments. The number of these instances is exponential in the number of reduced bits and optimum preservation is only guaranteed if all instances have the same global optimum. A more general precision measure than the bit-width, which is only defined for integer parameters, is discussed in (Stol-lenwerk et al., 2019a;b). The maximum coefficient ratio of a Q UBO problem is directly related to the performance on D-Wave quantum annealers. It is mentioned that it is largely affected by penalty parameters for incorporating constraints. (Verma & Lewis, 2022; Alessandroni et al., 2023) try to optimize these penalties by using bounds on the optima of the underlying problem. However, these methods are not applicable for arbitrary Q UBO instances, e.g., when the large precision stems from the underlying data and not the problem formulation. In (M ¨ucke et al., 2025), the dynamic range is identified as an improved complexity measure, and a method for iteratively reducing it is proposed. The method can be applied for any Q UBO instance. The underlying idea is to update single Q UBO matrix entries within specific inter-val boundaries, computed by bounding the optimal Q UBO 
+
+value. The method is guaranteed to preserve the original optima. However, the heuristics presented in that work are greedy and often get stuck in local optima. In what follows, we build upon (M ¨ucke et al., 2025) by formulating a more elaborate algorithm that overcomes this issue. 
+
+# 3. Background 
+
+We denote matrices with bold capital letters (e.g. A) and vectors with bold lowercase letters (e.g. a). Sets will be symbolized by calligraphical or blackboard bold capital let-ters (e.g. A, A). Let the index set from 1 to n be denoted as [n] ..= {1, . . . , n }. For an optimization problem, some-thing optimal will be denoted by the superscript “*”. We use “ ˆ ” or “ ˇ ” to indicate a maximum/upper bound or a minimum/lower bound, respectively. 
+
+3.1. QUBO 
+
+A Q UBO problem is completely characterized by an upper triangular matrix Q ∈ Rn×n. The Q UBO energy of a bi-nary vector z ∈ { 0, 1}n is defined as EQ(z) ..= z⊤Qz =P 
+
+> i≤j
+
+Qij zizj . Note that any real Q UBO matrix can be brought into an equivalent upper triangular form. The objective of a Q UBO problem is to find a binary vector 
+
+z∗ ∈ { 0, 1}n which optimizes the Q UBO energy 
+
+z∗ ∈ Z ∗(Q) ..= arg min 
+
+> z∈{ 0,1}n
+
+EQ(z) , (2) where Z∗(Q) is the set of optimizers for the Q UBO problem with matrix Q. Let Qn denote the set of upper triangular matrices in Rn×n. The problem in (1) is NP -hard (Pardalos & Jha, 1992), i.e., in the worst case, the best known algo-rithm is an exhaustive search over an exponentially large candidate space. Furthermore, any problem in NP can be reduced to Q UBO with only polynomial overhead, mak-ing this formulation a very general form for combinatorial 2110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 
+
+> Dynamic Range Reduction via Branch-and-Bound
+
+optimization. A range of solution techniques has been de-veloped over past decades, e.g., exact methods (Narendra & Fukunaga, 1977; Rehfeldt et al., 2023) with worst-case exponential running time, approximate techniques such as simulated annealing (Kirkpatrick et al., 1983), tabu search (Glover & Laguna, 1998), and genetic programming (Gold-berg & Kuo, 1987); see (Kochenberger et al., 2014) for a comprehensive overview. 
+
+3.2. Dynamic Range 
+
+Although the entries of a Q UBO matrix are theoretically real-valued, real-world computing devices have limits on the precision with which numbers can be represented. To quan-tify the precision required to accurately represent Q UBO 
+
+parameters, we adopt the concept of dynamic range ( DR )from signal processing. For this, we first define the set absolute differences between all elements of X ⊂ R as 
+
+D(X ) ..= {| x − y| : x, y ∈ X , x ̸ = y}, and write 
+
+ˇD(X ) ..= min D(X ) and ˆD(X ) ..= max D(X ). For a given QUBO matrix Q ∈ Q n the DR is defined as 
+
+DR (Q) ..= log 2
+
+ˆD(U(Q)) ˇD(U(Q)) 
+
+!
+
+, (3) where U(Q) ..= {Qij : i, j ∈ [n]}. Note that always 
+
+0 ∈ U (Q), since Q is upper triangular, that is Qij = 0 for 
+
+i > j . A large DR indicates that many bits are required to represent all parameters of Q accurately in binary, as the parameters span a wide range of values and require fine gradations. Taking the next larger integer larger than the DR quantifies how many bits are required to faithfully implement the parameters of a Q UBO matrix. Different measures for describing the required precision are the coefficient ratio (CR ) (Stollenwerk et al., 2019b) 
+
+CR (Q) = max {| Qij | : i, j ∈ [n]}
+
+min {| Qij | : i, j ∈ [n]} \ { 0} ≤ 2DR (Q) ,
+
+and the bit-width (BW ) (Yachi et al., 2023) 
+
+BW (Q) = ⌈log 2 max {| Qij | : i, j ∈ [n]}⌉ + 1 ≥ DR (Q) ,
+
+which is only defined for integer entries. The BW does not capture inter-weight distances, making it an inaccurate measure when scaling parameters to a specific range. Even though CR might be very small, the DR can still be large, but the reverse does not hold. That is to say, we understand 
+
+DR as an accurate measure of representational complexity. 
+
+# 4. Methodology 
+
+Our main goal is to reduce the DR of a given Q UBO problem by transforming the corresponding Q UBO matrix subject to the requirement that a global optimizer must be kept intact.              
+
+> a2a3, . . . a1
+> r= 0 .21 r= 0 .15
+> DR = 9 .49 DR = 9 .28 DR = 9 .13 DR = 8 .89
+> Vπ= 0 .24
+
+Figure 2: Illustration of the MDP described in Sec. 4. Every step t, we choose an action at in form of an index pair and update our state st to st+1 to obtain a matrix with a smaller 
+
+DR . The goal is to maximize the value function V π .To this end, we define the notion of optimum inclusion ( ∗⊑)on Q UBO instances as Q ∗⊑ Q′ ⇔ Z ∗(Q) ⊆ Z ∗(Q′). We formulate the precision reduction problem as follows: 
+
+arg min 
+
+> A∈Q n
+
+DR (Q + A) (4a) s.t. Q + A ∗⊑ Q . (4b) Let us give a small example for clarification. 
+
+Example 1. Consider the following 2 × 2 matrices: 
+
+Q =
+
+0.8 −1.50 −1000 
+
+
+
+, Q′ =
+
+0.8 −1.50 −2
+
+
+
+.
+
+Observing the corresponding QUBO problems, we get 
+
+arg min 
+
+> z∈{ 0,1}2
+
+z⊤Qz = arg min 
+
+> z∈{ 0,1}2
+
+z⊤Q′z =
+
+11
+
+
+
+,
+
+that is, Q and Q′ have the same optimizer, therefore Q ∗⊑
+
+Q′. Furthermore, it holds that 
+
+Q + A = Q′, A ..=
+
+0 00 998 
+
+
+
+.
+
+When we compare the DR of Q and Q′, we find that 
+
+DR (Q) ≈ 10 .29 , DR (Q′) ≈ 2.49 .
+
+Example 1 demonstrates that, in principle, it is possible to reduce the DR while preserving an optimizer of the Q UBO 
+
+problem. Interestingly, we can find an optimal solution 
+
+A∗ = ( δij (1 − 2z∗ 
+
+> i
+
+)) ni,j =1 − Q to (4), when we already know an optimizer z∗ ∈ Z ∗(Q). Q + A∗ is a diagonal matrix only consisting of the entries −1, 0, 1 with a min-imum DR (Q + A∗) = 1 . Nevertheless, solving an arbi-trary Q UBO problem with matrix Q is NP -hard, but the resulting optimum of (4) is a diagonal matrix, for which the corresponding Q UBO problem is solvable in linear time 
+
+O(n). Taking the common assumption that P̸ = NP , solv-ing (4) is also NP -hard and thus as intractable to solve as the Q UBO problem itself. Thus, we consider a slightly more constrained version than (4). 
+
+4.1. Markov Decision Process Formulation 
+
+We consider the state space as S = Qn and the action space 
+
+A ⊂ [n] × [n]. The state transition function is given by 3165 166 167 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 216 217 218 219                    
+
+> Dynamic Range Reduction via Branch-and-Bound
+> Q
+> r∗<ˇrr∗<ˇr
+> r∗<ˇr
+> r∗<ˇrr∗<ˇrr∗<ˇr
+> T= 5
+> T= 4
+> T= 3
+> T= 2
+> Rollout
+
+Figure 3: Exemplary depiction of the search space when applying our B&B algorithm (Sec. 5) to some Q UBO matrix Q. In every step, we expand our search space (from top to bottom, Sec. 5.1) and check whether a branch can be pruned ( r∗ < ˇr,Sec. 5.3). The small filled circles indicate the visited states of our algorithm and the pruned parts are depicted as gray dashed lines. The fraction of pruned states is 40 /85 = 0 .47 (without rollout). Since the search space size grows exponentially with the horizon T = 5 , we execute a PR (Sec. 5.2) for ˜T = 2 steps. From here on, a base policy is followed without expanding further, which is depicted in blue. The red path indicates the optimal solution and the yellow path shows the base policy. 
+
+f (s, a ) = f (Q, (k, l )) = Q + h(Q, (k, l )) eke⊤ 
+
+> l
+
+, where 
+
+ek, el are the standard basis vectors with zeros everywhere except at index k and l, respectively. h : Qn×[n]×[n] → R,
+
+is a function for determining the parameter update and we consider the following heuristic (M ¨ucke et al., 2025): Matrix entries are changed by a parameter w, Qkl → Qkl + w with 
+
+k, l ∈ [n], k ≤ l such that an optimizer is preserved, i.e., 
+
+y−(Q) ≤ w ≤ y+(Q) ⇒ Q + weke⊤ 
+
+> l∗
+
+⊑ Q. Details on heuristic h and how to compute the bounds y−(Q) and 
+
+y+(Q) can be found in (M ¨ucke et al., 2025) and are given in the Appendix. Note that y−(Q) ≤ 0 ≤ y+(Q) and h is illustrated in Fig. 4a. We define the reward as the change of DR , r(s, a ) ..= DR (s) − DR (f (s, a )) . The four-tuple 
+
+(S, A, f, r ) defines a Markov decision process (MDP). Now assume that we want to change T QUBO matrix entries such that the accumulated reward is maximized. Formally, the goal is to find a policy π∗ : S → A , s.t., 
+
+π∗ = arg max  
+
+> π:S→A
+
+V π (s0) = arg max   
+
+> π:S→A
+> T−1
+
+X
+
+> t=0
+
+r (st, π (st)) (5a) 
+
+= arg min  
+
+> π:S→A
+
+DR (fT (Q, π )) , (5b) where the equality follows through a telescopic sum and the t-time state transition ft following policy π is defined as ft(s0, π ) ..= f (st, π (st)) = st+1 , s0 ..= Q. Our MDP is illustrated in Fig. 2. Observing that the transition is a simple matrix addition, we can write fT (Q, π ) = Q + A′,where Q + A′ ∗⊑ Q. Thus, the optimization objective of the decision process in (5) is a more restricted version of the problem in (4). That is, we do not optimize over the set of all optimum inclusive matrices, but over the subset of matrices which can be created with any policy following our MDP framework. The cumulative sum in (5a) is also called the value function V π for a policy π. Using the recursive 
+
+Bellman equation 
+
+V π∗
+
+(st) = max 
+
+> a∈A
+
+h
+
+r(st, a ) + V π∗
+
+(f (st, a )) 
+
+i
+
+, (6) we can find an optimal policy in (5) with dynamic program-ming (DP), using a shortest path-type method. In our case, we have no knowledge about the final state fT (Q, π ) and thus the search space is exponentially large (see Fig. 3). Choosing the number of iterations T logarithmic in the problem dimension, i.e., T = log 2(n2) = 2 log 2(n), re-sults in a sub-exponential ( o(2 n)) state space size. Thus, we have an asymptotically slower growth than the expo-nentially large state space size 2n of the original Q UBO 
+
+problem. However, in practice, super-polynomial runtimes are often not tractable, especially for large n. Due to this fact, (6) is typically solved with approximate DP methods such as Monte Carlo Tree Search (MCTS), policy rollout (PR) or reinforcement learning (Bertsekas, 2019; 2021). We present a Branch and Bound (B&B) algorithm utilizing PR to reduce the complexity of solving (5). 
+
+# 5. Branch and Bound 
+
+Following all paths of possible Q UBO matrix updates is intractable. We combine PR with the B&B paradigm to obtain a trade-off between computational complexity and solution quality—solution paths which cannot lead to an optimum are pruned, based on bounds on the best found solution. The algorithm is given in Fig. 3: the search space is expanded (branch) and every state is checked whether it can be pruned (bound). This is done until the final horizon 
+
+T is reached and the state with the minimum DR is returned. 
+
+5.1. Branch 
+
+In the branch -step, the search space is expanded from the current considered state. The question arises how to decide which indices to consider in the current iteration, i.e., which entries of Q UBO matrix should be changed. The obvious method is to use all n(n + 1) /2 upper triangular indices of the whole matrix, which we will further indicate by A LL .4220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 259 260 261 262 263 264 265 266 267 268 269 270 271 272 273 274 
+
+> Dynamic Range Reduction via Branch-and-Bound
+
+With large n, this expansion gets very large and thus we also consider a different method in our experiments. This method is based on the observation, that only four entries of the Q UBO matrix affect the DR when changing a single weight. Namely the smallest/largest weight and the weights which are closest to each other, which will be denoted by IMPACT . This drastically reduces the search space search size and the performance to A LL is compared in Sec. 6. 
+
+5.2. Policy Rollout 
+
+Having an index pair (k, l ) at hand, a new state is created from the current state Q by following the transition func-tion f . Instead of solving the problem in (5) exactly and expanding the search space for T steps, we also consider a PR approach. It describes the concept of following a given a base policy ˙π for a number of steps. For a given rollout depth ˜T ≤ T , we denote the policy which optimizes its path for ˜T steps and then follows ˙π for T − ˜T steps as ¯π ˜T . We use a greedy policy ˙π(Q) ..= arg min a∈A DR (f (Q, a )) 
+
+which myopically optimizes the DR when taking a single step. Since the solution quality is monotonically increas-ing with ˜T , we obtain a trade-off between the size of the state space and the performance of our algorithm. Using PR is motivated by the well known rollout selection policy .At time t, the optimal future reward V π∗
+
+(f (st, a )) is ap-proximated with the reward V ˙π (f (st, a )) following ˙π. The Bellman equation (6) is modified to 
+
+V ˜π (st) = max 
+
+> a∈A
+
+r(st, a ) + V ˙π (f (st, a ))  . (7) The resulting rollout selection policy ˜π is at least equal and typically better than the base policy ˙π. It is renowned for its simplicity and strong performance, largely due to its close relationship with the fundamental dynamic programming algorithm of policy iteration. (7) represents the optimal one-step look-ahead policy, when subsequently following a base policy. This principle can be generalized to ˜T -step look-ahead rollouts, ˜T ≤ T , where the solution quality increases with increasing rollout horizon ˜T . The exact solution for (5) is obtained if ˜T = T . Thus, PR can be seamlessly integrated into our B&B algorithm. An experimental comparison between ¯π ˜T and ˜π with using the aforementioned variants can be found in Sec. 6.1. 
+
+5.3. Bound 
+
+We want to prune states, which cannot lead to the opti-mal solution. Deciding whether a state can be pruned, is dependent on bounds of the reachable best solution from that given state. Given the current best final DR r∗, we can prune a state Q if it is smaller than a lower bound 
+
+ˇr(Q, T ) on the best reachable solution DR (fT (Q, π ∗)) , i.e., if r∗ ≤ ˇr(Q, T ) ≤ DR (fT (Q, π ∗)) . Pruning states, we do not have to expand the search further and can drastically                                                 
+
+> R
+> −2−1.500.8
+> ˇD(U(Q))
+> ˆD(U(Q))
+> h
+> (a) We can read off ˆD(U(Q)) = 2 .8(red) and ˇD(U(Q)) = 0 .5
+> (green). Change of parameter Q01 using a heuristic h(Q,0,1) = 0.7(yellow). The sorted parameters are given by q1=−2,q2=
+> −1.5,q3= 0 and q4= 0 .8.
+> R
+> ˇb(Q,1)
+> ˆb(Q,1)
+> (b) Bounds when a single Q UBO parameter is changed to 0:A lower bound (top, green) is given by ˆD(U(f1(Q, π ∗))) ≥
+> ˇb(Q,1) =2and an upper bound (bottom, red) by
+> ˇD(U(f1(Q, π ∗))) ≤ˆb(Q,1) = 0 .8. The changed parameters are indicated with rectangular boxes.
+> R
+> ˇb(Q,2)
+> ˆb(Q,2)
+> (c) Bounds when two Q UBO parameters are changed, namely
+> ˇb(Q,2) = 0 .8and ˆb(Q,2) = 2 . For details, see Fig. 4b.
+
+Figure 4: Sorted Q UBO matrix entries given in Example 1. Heuristic h is depicted in Fig. 4a and the methods for finding a lower bound on the DR are given in Figs. 4b and 4c. reduce the computation time. We find a lower bound on 
+
+DR (fT (Q, π ∗)) with a lower/upper bound ˇb(Q, T )/ˆb(Q, T )
+
+on the numerator/denominator in (3) 
+
+DR (fT (Q, π ∗)) ≥ log 2
+
+ˇb(Q, T )ˆb(Q, T )
+
+!
+
+=.. ˇr(Q, T ) .
+
+Let m ..= n2 be the number of entries of an n × n matrix. For any Q ∈ Q n, there is an ordering (bijective map) σ :[m] → [n] × [n] of entries such that qℓ ≤ qℓ+1 , q ℓ ≡
+
+Qσ(ℓ), ∀ℓ ∈ [m]. With this notation, ˆD(U(Q)) = qm − q1
+
+and ∃j ∈ [m − 1] : ˇD(U(Q)) = qj+1 − qj . A visualization for an ordering of Example 1 is shown in Fig. 4a. 
+
+Lower Bound on Maximum Distance For finding a lower bound on DR (fT (Q, π ∗)) , we optimistically assume that we can set all parameters to 0 while maintaining an optimizer of Q. Since 0 is always considered in the com-putation of the DR , this corresponds to an optimal strat-egy of changing the parameters, because the DR cannot increase. Changing a single parameter, the numerator 
+
+ˆD(U(Q)) in (3) is maximally reduced if we set q1/q m
+
+larger/smaller than q2/q m−1. The maximum possible re-5275 276 277 278 279 280 281 282 283 284 285 286 287 288 289 290 291 292 293 294 295 296 297 298 299 300 301 302 303 304 305 306 307 308 309 310 311 312 313 314 315 316 317 318 319 320 321 322 323 324 325 326 327 328 329 
+
+Dynamic Range Reduction via Branch-and-Bound 2 4 6 8 10 
+
+0.0
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+1.0
+
+2 4 6 8
+
+2 4 6 8 10 
+
+Horizon Fraction of pruned states 
+
+Figure 5: Fraction of pruned states. Different depths ( 2, 4,
+
+6 and 8) for updating the current best DR are compared for 
+
+n = 8 (left) and n = 16 (right). duction is equal to min {q2 − q1, q m − qm−1}. Iterating this process for T times, we end up with ˇb(Q, T ) ..=min {qm−T +i − qi+1 : 0 ≤ i ≤ T }. An illustration for Ex-ample 1 is found in Figs. 4b and 4c. 
+
+Upper Bound on Minimum Distance Obtaining a lower bound is a little more tricky and an iterative procedure is given in Algorithm 1. Since we are concerned with the smallest distance between two Q UBO parameters, we con-sider the set of distances between “neighboring” parame-ters ¯D(U(Q)) ..= {qi+1 − qi : i ∈ [m − 1] } = {di : i ∈
+
+[m − 1] }. We iteratively set Q UBO weights to 0, which are part of the minimum distance, maximizing the mini-mum distance. Define an ordering ρ : [ m − 1] → [m − 1] ,s.t., dρ(i) ≤ dρ(i+1) . It then holds that ˇD(U(Q)) = dρ(1) .
+
+ˇD(U(Q)) is maximally reduced if we change qρ(1)+1 or 
+
+qρ(1) , s.t., dρ(1) is not the smallest distance anymore. We change the weight with the smaller corresponding distance (Lines 6 and 7, Algorithm 1). If qρ(1) is changed, dρ(1) −1
+
+is updated to dρ(1) −1 + dρ(1) = qρ(1)+1 − qρ(1) −1 and if 
+
+qρ(1)+1 is changed, dρ(1)+1 is updated to dρ(1)+1 + dρ(1) =
+
+qρ(1)+2 − qρ(1) (Algorithm 1, Algorithm 1). No update is required if ρ(1) = 1 or ρ(1) + 1 = m. The new smallest distance either equals the second smallest distance dρ(2) or one of the two newly updated ones. The smallest distance 
+
+dρ(1) is removed (Line 12, Algorithm 1) from ¯D and the ordering ρ is updated with the updated distances (Line 13, Algorithm 1). In Figs. 4b and 4c, this is illustrated for Ex-ample 1. The computational complexity of our bounds is derived and discussed in the Appendix. 
+
+# 6. Experiments 
+
+In what follows, we consider numerical experiments and study the impact of our method on a D-Wave Advantage System 5.4 quantum annealer (QA) and an FPGA-based digital annealer (DA) (M ¨ucke et al., 2019). Three exemplary problems are considered: B IN CLUS represents 2-means clustering, S UB SUM consists of finding a subset from a list of values that sum up to a given target value and V EC QUANT 
+
+Algorithm 1 LOWER BOUND 
+
+Input: Q, T
+
+Output: Lower bound ˇr ≤ DR (U(Qπ∗ 
+
+> T
+
+)) 
+
+1: ˇb ← min {qm−T +i − qi+1 : 0 ≤ i ≤ T }
+
+2: Compute σ, s.t., qℓ ≤ qℓ+1 , q ℓ ≡ Qσ(ℓ) ▷ Sort weights 3: ¯D ← { di : i ∈ [m − 1] }, d i = qi+1 − qi
+
+4: Compute ρ, s.t., dρ(ℓ) ≤ dρ(ℓ+1) ▷ Sort distances 5: for t = 1 to T do 
+
+6: I ← { ρ(1) , ρ (1) + 1 }
+
+7: i∗ = arg min i∈I di
+
+8: if i∗ = ρ(1) then 
+
+9: i∗ ← i∗ − 1
+
+10: end if 
+
+11: di∗ ← di∗ + dρ(1) ▷ Update distance 12: ¯D ← ¯D \ { dρ(1) }
+
+13: Recompute ρ, s.t., dρ(ℓ) ≤ dρ(ℓ+1) 
+
+14: end for 
+
+15: ˆb ← dρ(1) 
+
+16: ˇr ← ˇb/ ˆb
+
+aims for finding prototype vectors. All three problems have known Q UBO embeddings (Bauckhage et al., 2018; Biesner et al., 2022; Bauckhage et al., 2019). The specific setups are described in the Appendix. 
+
+6.1. Numerical Experiments 
+
+We compare different policies: the base policy ˙π (baseline from (M ¨ucke et al., 2025)), our B&B policy ¯π ˜T with dif-ferent rollout horizons ˜T and our rollout selection policy ˜π.The relative DR reduction for a horizon up to T = 10 can be found in Fig. 6. We compare A LL (left) and I MPACT (right) for choosing the indices in the branch step. It is apparent that every single policy reduces the DR with an increasing horizon T . The base policy ˙π is largely outperformed by our ¯π ˜T and ˜π. ¯π ˜T is increasing its performance with an increasing rollout horizon ˜T . We can see that the exact method A LL has the same performance as using the sim-plified version I MPACT , while being more computational demanding. It scales quadratically with the problem size n,where I MPACT is basically independent of n. The policy ˜π
+
+already almost achieves optimal performance (c.f. to ¯π10 ). Evaluating the quality of our bounds (see Sec. 5.3), we indicate the fraction of the pruned state space in Fig. 5. We here consider the exact solution, that is ¯πT . We vary the depth until the upper bounds are updated. Increasing this depth, as well as increasing the horizon leads to pruning a larger fraction of the whole search space. The number of pruned states does not heavily depend on an updated current best, indicating the strength of our lower bound (Sec. 5.3). 
+
+6.2. Performance on Hardware Solvers 
+
+We first compare the DR reduction performance of the base policy ˙π and a randomized base policy ˙πR with our rollout 6330 331 332 333 334 335 336 337 338 339 340 341 342 343 344 345 346 347 348 349 350 351 352 353 354 355 356 357 358 359 360 361 362 363 364 365 366 367 368 369 370 371 372 373 374 375 376 377 378 379 380 381 382 383 384                            
+
+> Dynamic Range Reduction via Branch-and-Bound 0246810
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> ˙π(baseline) ¯π1¯π2˜π
+> 0246810
+> Horizon Relative  DR  reduction 0246810
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> ¯π1¯π2¯π10 ˜π
+> 0246810
+> Horizon Relative  DR  reduction
+
+Figure 6: Relative DR reduction for 100 BIN CLUS instances with n = 8 (first and third column plot) and n = 16 (second and fourth column plot). Different policies are compared for choosing the indices with A LL (left) and I MPACT (right). 0 25 50 75 100 
+
+# 5
+
+# 10 
+
+# 15 
+
+# 20 
+
+# 25 
+
+# 0 25 50 75 100 0 25 50 75 100 
+
+# ˙π
+
+# ˙πR
+
+# ˜π
+
+# Horizon 
+
+> DR
+
+Figure 7: Performance of our developed policy ˜π compared to the base policy ˙π and the randomized base policy ˙πR. The 
+
+DR reduction is compared for a S UB SUM (left), a B IN CLUS (middle) and a V EC QUANT (right) instance. selection policy ˜π in Fig. 7 for three different instances of SUB SUM , B IN CLUS and V EC QUANT of dimensions n =16 , 20 , 20 . We can see that ˙π ends up in local optima pretty fast while our ˜π is more robust and is steadily improving with an increasing horizon. It also outperforms ˙πR, which needs a lot of iterations for an increasing Q UBO dimension. We also compare the results of our policies with two other methods from the literature. We denote the method of tuning penalty parameters for incorporating constraints in (Alessan-droni et al., 2023) as P EN and the method of introducing auxiliary variables to reduce the BW (Oku et al., 2020) as AUX . However, they are not generally applicable to ar-bitrary Q UBO problems, i.e., P EN can only be applied to VEC QUANT since it incorporates a constraint of finding exactly k prototypes and A UX can only be applied to S UB -SUM , since we here use Q UBO instances with integer values. However, our method can be applied to arbitrary Q UBO 
+
+problems. Specifics on the obtained DR can be found in Tab. 1—our method always achieves the smallest DR .Further, we assess the impact of the reduced Q UBO instances on two hardware Q UBO solvers (Ising machines)—QA and DA. QAs are prone to Integrated Control Errors which constrain the DR of the hardware parameters. If the DR of the given Q UBO is too large, it can happen that a completely different problem is solved due to implementation noise of the parameters. A similar problem appears for hardware solvers with a fixed bit precision: the parameters have to be rounded/quantized to that precision, which can lead to different optima (see Fig. 1). Furthermore, DA designs can be improved by considering a reduced bit precision. In our experiments, the hardware plattform for the digital annealer is an AMD Virtex UltraScale+ FPGA VCU118 evaluation board. By implementing the digital annealer chip design with AMD Vivado for 16 , 8 and 4 bit precision, we find that when using 4 instead of 16 bit precision, the number of on-chip signals is reduced by 28 .29% . This has multiple benefits: First, the improvement allows us to run the orginal design with a reduced power consumption when operating the hardware solver. E.g., the power requirement for on-chip memory 1 shrinks from 1.4 W to 0.3 W . Second, due to less occupied chip space, the reduction also allows for an increase of the maximum number of Q UBO problem variables. However we did not evaluate this option as it requires significant changes of the chip design which are out of scope of our study. Now, after adressing the resource consumption, we answer the question whether reducing the DR leads to an opti-mized performance for QA and DA. Due to their prob-abilistic nature, we generate 1000 samples and use de-fault parameters. For DA, we use three different bit pre-cisions of the internal arithmetics, i.e., 16 , 8 and 4 bit. For making the performances comparable we evaluate the        
+
+> 1Block RAM and Ultra RAM combined. See https://docs.amd.com/v/u/en-US/ ug573-ultrascale-memory-resources .Numbers reported here are estimated by the FPGA design software.
+
+7385 386 387 388 389 390 391 392 393 394 395 396 397 398 399 400 401 402 403 404 405 406 407 408 409 410 411 412 413 414 415 416 417 418 419 420 421 422 423 424 425 426 427 428 429 430 431 432 433 434 435 436 437 438 439 
+
+> Dynamic Range Reduction via Branch-and-Bound
+
+## 0
+
+## 10 −1
+
+## 10 1
+
+## 10 3 AUX Orig GRE 
+
+## Ours PEN 
+
+> vQ
+
+## 0 0.25 0.5 0.75 1.0 
+
+## 0
+
+## 10 −1
+
+## 10 1
+
+## 10 3
+
+## 0 0.25 0.5 0.75 1.0 0 0.25 0.5 0.75 1.0 
+
+## Samples (ordered by energy) 
+
+> vQ
+
+Figure 8: Performance of the D-Wave Advantage 5.4 (top row) and an FPGA-based digital annealer with 4-bit precision (bottom row): we compare the original Q UBO Q (Orig), the Q UBO using the greedy base policy (G RE ) for 100 steps 
+
+f100 (Q, ˙π), the method in (Alessandroni et al., 2023) (P EN ) for computing the penalty, the method of adding auxiliary variables (A UX ) (Oku et al., 2020) and our rollout selection policy for 100 steps f100 (Q, ˜π). The relative energies vQ for 
+
+1000 samples are shown for a S UB SUM (left), a B IN CLUS (middle) and a V EC QUANT (right) instance. Table 1: Comparison of Q UBO hardware solvers using different methods (details in Fig. 8). We depict the DR along with the number of optimal samples (from 1000 ) obtained by QA and DA with 16 , 8 and 4 bit precision. Optima are bold and dashes indicate that the method is not applicable for the respective problem.                                                                                            
+
+> SUB SUM BIN CLUS VEC QUANT
+> DR QA DA 16 DA 8DA 4DR QA DA 16 DA 8DA 4DR QA DA 16 DA 8DA 4
+> Orig 25 .68 051022 .79 31000 1000 119 .19 18 1000 1000 0
+> GRE 15 .94 3687 3020 .52 605 462 009.51 11000 00
+> AUX 25 .68 0722——————————PEN ——————————24 .63 01000 10
+> Ours 9.89 26 1000 008.87 865 585 579 528 2.68 356 1000 1000 487
+
+original Q UBO energy EQ(z) for every sample z and have a look at the relative distance to the optimum energy 
+
+vQ(z) ..= ( EQ(z) − EQ(z∗)) /E Q(z∗). This is depicted in Fig. 8, where we indicate the energy distribution for the initial Q UBO matrix Q, the base policy f100 (Q, ˙π), A UX 
+
+for S UB SUM , P EN for V EC QUANT and our rollout selection policy f100 (Q, ˜π). Even though our DR reduction method can change the overall energy landscape, we are interested in the low energy values since we aim to minimize the energy. In Tab. 1, we depict the total number of optimal samples from the 1000 drawn samples, using different methods for QA and DA. We can see that our method almost always outperforms the baselines in terms of ability of the hardware solver to find optimal solutions. 
+
+# 7. Conclusion 
+
+In this paper, we developed a principled Branch-and-Bound algorithm for reducing the required precision for quadratic unconstrained binary optimization problems (Q UBO ). In order to achieve this, we consider the dynamic range ( DR )as a measure of complexity, which we iteratively reduce in a Markov decision process (MDP) framework. We propose computationally efficient and theoretically sound bounds for pruning, leading to drastic reduction of the search space size. Furthermore, we combine our approach with the well-known policy rollout for improving computational efficiency and the performance of already existing heuristics. Our ex-tensive experiments comply with the theoretical insights. We use our method to reduce the DR of NP -hard real-word problems, such as clustering, subset sum and vector quan-tization. Our proposed algorithm largely outperforms re-cently developed algorithms, while also being applicable to arbitrary Q UBO problems. The effectiveness for hardware solvers is shown for a real quantum annealer (QA) and an FPGA-based digital annealer (DA). We conclude that our method enhances the reliability of QA and DA in finding the optimum, and reduces the power consumption of DA. 8440 441 442 443 444 445 446 447 448 449 450 451 452 453 454 455 456 457 458 459 460 461 462 463 464 465 466 467 468 469 470 471 472 473 474 475 476 477 478 479 480 481 482 483 484 485 486 487 488 489 490 491 492 493 494 
+
+> Dynamic Range Reduction via Branch-and-Bound
+
+# Impact Statement 
+
+This paper presents work whose goal is to advance the fields of Optimization and Artificial Intelligence. There are many potential societal consequences of our work, none which we feel must be specifically highlighted here. 
+
+# References 
+
+Albash, T. and Lidar, D. A. Adiabatic quantum computation. 
+
+Reviews of Modern Physics , 90(1):015002, 2018. Alessandroni, E., Ramos-Calderer, S., Roth, I., Traversi, E., and Aolita, L. Alleviating the quantum big-m problem. 
+
+arXiv preprint arXiv:2307.10379 , 2023. Aloise, D., Deshpande, A., Hansen, P., and Popat, P. Np-hardness of euclidean sum-of-squares clustering. Ma-chine Learning , 75(2):245–248, 2009. doi: 10.1007/ S10994-009-5103-0. Bauckhage, C., Ojeda, C., Sifa, R., and Wrobel, S. Adia-batic quantum computing for kernel k= 2 means cluster-ing. In Gemulla, R., Ponzetto, S. P., Bizer, C., Keuper, M., and Stuckenschmidt, H. (eds.), Lernen, Wissen, Daten, Analysen (LWDA) , volume 2191 of CEUR Workshop Pro-ceedings , pp. 21–32. CEUR-WS.org, 2018. Bauckhage, C., Piatkowski, N., Sifa, R., Hecker, D., and Wrobel, S. A qubo formulation of the k-medoids prob-lem. In J ¨aschke, R. and Weidlich, M. (eds.), Lernen, Wissen, Daten, Analysen (LWDA) , volume 2454 of CEUR Workshop Proceedings , pp. 54–63. CEUR-WS.org, 2019. Bertsekas, D. Reinforcement learning and optimal control ,volume 1. Athena Scientific, 2019. Bertsekas, D. Rollout, policy iteration, and distributed reinforcement learning . Athena Scientific, 2021. Bertsekas, D. P., Tsitsiklis, J. N., and Wu, C. Rollout algo-rithms for combinatorial optimization. Journal of Heuris-tics , 3:245–262, 1997. Biesner, D., Gerlach, T., Bauckhage, C., Kliem, B., and Sifa, R. Solving subset sum problems using quantum inspired optimization algorithms with applications in au-diting and financial data analysis. In Wani, M. A., Kan-tardzic, M. M., Palade, V., Neagu, D., Yang, L., and Chan, K. Y. (eds.), International Conference on Machine Learning and Applications (ICMLA) , pp. 903–908. IEEE, 2022. Booth, M., Reinhardt, S. P., and Roy, A. Partitioning opti-mization problems for hybrid classical. quantum execu-tion. Technical Report , pp. 01–09, 2017. Boros, E., Hammer, P. L., and Tavares, G. Preprocessing of unconstrained quadratic binary optimization. Technical report, Technical Report RRR 10-2006, RUTCOR, 2006. Boros, E., Hammer, P. L., Sun, R., and Tavares, G. A max-flow approach to improved lower bounds for quadratic unconstrained binary optimization (qubo). Discrete Opti-mization , 5(2):501–529, 2008. Brown, G. A new perspective for information theoretic feature selection. In van Dyk, D. and Welling, M. (eds.), 
+
+International Conference on Artificial Intelligence and Statistics (AISTATS) , volume 5 of Proceedings of Ma-chine Learning Research , pp. 49–56. PMLR, 16–18 Apr 2009. URL https://proceedings.mlr.press/ v5/brown09a.html .Chai, Y., Funcke, L., Hartung, T., Jansen, K., K ¨uhn, S., Stornati, P., and Stollenwerk, T. Optimal flight-gate assignment on a digital quantum computer. Physical Review Applied , 20(6), 2023. ISSN 2331-7019. doi: 10.1103/physrevapplied.20.064025. Choukroun, Y., Kravchik, E., Yang, F., and Kisilev, P. Low-bit quantization of neural networks for efficient inference. In Kweon, I. S., Paragios, N., Yang, M.-H., and Lazebnik, S. (eds.), International Conference on Computer Vision Workshops , pp. 3009–3018. IEEE, 2019. doi: 10.1109/ ICCVW.2019.00363. Ermon, S., Gomes, C. P., Sabharwal, A., and Selman, B. Taming the curse of dimensionality: Discrete in-tegration by hashing and optimization. In Dasgupta, S. and McAllester, D. (eds.), International Conference on Machine Learning , volume 28 of JMLR Workshop and Conference Proceedings , pp. 334–342. JMLR.org, 2013. URL http://proceedings.mlr.press/ v28/ermon13.html .Glover, F. and Laguna, M. Tabu search . Springer, 1998. Goldberg, D. E. and Kuo, C. H. Genetic algorithms in pipeline optimization. Journal of Computing in Civil Engineering , 1(2):128–141, 1987. Kagawa, H., Ito, Y., Nakano, K., Yasudo, R., Kawa-mata, Y., Katsuki, R., Tabata, Y., Yazane, T., and Hamano, K. Fully-pipelined architecture for simulated annealing-based qubo solver on the fpga. In Jacir Bordim, Shuichi Ichikawa, T. Y. (ed.), International Symposium on Computing and Networking (CANDAR) , volume 8, pp. 39–48. IEEE, 2020. Kirkpatrick, S., Gelatt Jr, C. D., and Vecchi, M. P. Opti-mization by simulated annealing. science , 220(4598): 671–680, 1983. 9495 496 497 498 499 500 501 502 503 504 505 506 507 508 509 510 511 512 513 514 515 516 517 518 519 520 521 522 523 524 525 526 527 528 529 530 531 532 533 534 535 536 537 538 539 540 541 542 543 544 545 546 547 548 549 
+
+> Dynamic Range Reduction via Branch-and-Bound
+
+Kochenberger, G., Hao, J.-K., Glover, F., Lewis, M., L ¨u, Z., Wang, H., and Wang, Y. The unconstrained binary quadratic programming problem: a survey. Journal of combinatorial optimization , 28:58–81, 2014. Lucas, A. Ising formulations of many np problems. Fron-tiers in physics , 2:74887, 2014. Mastiyage Don, S. H. G., Inui, Y., Kako, S., Yamamoto, Y., and Aonishi, T. Mean-field coherent ising machines with artificial zeeman terms. Journal of Applied Physics , 134 (23), 2023. Matsubara, S., Takatsu, M., Miyazawa, T., Shibasaki, T., Watanabe, Y., Takemoto, K., and Tamura, H. Digital annealer for high-speed solving of combinatorial opti-mization problems and its applications. In Ho, T.-Y., Tan, S., and Chen, Y. (eds.), Asia and South Pacific Design Automation Conference (ASP-DAC) , pp. 667–672. IEEE, 2020. Mohseni, N., McMahon, P. L., and Byrnes, T. Ising ma-chines as hardware solvers of combinatorial optimization problems. Nature Reviews Physics , 4(6):363–379, 2022. Mooney, G. J., Tonetto, S. U., Hill, C. D., and Hollenberg, L. C. Mapping np-hard problems to restricted adiabatic quantum architectures. arXiv preprint arXiv:1911.00249 ,2019. M ¨ucke, S., Piatkowski, N., and Morik, K. Learning bit by bit: Extracting the essence of machine learning. In J ¨aschke, R. and Weidlich, M. (eds.), Lernen, Wissen, Daten, Analysen (LWDA) , volume 2454 of CEUR Work-shop Proceedings , pp. 144–155. CEUR-WS.org, 2019. M ¨ucke, S., Heese, R., M ¨uller, S., Wolter, M., and Pi-atkowski, N. Feature selection on quantum computers. 
+
+Quantum Machine Intelligence , 5(1):11, 2023. M ¨ucke, S., Gerlach, T., and Piatkowski, N. Optimum-preserving qubo parameter compression. Quantum Ma-chine Intelligence , 7(1):1–18, 2025. Narendra and Fukunaga. A branch and bound algorithm for feature subset selection. IEEE Transactions on computers ,100(9):917–922, 1977. Oku, D., Tawada, M., Tanaka, S., and Togawa, N. How to reduce the bit-width of an ising model by adding auxiliary spins. IEEE Transactions on Computers , 71(1):223–234, 2020. Pardalos, P. M. and Jha, S. Complexity of uniqueness and local search in quadratic 0–1 programming. Operations research letters , 11(2):119–123, 1992. Punnen, A. P. The quadratic unconstrained binary opti-mization problem. Springer International Publishing , 10: 978–3, 2022. Rehfeldt, D., Koch, T., and Shinano, Y. Faster exact solu-tion of sparse maxcut and qubo problems. Mathematical Programming Computation , 15(3):445–470, 2023. S¸ eker, O., Tanoumand, N., and Bodur, M. Digital annealer for quadratic unconstrained binary optimization: A com-parative performance analysis. Applied Soft Computing ,127:109367, 2022. Silver, D., Huang, A., Maddison, C. J., Guez, A., Sifre, L., Van Den Driessche, G., Schrittwieser, J., Antonoglou, I., Panneershelvam, V., Lanctot, M., et al. Mastering the game of go with deep neural networks and tree search. 
+
+nature , 529(7587):484–489, 2016. Stollenwerk, T., Lobe, E., and Jung, M. Flight gate assign-ment with a quantum annealer. In Feld, S. and Linnhoff-Popien, C. (eds.), International Workshop on Quantum Technology and Optimization Problems , volume 1, pp. 99–110. Springer, 2019a. Stollenwerk, T., O’Gorman, B., Venturelli, D., Mandra, S., Rodionova, O., Ng, H., Sridhar, B., Rieffel, E. G., and Biswas, R. Quantum annealing applied to de-conflicting optimal trajectories for air traffic management. IEEE transactions on intelligent transportation systems , 21(1): 285–297, 2019b. Verma, A. and Lewis, M. Penalty and partitioning tech-niques to improve performance of qubo solvers. Discrete Optimization , 44:100594, 2022. Vysko ˇcil, T., Pakin, S., and Djidjev, H. N. Embedding inequality constraints for quantum annealing optimiza-tion. In Feld, S. and Linnhoff-Popien, C. (eds.), Interna-tional Workshop on Quantum Technology and Optimiza-tion Problems , volume 1, pp. 11–22. Springer, 2019. Yachi, Y., Mukasa, Y., Tawada, M., and Togawa, N. Efficient coefficient bit-width reduction method for ising machines. In unknown (ed.), International Conference on Consumer Electronics (ICCE) , volume 40, pp. 01–06. IEEE, 2022. Yachi, Y., Tawada, M., and Togawa, N. A bit-width reducing method for ising models guaranteeing the ground-state output. In Becker, J., Marshall, A., Harbaum, T., Ganguly, A., Siddiqui, F., and McLaughlin, K. (eds.), International System-on-Chip Conference (SOCC) , volume 36, pp. 1–6. IEEE, 2023. Yamamoto, Y., Leleu, T., Ganguli, S., and Mabuchi, H. Coherent ising machines—quantum optics and neural network perspectives. Applied Physics Letters , 117(16), 2020. 10 550 551 552 553 554 555 556 557 558 559 560 561 562 563 564 565 566 567 568 569 570 571 572 573 574 575 576 577 578 579 580 581 582 583 584 585 586 587 588 589 590 591 592 593 594 595 596 597 598 599 600 601 602 603 604 
+
+> Dynamic Range Reduction via Branch-and-Bound
+
+# A. State Space Size 
+
+We proof the sub-exponential state space size given in Sec. 4.1 in the main paper. We have no knowledge about the final state fT (Q, π ) and thus the search space is expo-nentially large 
+
+> T
+
+X
+
+> t=0
+
+(n2)t = (n2)T +1 − 1
+
+n2 − 1 ∈ O (n2( T +1) ) . (8) Choosing the number of iterations T logarithmic in the problem dimension, i.e., T = log 2(n2) = 2 log 2(n), results in the sub-exponential state space size of 
+
+O
+
+
+
+n4 log 2(n)+2 
+
+= O
+
+
+
+n22(4 log 22(n))
+
+⊆ o(2 n) .
+
+Thus, we have an asymptotically slower growth than the exponentially large state space size 2n of the original Q UBO 
+
+problem. 
+
+# B. Details on Boundaries and Heuristic 
+
+We recall how the boundaries y−(Q) ≤ w ≤ y+(Q)
+
+from Sec. 4.1 are computed in (M ¨ucke et al., 2025). Let 
+
+B ..= {0, 1}, z ∈ Bn and k, l ∈ [n]. The n-dimensional vector which variables indexed by k and l fixed to the values 
+
+(a, b ) ∈ B2 is indicated by zab . Then 
+
+z∗ 
+
+> ab
+
+∈ arg min 
+
+> zab ∈{ 0,1}n
+
+EQ(zab ) ,
+
+and define y∗ 
+
+> ab ..
+
+= EQ(x∗
+
+> ab
+
+). Naturally, y∗ 
+
+> ab
+
+are just as hard to compute as solving Q UBO itself. Therefore, we work with upper and lower bounds on the true values to determine the update parameter w, which are much easier to compute. Bounds for y∗ 
+
+> ab
+
+are denoted by ˆyab and ˇyab , such that 
+
+ˇyab ≤ y∗ 
+
+> ab
+
+≤ ˆyab , ∀(a, b ) ∈ B2 .
+
+Further, let 
+
+y− ..= min {0, min {ˆy00 , ˆy01 , ˆy10 } − ˇy11 } ,y+ ..= max {0, min {ˇy00 , ˇy01 , ˇy10 } − ˆy11 } ,
+
+if k̸ = l. Otherwise, when k = l, let y− = min {0, ˆy00 −
+
+ˇy11 } and y+ = max {0, ˇy00 − ˆy11 }. Then Q+weke⊤ 
+
+> l∗
+
+⊑ Q
+
+if (Theorem 1 in (M¨ ucke et al., 2025)) 
+
+y− ≤ w ≤ y+ .
+
+For the proof, we refer to the paper. The lower bound ˇy can be efficiently computed, e.g. with roof-duality (Boros et al., 2008) and an upper bound ˆy with a local optimum obtained through any Q UBO solver. With the boundaries in Appendix B at hand, we have an interval in which a Q UBO weight can be changed to preserve an optimizer. Instead of considering the weight update as another degree of freedom, we use the best performing heuristic from (M ¨ucke et al., 2025). It is a greedy strategy where the Q UBO parameter Qkl is increased if qℓ < 0 and decreased otherwise, where σ(ℓ) = ( k, l ). For increasing (decreasing) Qkl , w is chosen maximally (minimally) while not increasing the DR . Recall that there is always a qu = 0 
+
+for some u ∈ [m], and thus we may set parameters to 0. For certain target platforms, such as quantum annealers, this is particularly beneficial, as setting a parameter to 0 allows to discard the coupling between the qubits indexed by k and 
+
+l, which saves hardware resources. Thus, we always set parameters to 0 if possible. More technical details on the used heuristic can be found in (M¨ ucke et al., 2025). 
+
+# C. Complexity Analysis 
+
+The following complexity analysis belongs to computing the bounds in Sec. 5.3 of the main paper. Even though we are able to prune a large amount of the search space, it would be beneficial for the bounds to be computable efficiently. It turns out that the bounds can be dynamically computed in O(T n 2). Through the use of memoization, this can be efficiently combined with PR. 
+
+Upper Bound For the transition f (Q, (k, l )) = Q +
+
+h(Q, (k, l )) eke⊤ 
+
+> l
+
+we need to compute the value h(Q, (k, l )) 
+
+which is implicitly dependent on y−(Q) and y+(Q). For computing a lower bound ˇy, we use the roof dual technique (Boros et al., 2008). A flow network is build with O(n)
+
+nodes, and the lower bound is given by the maximum flow value, which is computable in O(n3). Exploiting the top-down nature of our B&B approach, we can dynamically update the flow network and recompute the maximum flow in O(n2). An upper bound ˆy is given by performing local descent using a discrete analogue of a gradient (Boros et al., 2006). Having an initial runtime of O(n3) it also can be dynamically updated making it computable in O(n2). This leads to an initial computational effort of O(n3) and O(n2)
+
+for every subsequent branched state. Having y−(Q) and y+(Q) at hand, h can be computed in 
+
+O(n). This leads to a total computational cost of O(n2)
+
+for a single state. Thus, every upper bound ˆr(Q, T ) (policy rollout) can be computed in O(T n 2).
+
+Lower Bound For the computational complexity of the lower bound ˇr(Q, T ), we first consider the lower bound 
+
+ˇb(Q, T ). Initially, the parameters of Q and the elements in ¯D can be sorted in O(n2 log( n)) . Updating single pa-rameters, this sorting can be dynamically updated in O(n2).For ˆb(Q, T ), this is repeated T times, leading to a com-putational effort of O(T n 2). The bound ˇb(Q, T ) can be computed in O(T ). Thus, the computational complexity of 11 605 606 607 608 609 610 611 612 613 614 615 616 617 618 619 620 621 622 623 624 625 626 627 628 629 630 631 632 633 634 635 636 637 638 639 640 641 642 643 644 645 646 647 648 649 650 651 652 653 654 655 656 657 658 659 
+
+> Dynamic Range Reduction via Branch-and-Bound
+
+the lower bound ˇr(Q, T ) is O(T n 2). Combined with the runtime for computing an upper bound ˆr(Q, T ) results in a total runtime O(T n 2) of the bound-step. 
+
+# D. Data Generation 
+
+The following setup for the datasets are used in Sec. 6 in the main paper. 
+
+D.1. B IN CLUS 
+
+To generate data for B IN CLUS , we begin by sampling n
+
+independent and identically distributed 2-dimensional points from an isotropic normal distribution N (0 , 0.1) . Next, we create two clusters by transforming the first n/ 2 points with (x1, x 2) 7 → (x1 − 1, x 2) and the last n/ 2 points with 
+
+(x1, x 2) 7 → (x1 + 1 , x 2). Finally, we select the first and last points and multiply their coordinates by 100 , introducing two outliers into the data set. For analyzing the behaviour of our B&B algorithm, we sample 100 BIN CLUS QUBO 
+
+instances for n = 8 , 16 .A corresponding Q UBO embedding is given as follows: Assume we are given a set of n data points X ⊂ Rd,
+
+|X | = n. We want to partition X into disjoint clusters 
+
+X1, X2 ⊂ X , X1 ˙∪X 2 = X . We gather the data in a matrix 
+
+X ..= x1, . . . , xn , ∀i : xi ∈ X , and assume that it is centered, i.e., X1 = 0, where 1 denotes the n-dimensional vector consisting only of ones. A Q UBO formulation was derived in (Bauckhage et al., 2018), which minimizes the 
+
+within cluster scatter :
+
+min  
+
+> s∈{− 1,+1 }n
+
+− s⊤X⊤Xs (10a) 
+
+⇔ min  
+
+> z∈{ 0,1}n
+
+− z⊤X⊤Xz + 1⊤X⊤Xz , (10b) where s = 2 z − 1. A value zi = 1 indicates that data point 
+
+xi is in cluster X1, and in X2 for zi = 0 . Observing that 
+
+X⊤X is a Gram matrix leads to a possible application of the kernel trick. For this, we consider a centered kernel matrix K ∈ Rn×n with elements k(xi, xj ), where k :
+
+Rn × Rn → R is a kernel function. k(xi, xj ) indicates how similar data points xi and xj are in some feature space. We can reformulate (10b) to     
+
+> min
+> z∈{ 0,1}n1⊤Kz −z⊤Kz ,
+
+which gives us our Q UBO formulation. For our experiments, we choose a linear kernel. For evaluating the hardware solver performance, we use the same instance as in (M ¨ucke et al., 2025). 
+
+D.2. S UB SUM 
+
+For the S UB SUM problem, we are given a set A =
+
+{a1, . . . , a n} ⊂ Z and T ∈ Z. The goal is to find I ⊂ [n],s.t., P 
+
+> i∈I
+
+ai = T . We use the same problem instance as is given in (M ¨ucke et al., 2025), Section 4.2. We set n = 16 
+
+and generate the elements of A as |⌊ 10 · Z⌉| , where Z fol-lows a standard Cauchy distribution. This approach leads to occasional outliers with large magnitudes, which in turn produced Q UBO instances with a high degree of difficulty due to large dynamic ranges (DR). Next, we determined the number of summands k by sampling from a triangular dis-tribution ⌊U ⌉, where U is defined with parameters a = n 
+
+> 5
+
+,
+
+b = n 
+
+> 2
+
+, and c = 4n 
+
+> 5
+
+, ensuring that, on average, half of the elements of A contribute to the sum. Finally, we selected k
+
+indices from [n] without replacement to form the subset I
+
+and set T = P 
+
+> i∈I
+
+ai, thereby creating problems where the global optimum is predetermined. We obtain a Q UBO formulation, where we use n binary variables which indicate if i ∈ S for each i. With a =(a1, . . . , a n), a Q UBO formulation is given by 
+
+min 
+
+> z∈{ 0,1}n
+
+ a⊤z − T 2 ⇔ min  
+
+> z∈{ 0,1}n
+
+z⊤a⊤az − 2T a⊤z .
+
+D.3. V EC QUANT 
+
+Vector quantization deals with the problem of finding pro-totypes of a given set of vectors, which give a best repre-sentation according to some measure. We use the approach from (Bauckhage et al., 2019), where the goal is to find k
+
+medoids according to the well known k-medoids objective function. A Q UBO formulation is given by 
+
+min  
+
+> z∈{ 0,1}n
+
+z⊤  γ11 ⊤ − αD z + ( βD1 − 2γk 1)⊤ z ,
+
+where D is a pairwise distance matrix for, α is a weight for identifying far apart data points, β is for identifying central data points and γ ensures that we choose exactly 
+
+k vectors. We follow (Bauckhage et al., 2019) and set 
+
+α = 1 /k , β = 1 /n and use Welsh’s distance 
+
+d(x, y) ..= 1 − exp − ∥x − y∥22
+
+2
+
+!
+
+,
+
+for computing D. The penalty parameter γ, which enforces that exactly k prototypes are chosen, is set to 2. For hard-ware evaluation, we use the same dataset as B IN CLUS and set k = 4 .
+
+# E. Baselines 
+
+We compare our approaches to different baseline methods from the literature. 
+
+E.1. Adding Auxiliary Variables 
+
+In (Oku et al., 2020), a method is proposed which reduces the bit-width of single parameters of the underlying Ising 12 660 661 662 663 664 665 666 667 668 669 670 671 672 673 674 675 676 677 678 679 680 681 682 683 684 685 686 687 688 689 690 691 692 693 694 695 696 697 698 699 700 701 702 703 704 705 706 707 708 709 710 711 712 713 714 
+
+> Dynamic Range Reduction via Branch-and-Bound
+
+model. It adds auxiliary variables to the problem in a way such that an optimal configuration still corresponds to an optimum of the original problem. It is assumed that all problem parameters are integer, i.e., J ∈ Zn×n, h ∈ Zn.If we want to change a parameter Jij , i̸ = j to reduce its bit-width, we can do this by introducing a new variable x to the problem to obtain J′ ∈ Zn+1 ×n+1 such that 
+
+J′ 
+
+> ij
+
+= Jij − r, J ′ 
+
+> ix
+
+= |r|, J ′ 
+
+> xj
+
+= −r . 
+
+If we want to change hi, optimality is ensured by 
+
+h′ 
+
+> i
+
+= hi − r, h ′ 
+
+> ix
+
+= −| r|, h ′ 
+
+> x
+
+= r . 
+
+That is, if ¯s ..= arg min s∈{− 1,1}n+1 s⊤J′s + s⊤h′, then 
+
+¯s⊤
+
+> [n]
+
+J ¯s[n] + ¯ s⊤
+
+> [n]
+
+h = min  
+
+> s∈{− 1,+1 }n
+
+s⊤Js + s⊤h ,
+
+where the subscript [n] denotes the vector consisting of the first n entries. However, to reduce the bit-width by m bits, 
+
+O(n2m) auxiliary variables are introduced. Due to limited capability of hardware solvers in terms of representable problem size, this can pose a problem on finding a solution. In our experiments we apply this method to S UB SUM , since our datasets are integer. We reduce the bit-width of our parameters by 2, since no further benefit on the performance of hardware solvers was observed for introducing more variables. 
+
+E.2. Tuning Penalty Parameters 
+
+As a second baseline, we use the method from (Alessandroni et al., 2023). It is assumed that the optimization problem is given in a quadratic binary constrained form 
+
+min  
+
+> z∈{ 0,1}n
+
+z⊤Qz 
+
+s.t. Az = b ,
+
+which can be brought in an equivalent Q UBO form by intro-ducing a penalty parameter λ > 0min  
+
+> z∈{ 0,1}n
+
+z⊤Qz + λ(Az − b)⊤(Az − b) .
+
+This parameter has to be chosen large enough to ensure equivalence. We use the method 
+
+λ = ˆ z⊤Q ˆz − ˇEQ ,
+
+where ˆz is a feasible solution, i.e., A ˆz = b and ˇEQ is a lower bound on the optimum, i.e., ˇEQ ≤ min z⊤Qz . For increasing λ the DR is also increased, thus choosing λ as small as possible is favourable. Hence, we use the exact solutions for computing λ in our experiments. However, this is intractable in realistic scenarios. 13

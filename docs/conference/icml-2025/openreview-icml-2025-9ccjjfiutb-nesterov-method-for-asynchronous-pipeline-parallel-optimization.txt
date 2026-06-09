@@ -1,0 +1,883 @@
+Title: Nesterov Method for Asynchronous Pipeline Parallel Optimization
+
+URL Source: https://openreview.net/pdf?id=9CCJJFiutB
+
+Number of Pages: 16
+
+Markdown Content:
+# Nesterov Method for Asynchronous Pipeline Parallel Optimization 
+
+Thalaiyasingam Ajanthan 1 Sameera Ramasinghe 1 Yan Zuo 1 Gil Avraham 1 Alexander Long 1
+
+# Abstract 
+
+Pipeline Parallelism (PP) enables large neural net-work training on small, interconnected devices by splitting the model into multiple stages. To maximize pipeline utilization, asynchronous opti-mization is appealing as it offers 100% pipeline utilization by construction. However, it is inher-ently challenging as the weights and gradients are no longer synchronized, leading to stale (or de-layed) gradients . To alleviate this, we introduce a variant of Nesterov Accelerated Gradient (NAG) for asynchronous optimization in PP. Specifically, we modify the look-ahead step in NAG to effec-tively address the staleness in gradients. We the-oretically prove that our approach converges at a sublinear rate in the presence of fixed delay in gradients. Our experiments on large-scale lan-guage modelling tasks using decoder-only archi-tectures with up to 1B parameters , demonstrate that our approach significantly outperforms exist-ing asynchronous methods, even surpassing the synchronous baseline. †
+
+# 1. Introduction 
+
+Pipeline Parallelism (PP) is a standard parallelism technique for training large-scale frontier foundational models (Dubey et al., 2024; Liu et al., 2024a). PP partitions neural net-works into sequential stages, enabling the training of models that exceed the memory capacity of any single device by distributing computations across multiple interconnected devices. The devices can be co-located in datacenters or connected via the internet ( i.e ., low bandwidth connections) in a fully decentralised setting. Each device processes a stage ( i.e ., a set of consecutive layers) and communicates the activations and gradients with adjacent stages often via bandwidth-constrained interconnects.          
+
+> 1Pluralis Research. Correspondence to: Thalaiyasingam Ajan-than <aj@pluralis.ai >.
+> Proceedings of the 42 nd International Conference on Machine Learning , Vancouver, Canada. PMLR 267, 2025. Copyright 2025 by the author(s).
+> †Our code is available at https://github.com/ PluralisResearch/AsyncPP .
+
+The main objective of PP methods is to mask the communi-cation overhead and improve device utilization so as to min-imize training time. To this end, many pipeline scheduling strategies ( i.e ., the order of processing forward and back-ward passes of microbatches) have been developed (Huang et al., 2019; Narayanan et al., 2021b; Qi et al., 2023). How-ever, the main bottleneck in these methods is the require-ment to synchronize the weights and gradients across stages at each update step, hindering 100% pipeline utilization. To enable full pipeline utilization, we consider asynchronous optimization in PP, where the weight updates are performed independently at each stage without waiting for the corre-sponding backward pass to complete. This approach intro-duces gradient staleness , as weights are updated multiple times between the forward and backward passes of a micro-batch, resulting in outdated gradients being used for weight updates. This gradient staleness presents a significant opti-mization challenge, necessitating sophisticated delay correc-tion mechanisms to ensure convergence, even in traditional distributed settings (Agarwal & Duchi, 2011; Zheng et al., 2017; Stich & Karimireddy, 2019; Mishchenko et al., 2022). Typically, delay correction methods directly estimate the gradients via forecasting approaches (Zheng et al., 2017; Liu et al., 2024b) or extrapolate the previous update step in the weight space (Hakimi et al., 2019; Guan et al., 2019). We follow the latter approach as delay correction in the weight space does not make any assumptions on the loss landscape (as in gradient forecasting methods), but rather assumes that the update directions change slowly. Noting that the smoothness of update directions can be controlled in momentum based optimizers, we derive a look-ahead based optimization method to alleviate gradient staleness. Specifically, we introduce a variant of the Nesterov Accel-erated Gradient (NAG) method (Nesterov, 1983; 2013) for asynchronous PP optimization. Our idea stems from the observation that NAG has a look-ahead step which can be repurposed as a delay correction in the weight space, by carefully modifying the update formula (refer to Fig. 1). Our approach is a simple, yet elegant modification to NAG that does not introduce any hyperparameters. We theoreti-cally prove that our approach converges at a sublinear rate for convex, smooth functions with a fixed delay in gradients. We demonstrate the merits of our approach on large-scale 1Nesterov Method for Asynchronous Pipeline Parallel Optimization 
+
+language modelling tasks with decoder-only transformer architectures (Vaswani et al., 2017; Karpathy, 2022). In short, our approach significantly outperforms all existing asynchronous PP methods including sophisticated delay correction mechanisms, even surpassing the synchronous baseline. Notably, for the first time, we train a 1B param-eter model to convergence in the asynchronous PP setup outperforming the synchronous baseline. Moreover, we show the effectiveness of our method in a realistic decen-tralized training framework, namely SWARM (Ryabinin et al., 2023), where our approach significantly outperforms both synchronous and asynchronous methods. Our experi-ments clearly demonstrate the feasibility of asynchronous PP optimization in the large-scale setting. Our contributions can be summarized as follows: • For the first time, we show an asynchronous PP optimiza-tion method can surpass the synchronous alternative for large-scale language modelling tasks. • Our approach is an elegant variant of NAG, and we pro-vide theoretical and empirical justification of convergence in the presence of gradient staleness. • Furthermore, we test our method in a realistic decentral-ized training framework (SWARM), proving its empirical effectiveness beyond doubt. 
+
+# 2. Preliminaries 
+
+We first define the problem setup and briefly review PipeDream (Narayanan et al., 2019) and NAG (Nesterov, 2013; Bubeck et al., 2015), upon which we build our work. We refer the interested reader to the respective papers for more details. 
+
+2.1. Problem Setup 
+
+Let us consider a single pipeline without data parallelism for simplicity. Let P be the number of pipeline stages. Let 
+
+fi(wi, xi−1) be the forward function in stage i with weights 
+
+wi (correspond to all learnable parameters) and input xi−1,respectively. We may simply write fi for brevity, when the context is clear. Now, the full neural network forward function can be written as: 
+
+F (W, x0) := fP ◦ fP −1 ◦ · · · ◦ f1(x0) , (1) where W = {wP , . . . , w1} and x0 is the input data point. Analogously the backward function can be written as: 
+
+G(W, eP ) := g1 ◦ g2 ◦ · · · ◦ gP (eP ) , (2) where eP is the error signal, and gi(wi, ei) is the backward function at stage i corresponding to fi. Specifically, ei is the gradient of the loss with respect to the output activations 
+
+xi = fi(wi, xi−1), and it is backpropagated through the network using the weights (and non-linearities) of each stage. Formally, the gradient with respect to the weights and the error signal to the previous stage can be written as: 
+
+∇fi(wti ) = hi(wti , eti) , (3) 
+
+eti−1 = gi(wti , eti) ,
+
+where hi corresponds to the chain rule. Then at each stage, the computed gradients ∇fi(wti ) are used to perform the optimization step with learning rate η > 0:
+
+wt+1  
+
+> i
+
+= wti − η ∇fi(wti ) . (4) We omit optimizer specific updates and stochasticity for simplified notation. Note that, in the asynchronous setting, the weights wti and gradients eti (and ∇fi(wti )) are not synchronized. In other words, the weights are updated without waiting for the back-ward passes ( i.e ., gradient computation) of all active micro-batches to complete, leading to delayed gradients. There-fore, asynchrony would affect both the backpropagation step, Eq. (3), and the optimization step, Eq. (4). 
+
+2.2. PipeDream 
+
+PipeDream (Narayanan et al., 2019) uses a One-Forward-One-Backward (1F1B) schedule with weight stashing for asynchronous PP optimization. At steady state, each stage alternates between forward and backward passes. Since 
+
+weight stashing retains a copy of weights used in the for-ward pass until the microbatch completes, correct backprop-agation can be computed by loading the stashed weights. This ensures synchronous backpropagation, Eq. (3), while weight updates, Eq. (4), remain asynchronous, i.e ., delayed gradients are used to update the most recent weights. Precisely, let τi be the delay at stage i, meaning the weights at stage i are updated τi times between the forward and backward passes of a particular microbatch. Assuming constant delay at each stage, this delay can be written as: 
+
+τi =
+
+ 2( P − i) + 1 2K
+
+
+
+, (5) where i ∈ { 1, 2, . . . , P } and K is the update interval, e.g ., 
+
+K = 1 if updated for every microbatch. Note that earlier stages incur larger delays. Now the backward function, and optimizer step at time t for PipeDream can be written as: 
+
+et−τi 
+
+> i−1
+
+= gi(wt−τi 
+
+> i
+
+, et−τi+1  
+
+> i
+
+) , (6) 
+
+wt+1  
+
+> i
+
+= wti − η ∇fi(wt−τi 
+
+> i
+
+) .
+
+To reiterate, the forward and the backward passes are com-puted on the weights at time step t − τi, and these outdated gradients are used to update the latest weights at time step 2Nesterov Method for Asynchronous Pipeline Parallel Optimization 
+
+t. In short, PipeDream uses more memory in each stage to store old weights, ensuring correct gradient computation, but the optimization is performed asynchronously without any delay correction. Additionally, due to asynchrony, PipeDream does not guar-antee that weights are synchronized across stages. Specifi-cally, since the delay is stage dependent, earlier stages will use older weights compared to the later stages. Precisely, the forward function at time step t takes the following form: 
+
+F (Wt, x0) := f tP ◦ f t−1  
+
+> P−1
+
+◦ · · · ◦ f t−P +1 1 (x0) , (7) where f ti := fi(wti , ·). The gradients are computed for this function. Note, for t ≥ P , all stages are updated at each time step following the 1F1B schedule. Thus, the set of weights 
+
+WP can be interpreted as stage dependent initialization, and in practice, this weight discrepancy has not shown to cause any convergence issues (Narayanan et al., 2019). 
+
+2.3. Nesterov Accelerated Gradient 
+
+Nesterov Accelerated Gradient (NAG) (Nesterov, 1983; 2013; Bubeck et al., 2015) is an accelerated gradient method that has the optimal O( 1 
+
+> t2
+
+) convergence rate for smooth con-vex functions in the non-stochastic setting. The main idea is to perform a look-ahead step in the previous update di-rection, combined with a carefully selected sequence of step-sizes to ensure accelerated convergence. Let f : Rm → R be the objective function. Then, NAG performs the following iterations starting from an initial point w1 ∈ Rm:
+
+dt = γt(wt − wt−1) , (8) 
+
+wt+1 = wt + dt − η∇f (wt + dt) ,
+
+where η > 0 is the learning rate. Here, the momentum coef-ficient γt satisfies, γ1 = 0 , 0 < γ t < 1, and the sequence of 
+
+γt is derived as part of the convergence proof (Bubeck et al., 2015). Note that, dt corresponds to the look-ahead step which extrapolates the update (wt − wt−1) by γt and the gradients are computed at the extrapolated point (wt + dt).NAG has been incorporated into popular deep learning optimizers such as SGD (Sutskever et al., 2013) and Adam (Dozat, 2016), although it often slightly underper-forms in synchronous settings. However, we show the supe-riority of a variant of NAG in asynchronous optimization. 
+
+# 3. Method 
+
+We address the gradient staleness in asynchronous PP op-timization by incorporating a delay correction mechanism. Specifically, our idea is to do the delay correction in the weight space by extrapolating the last update step, so that the gradients can be computed at a point that is closer to 
+
+Figure 1: Original NAG (left) and our modified version (right) for delayed gradients (denoted with ¯gt). Our method discounts the gradient term by (1 − γt). When γt → 1,the angle α → 0, making the weight trajectory smoother. Consequently, the look-ahead dt can be shown to act as delay correction, alleviating gradient staleness. 
+
+the ideal one. This is appealing as it does not make any as-sumptions about the loss function or gradients as in gradient forecasting methods. The only assumption is that the update directions change slowly with respect to iterations, which is valid for momentum based optimizers. As discussed previously, NAG is an ideal candidate for this as it performs a look-ahead step by extrapolating the last update step. We now introduce our modified update formula for delay correction in the weight space. 
+
+3.1. Nesterov Method for Delayed Gradients 
+
+Let us consider a particular stage and drop the stage index for brevity. 1 Let τ be the delay as defined in Eq. (5), which is constant for each stage, and ∆t be the corresponding delay in the weight space. Then, the delayed versions of wt
+
+and dt take the following form: 
+
+¯wt = wt−τ = wt − ∆t , ¯dt = dt−τ . (9) Now, our variant of NAG with delayed gradients perform the following iterations: 
+
+dt = γt(wt − wt−1) , (10) 
+
+wt+1 = wt + dt − η(1 − γt)∇f ( ¯ wt + ¯dt) .
+
+Note that compared to Eq. (8), our update formula discounts the gradient term by (1 − γt). This is illustrated in Fig. 1. This subtle but important difference, allows us to show that our look-ahead step approximates ∆t (i.e ., acts as delay correction) and our algorithm converges at a sublinear rate when the gradients are delayed. 
+
+Look-ahead as delay correction. The momentum coef-ficient γt is usually chosen to be a constant close to 1 or chosen as an increasing sequence satisfying lim t→∞ γt = 1 .Assuming this, we can intuitively see that the influence of the gradient term decreases when γt increases, due to the discount factor (1 − γt). This translates into dt dominating the updates, resulting in a smooth trajectory in the weight 
+
+> 1We also use a subscript for the time step to reduce clutter.
+
+3Nesterov Method for Asynchronous Pipeline Parallel Optimization 
+
+space. Consequently, it can be shown that the vector direc-tions of look-ahead at time t−τ , ie, ¯dt = dt−τ , and the delay ∆t are aligned. 2 This means that taking a step in the direction of ¯dt reduces the delay, effectively acting as delay correction in the weight space. We formally state this below. 
+
+Proposition 1. Let γt be an increasing sequence such that lim t→∞ γt = 1 then, lim t→∞ cos(∆ t, ¯dt) = 1 , where 
+
+cos( ·, ·) is the cosine similarity. 
+
+Proof. By algebraic manipulations, we can write ∆t in terms of ¯dt as follows: 
+
+∆t =
+
+> τ
+
+X
+
+> i=1
+
+"  Πt−ij=t−τ +1 γj
+
+ ¯dt (11) 
+
+− η
+
+> t−i
+
+X
+
+> k=t−τ
+
+
+
+Πt−ij=k+1 γj
+
+
+
+(1 − γk) ¯ gk
+
+#
+
+,
+
+where ¯gt = ∇f ( ¯ wt + ¯dt). When, γt → 1, the gradient term vanishes, and cos(∆ t, ¯dt) → 1. Refer to Appendix A.2 for the detailed proof. Here, since the last update step aligns with the delay direc-tion, one may wonder what if we extrapolate in the direction of (wt − wt−1) to completely compensate for the delay rather than taking a fractional step dt = γt(wt − wt−1).The answer is, convergence may be disrupted if one naively extrapolates further than γt. Note that by definition of NAG, 
+
+γt cannot be larger than 1, and it is usually derived as part of the convergence proof. Nevertheless, our experiments show that our delay correction in the weight space is superior compared to gradient forecasting based correction methods. 
+
+Convergence analysis. We now state our convergence theorem for a convex, β-smooth function. 
+
+Theorem 1. Let f be a convex, β-smooth function with bounded gradients, then the iterates in Eq. (10) with η = 1
+
+> β
+
+converges at a rate of O( 1 
+
+> t
+
+).Proof. We largely follow the proof of (Bubeck et al., 2015) while adopting delayed gradients. As part of the proof, the momentum coefficient is set to γt = t−2 
+
+> t
+
+and we show that ∥∆t∥ = O( 1 
+
+> t
+
+) using the bounded gradient assumption. Detailed proof can be found in Appendix A.3. We do not claim the sublinear rate we derived is tight, and the rate or the constants in the bound may be improved. We leave any such analysis for future work. To our knowledge, this is the first time a variant of the Nesterov method is shown to converge in the presence of delayed gradients.             
+
+> 2Note, at time t−τ, the weights wt−τare extrapolated by
+> dt−τand the gradients are computed at the point wt−τ+dt−τ,to compensate for the “future” delay ∆t.
+
+Implementation details. For transformer architectures, AdamW optimizer (Loshchilov, 2017) is known to be su-perior over SGD. To this end, we adopt the NAdam opti-mizer (Dozat, 2016) that incorporates the Nesterov method in Adam (Kingma, 2014) with decoupled weight decay for our language model training. Interestingly, both Adam and NAdam discount the gradient term by (1 − γt), as they treat momentum as an exponential moving average of gradients. Even though the motivation of Adam is different, in this pa-per, we theoretically and empirically show the effectiveness of this discount factor for asynchronous optimization. In the PyTorch implementation of NAdam (PyTorch Con-tributors, 2025), the momentum coefficient is warmed up to the β1 value passed to the algorithm, which satisfies our as-sumption in Proposition 1 when β1 is set close to 1. To this end, we use the NAdam optimizer as is , and use a large value for β1 (0.99 in our experiments). It is remarkable that, with almost no modifications to an existing implementation, we show significant improvement over existing asynchronous optimization methods and provide theoretical justification. In fact, as we show in our experiments, simply changing the optimizer to NAdam improves other delay correction meth-ods such as the learning rate discounting approach (Yang et al., 2021) and gradient forecasting methods (Zheng et al., 2017). However, such delay correction methods deteriorate the performance of NAdam as is, validating our insight that correcting delays in the weight space is more effective. Since we build our method using the PipeDream framework (refer Sec. 2.2), at each stage we store a copy of weights for each active microbatch to ensure correct gradient com-putation. This amounts to storing τi copies of weights in stage i, therefore, the memory requirement of our method grows linearly with the delay (or number of stages). Even though, in practice, these weight stashes can be offloaded to the CPU effectively masking the memory requirement, for completeness, we also discuss a no-weight-stash version 
+
+of our method below. Despite backpropagating through different sets of weights compared to the forward pass, sur-prisingly, this method is competitive to the synchronous method without any additional memory requirements .
+
+3.2. Memory Efficient Version 
+
+As noted before, without weight stashing, the backpropaga-tion is incorrect, i.e ., Eq. (3) takes the following form: 
+
+˜∇fi(wt−τi 
+
+> i
+
+) = hi(wti , ˜et−τi+1  
+
+> i
+
+) , (12) 
+
+˜et−τi 
+
+> i−1
+
+= gi(wti , ˜et−τi+1  
+
+> i
+
+) .
+
+Here, since wti is used to backpropagate (instead of wt−τi 
+
+> i
+
+), the gradients are altered for the following stages. Hence, we denote the delayed error signal by ˜e and the weight gradients by ˜∇fi to indicate that they are altered. To compensate for this, we make two modifications: 1) stage-dependent learn-4Nesterov Method for Asynchronous Pipeline Parallel Optimization 
+
+ing rate, and 2) stage-dependent momentum coefficient. Here, the idea is that earlier stages incur larger delays and also larger error accumulation due to incorrect backpropaga-tion. Even if our variant of NAG can alleviate the issue with larger delays, larger error accumulation is still a problem. To this end, we further decrease the learning rate for earlier stages following the idea of (Yang et al., 2021). Addition-ally, the momentum coefficient is linearly increased from 
+
+0.9 to 0.99 from the last stage to the first one. Precisely, the learning rate η and the momentum coefficient γ for stage 
+
+i ∈ { 1, 2, . . . , P } are set as follows: 
+
+ηti = ητ ρt
+
+> i
+
+where ρt = 1 − min   tT , 1 , (13) 
+
+γi = 0 .9 + P − iP ∗ 0.09 ,
+
+where P is the number of stages. Note, the learning rate correction is only applied for the first T iterations to stabilize training as in (Yang et al., 2021). 
+
+# 4. Related Work 
+
+Asynchronous data parallel methods. Data Parallelism (DP) is a traditional distributed training setting, where each device optimizes the full model and periodically synchro-nizes the model parameters. Asynchronous DP methods are well-studied within the theoretical framework and many gradient delay correction mechanisms have been devel-oped (Agarwal & Duchi, 2011; Stich & Karimireddy, 2019; Assran et al., 2020). Notable methods that improve over the simple asynchronous SGD (Recht et al., 2011) include delay dependent learning rate (Barkai et al., 2019; Mishchenko et al., 2022), gradient forecasting with second-order infor-mation (Zheng et al., 2017), and look-ahead in the weight space (Hakimi et al., 2019). Apart from this, training dy-namics of asynchronous DP methods have also been ana-lyzed (Mitliagkas et al., 2016; Liu et al., 2024b) and some of these observations may be useful in the PP setting as well. 
+
+Pipeline parallel methods. The main objective of PP methods (Guan et al., 2024) is to improve pipeline uti-lization which led to the development of many pipeline scheduling strategies including GPipe (Huang et al., 2019), 1F1B (Narayanan et al., 2021b), and Zero Bubble (Qi et al., 2023). However, these methods suffer from synchronization bottlenecks. Asynchronous methods alleviate this bottle-neck to achieve 100% pipeline utilization at the cost of gradient staleness. Notable gradient delay correction mech-anisms for PP include weight stashing (Narayanan et al., 2019; 2021a), learning rate discounting (Yang et al., 2021), and direct weight prediction (Chen et al., 2018; Guan et al., 2019). Moreover, gradient forecasting methods developed for DP (Zheng et al., 2017) can also be employed. However, existing asynchronous PP methods are mainly empirical and tested on small-scale image classification or language translation tasks. In contrast, for the first time, we demon-strate that asynchronous methods can surpass synchronous methods in 1B parameter scale language modelling tasks, in addition to providing theoretical convergence guarantees. 
+
+# 5. Experiments 
+
+5.1. Experimental Setup 
+
+We evaluate our method on the language modelling task using decoder-only architectures. We use three large-scale datasets: WikiText (WT) (Merity et al., 2016), BookCorpus (BC) (Zhu et al., 2015), and OpenWebText (OWT) (Gokaslan et al., 2019) datasets. For WikiText, we utilize the predefined training and validation splits, for the other datasets, we randomly select 10% of the training set as the held-out validation set. Our model architecture is based on NanoGPT (Karpathy, 2022) with no dropout. The base configuration includes a context length of 512, an em-bedding dimension of 768, 12 attention heads, and 8 layers, with approximately 134M parameters, and each layer is treated as a stage in our PP framework. We use the GP2 tokenizer (Radford et al., 2019) and train the model from scratch. Across all experiments, we maintain a microbatch size of 8, a learning rate η of 3e-4, and a weight decay of 0.01 , unless otherwise specified. The update interval 
+
+K = 1 for the asynchronous methods. The learning rate is obtained by tuning the performance of GPipe on the Wiki-Text dataset. All baseline methods employ the AdamW optimizer (Loshchilov, 2017). Each experiment is run for 50k iterations, with a linear warmup of 3k iterations starting from a learning rate of 1e-7. Then, it is decayed to 3e-5
+
+following a cosine decay schedule. We evaluate two existing asynchronous PP methods, PipeDream (Narayanan et al., 2019) and PipeMare (Yang et al., 2021), together with the synchronous GPipe (Huang et al., 2019) method. Unlike PipeDream, which stashes old weights, PipeMare estimates these weights using the velocity of weight updates. Moreover, PipeMare incorpo-rates a learning rate discounting mechanism as described in Eq. (13), with T set to 6k iterations. We implement PipeMare within the PipeDream framework. For GPipe, we use the torch.distributed.pipelining package, setting the number of microbatches to 4, which is limited by the GPU memory. 3 Due to differences in the underlying implementations, the absolute wall-clock time is not compa-rable between methods. We instead compare performance based on training iterations, or equivalently the amount of data processed.       
+
+> 3In our experiments, GPipe accumulates 4microbatches for each weight update to reduce pipeline bubbles (Huang et al., 2019), and therefore it performs 4×less updates for the same amount of data than asynchronous methods.
+
+5Nesterov Method for Asynchronous Pipeline Parallel Optimization   
+
+> (a) WikiText (b) BookCorpus (c) OpenWebText
+
+Figure 2: Training trajectory comparison on three language modelling datasets. In all scenarios, our method significantly outperforms the asynchronous methods while surpassing the synchronous GPipe method throughout training. Our memory efficient version clearly outperforms the asynchronous methods while being competitive to GPipe in two out of three datasets.                              
+
+> Method WT BC OWT Memory GPipe 30.63 42.39 65.17 O(N)
+> PipeDream 99.48 52.98 224.30 O(P N )
+> PipeMare 71.38 76.93 239.13 O(N)
+> Ours 27.72 39.85 62.86 O(P N )
+> Ours-No-WS 29.90 42.61 108.20 O(N)
+
+Table 1: Perplexity scores on the validation set at 50k itera-tions. The memory requirement of each method is shown in the last column, where N is the number of parameters and P
+
+is the number of pipeline stages. Ours outperforms all meth-ods, including the synchronous GPipe method. Our memory efficient version (Ours-No-WS) is on par with GPipe on per-plexity, while outperforming other asynchronous methods. 
+
+Our proposed method is denoted as Ours , which em-ploys the Nadam optimizer (Dozat, 2016) with decoupled weight decay and a momentum coefficient β1 of 0.99 . The memory-efficient variant of our method, Ours-No-WS , in-corporates the same learning rate discounting as PipeMare (see Eq. (13)), with T also set to 6k iterations. Unless oth-erwise specified, all experiments use the base architecture described above and are performed on the WikiText dataset with the aforementioned hyperparameters. All experiments are performed on a system equipped with 8 A10G GPUs. 
+
+5.2. Main Results 
+
+We analyze the training trajectories of our method against the baselines for the base architecture with 8 stages, as il-lustrated in Fig. 2. The results demonstrate that our method significantly outperforms existing asynchronous approaches and even surpasses GPipe across all three datasets. Our memory-efficient variant is competitive with GPipe, match-ing its performance on two out of the three datasets. Notably, the training trajectories of PipeDream and PipeMare reveal the optimization challenges inherent in asynchronous se-tups, 4 while our Nesterov-based delay correction effectively bridges the gap between asynchronous and synchronous 
+
+> 4To the best of our knowledge, this is the first time PipeDream and PipeMare are tested on large-scale language modelling tasks.
+
+Figure 3: Training and validation trajectories for the 1B parameter model. Similar to the base model, our method outperforms GPipe while the memory efficient version is competitive with GPipe. 
+
+methods. Unlike PipeMare, which estimates old weights to facilitate correct backpropagation, our no-weight-stash ver-sion achieves superior performance without such estimation, relying instead on the Nesterov-based delay correction. Although we primarily report training loss, the trends are consistent with validation loss as well. Validation loss com-parison is provided in Fig. 9 in the appendix. For complete-ness, we include the perplexity scores on the validation set for all methods at 50k iterations in Table 1 along with the memory requirement. In this, we only consider the mem-ory requirement for storing weights and do not consider activation memory as it is the same for all the methods. 
+
+5.3. Increasing the Model Size 
+
+To show the scalability of our approach, we train a 1B parameter model in the asynchronous setting. We maintain the number of stages at 8 but increase the context length to 1024 and the embedding dimension to 2688, with 24 attention heads. A learning rate of 1e-4 is used for all methods. These experiments are performed on a system equipped with 8 A100 GPUs. As shown in Fig. 3, the results are consistent with those of the base model. Specifically, our method significantly out-performs all baselines, including GPipe, throughout training. Notably, our no-weight-stash variant matches the perfor-mance of GPipe. Aside from learning rate adjustment, no changes were made to the method or its hyperparameters. This large-scale experiment demonstrates the merits of our method and the practicality of asynchronous PP optimiza-tion for language model training. 6Nesterov Method for Asynchronous Pipeline Parallel Optimization   
+
+> (a) Training loss (b) Weight discrepancy for Stage-1 (c) NAG with other delay corrections
+
+Figure 4: Comparison with other delay correction methods on WikiText. Our method, outperforms all other delay correction methods in terms of training loss and weight discrepancy. Additionally, NAG improves all previous delay correction methods, while NAG alone yields the best performance. 
+
+5.4. Other Delay Correction Methods 
+
+We compare our method with the following delay correc-tion mechanisms which were originally developed for asyn-chronous optimization in the DP setting. 
+
+PipeDream-LR. The learning rate discounting method (Yang et al., 2021; Mishchenko et al., 2022) which employs a delay dependent discounting of the learning rate as noted in Eq. (13) where T is set to 6k. 
+
+LR-SecondOrder. On top of the learning rate correction above, we forecast the gradients to the current step using the second-order Taylor expansion of the loss as in (Zheng et al., 2017). The implementation is similar to (Zheng et al., 2017) where the diagonal of the Fisher matrix is used to approximate the Hessian. 
+
+Polynomial+FFT. In this approach, we frame gradient forecasting as a time series prediction problem, leveraging historical gradient data to predict future gradients. Specifi-cally, we employ a second-order polynomial to model trends and utilize Fast Fourier Transform (FFT) to capture any periodic signals. The history size is set to 8. This is a well-known method in time series forecasting literature (Bloom-field, 2004), which we adopt for gradient delay correction. In addition to monitoring training loss, we also evaluate the Root-Mean-Square Error (RMSE) of the weight discrep-ancy ∆t (as in Eq. (9)) at the first stage, which experiences the largest delay. This metric is named gap in (Hakimi et al., 2019), which directly measures the effectiveness of delay correction, where smaller gap indicates better delay correction. The results are presented in Fig. 4. Among the above delay correction methods, polynomial fitting is the most effective. However, our simple Nesterov-based approach outperforms all other sophisticated tech-niques in both training loss and weight discrepancy. Notably, our method is complementary to those strategies and further enhances their performance. Although combining Nesterov with other delay correction mechanisms diminishes its effec-tiveness, supporting our hypothesis that correcting delays in the weight space is more impactful than other approaches. 
+
+Figure 5: Performance with respect to the number of stages. Even though, performance slightly degrades for our method compared to GPipe, the training time increase is exponen-tially larger for GPipe. 
+
+5.5. Increasing the Number of Stages 
+
+To evaluate scalability with respect to the number of stages, we increase the number of layers in the base model whilst maintaining the same embedding dimension. We compare the results against GPipe in terms of training loss and the percentage increase in training time. For configurations with 20 and 24 stages, the learning rate is reduced to 1e-4 for our method, while all other hyperparameters remain unchanged. The results are presented in Fig. 5. Since the delay grows with the number of stages, the perfor-mance of our method degrades slightly as expected. How-ever, due to 100% pipeline utilization, the percentage in-crease in runtime for our approach is significantly lower compared to GPipe. Concretely, for GPipe, 24-stage model takes 8.5× more time compared to the 4-stage model, how-ever, our model is only 2.5× slower. This highlights the trade-off between performance and runtime efficiency, un-derscoring the advantages of asynchronous optimization. This runtime discrepancy is more pronounced when a faster GPU is used, such as A100, as observed in our 1B model experiments (refer to Fig. 10 in the appendix). 
+
+5.6. Ablation Study 
+
+To understand the effect of momentum coefficient, we vary the momentum coefficient and report the performance of our base model on the WikiText dataset. In addition to training loss, we also measure the cosine similarity be-7Nesterov Method for Asynchronous Pipeline Parallel Optimization   
+
+> (a) Ablation of our main method (b) Look-ahead and delay alignment (c) Ablation of Ours-No-WS
+
+Figure 6: Ablation study of our methods. Constant momentum coefficient of 0.99 performs slightly better than the adaptive version (denoted with ‘-a’) and it also shows the best alignment in (b). For the memory efficient version, in addition to adaptive momentum, delay dependent learning rate discounting also helps as shown in (c). 
+
+Figure 7: Our approach with and without the gradient dis-counting term for the Nesterov method. Without the dis-counting term, training is significantly disrupted due to gradient staleness, validating our insight. 
+
+tween the look-ahead direction dt and the weight difference 
+
+∆t = wt − wt−τ at the first stage, where the discrepancy is most pronounced. The results are presented in Fig. 6. As expected, increasing the momentum coefficient from 0.9 to 0.99 leads to improved performance. However, using an adaptive momentum coefficient, as defined in Eq. (13), results in slightly worse performance compared to a fixed value of 0.99 for our main method. The influence of the momentum coefficient on the alignment between the look-ahead step and the weight difference is also empirically demonstrated, matching our theoretical insight. On the other hand, for the memory-efficient version, a delay-adaptive momentum coefficient performs better, and incorporating learning rate discounting further enhances performance. 
+
+Effect of gradient discounting. As outlined in Sec. 3.1, the standard implementation of NAdam incorporates a dis-count factor of (1 −γt) for the gradient term. To demonstrate the necessity of this discounting factor for our approach, we train a model using a modified optimizer where this term is removed, denoted as PipeDream-NAG-Base. The results are presented in Fig. 7. Without this discount factor, the method struggles due to gradient staleness and fails to achieve a training loss compa-rable to our method. Notably, the weight discrepancy at the first stage is an order of magnitude larger than that observed with our gradient discounting approach. Empirically, this strongly validates the significance of the discounting factor. 
+
+Figure 8: Training trajectory comparison in SWARM. Our method significantly outperforms both the synchronous and asynchronous versions of SWARM. 
+
+5.7. Realistic Decentralized Training 
+
+Finally, to stress test our method, we evaluate our approach in a realistic decentralized setting using SWARM (Ryabinin et al., 2023). SWARM is built using the Hivemind frame-work (Ryabinin & Gusev, 2020; Ryabinin et al., 2020) and it supports fault-tolerant, pipeline-parallel training with multi-ple worker nodes per stage ( i.e ., DP at each stage) connected over the internet. Natively, it employs gradient accumula-tion akin to synchronous training and the workers at each stage are synchronized periodically. We refer the interested reader to Ryabinin et al. (2023) for more details. Our architecture and the hyperparameters are similar to the base model experiments but adapted to accommodate SWARM and we train on the WikiText dataset. More details can be found in Appendix B.1. We compare three variants: 1) the standard, synchronous setting (SWARM); 2) an asyn-chronous setting with local updates for every microbatch and a periodic stage-wise weight synchronization (SWARM-Async); and 3) SWARM-Async with our no-weight-stash 
+
+version (Ours-No-WS). Note that weight stashing is not applicable in SWARM. Results are reported in Fig. 8. Our method clearly outperforms both the synchronous and asynchronous versions of SWARM throughout training. No-tably, SWARM-Async shows training instability even with a lower learning rate (refer to Appendix B.1), whereas our method shows stable convergence. Validation loss also fol-lows a similar trend as shown in Fig. 13 in the appendix. 8Nesterov Method for Asynchronous Pipeline Parallel Optimization 
+
+# 6. Conclusion 
+
+We introduce a novel variant of NAG to alleviate gradient staleness in asynchronous PP optimization. Theoretically, we show that our algorithm converges at a sublinear rate for convex, smooth functions in the non-stochastic setting with fixed delay in gradients. Practically, adopting our method is as simple as switching the optimizer and changing the value of an existing hyperparameter. To show the merits of our approach, we performed large-scale experiments on lan-guage modelling tasks using models up to 1B parameters. In all our experiments, our method consistently outperformed previous asynchronous methods as well as the synchronous GPipe method. The behaviour is consistent even in decen-tralized experiments in SWARM. In the future, we intend to investigate the tightness of our convergence rate and ex-tend our approach to PP with stage-wise DP setting, in a heterogenous decentralized training environment. 
+
+# Impact Statement 
+
+Our method establishes the feasibility of asynchronous PP optimization for billion-scale language model training, im-proving efficiency in distributed and decentralized settings. By enabling more effective parallelization, it has the poten-tial to reduce energy consumption and training costs while increasing accessibility to large-scale model training via decentralized infrastructures. As a theoretical contribution, its societal impact is application-dependent, with no direct consequences attributable to the method itself. 
+
+# References 
+
+Agarwal, A. and Duchi, J. C. Distributed delayed stochastic optimization. Advances in neural information processing systems , 24, 2011. Assran, M., Aytekin, A., Feyzmahdavian, H. R., Johansson, M., and Rabbat, M. G. Advances in asynchronous parallel and distributed optimization. Proceedings of the IEEE ,108(11):2013–2031, 2020. Barkai, S., Hakimi, I., and Schuster, A. Gap aware mitigation of gradient staleness. arXiv preprint arXiv:1909.10802 , 2019. Bloomfield, P. Fourier analysis of time series: an introduc-tion . John Wiley & Sons, 2004. Brown, T., Mann, B., Ryder, N., Subbiah, M., Kaplan, J. D., Dhariwal, P., Neelakantan, A., Shyam, P., Sastry, G., Askell, A., et al. Language models are few-shot learners. 
+
+Advances in neural information processing systems , 33: 1877–1901, 2020. Bubeck, S. et al. Convex optimization: Algorithms and com-plexity. Foundations and Trends® in Machine Learning ,8(3-4):231–357, 2015. Chen, C.-C., Yang, C.-L., and Cheng, H.-Y. Efficient and robust parallel dnn training through model parallelism on multi-gpu platform. arXiv preprint arXiv:1809.02839 ,2018. Dozat, T. Incorporating nesterov momentum into adam. 
+
+ICLR Workshop , 2016. Dubey, A., Jauhri, A., Pandey, A., Kadian, A., Al-Dahle, A., Letman, A., Mathur, A., Schelten, A., Yang, A., Fan, A., et al. The llama 3 herd of models. arXiv preprint arXiv:2407.21783 , 2024. Gokaslan, A., Cohen, V., Pavlick, E., and Tellex, S. Open-webtext corpus. http://Skylion007.github. io/OpenWebTextCorpus , 2019. Guan, L., Yin, W., Li, D., and Lu, X. Xpipe: Efficient pipeline model parallelism for multi-gpu dnn training. 
+
+arXiv preprint arXiv:1911.04610 , 2019. Guan, L., Li, D.-S., Liang, J.-Y., Wang, W.-J., Ge, K.-S., and Lu, X.-C. Advances of pipeline model parallelism for deep learning training: an overview. Journal of Computer Science and Technology , 39(3):567–584, 2024. Hakimi, I., Barkai, S., Gabel, M., and Schuster, A. Taming momentum in a distributed asynchronous environment. 
+
+arXiv preprint arXiv:1907.11612 , 2019. Huang, Y., Cheng, Y., Bapna, A., Firat, O., Chen, D., Chen, M., Lee, H., Ngiam, J., Le, Q. V., Wu, Y., et al. Gpipe: Efficient training of giant neural networks using pipeline parallelism. Advances in neural information processing systems , 32, 2019. Karpathy, A. NanoGPT . https://github.com/ karpathy/nanoGPT , 2022. Kingma, D. P. Adam: A method for stochastic optimization. 
+
+arXiv preprint arXiv:1412.6980 , 2014. Liu, A., Feng, B., Xue, B., Wang, B., Wu, B., Lu, C., Zhao, C., Deng, C., Zhang, C., Ruan, C., et al. Deepseek-v3 technical report. arXiv preprint arXiv:2412.19437 ,2024a. Liu, B., Chhaparia, R., Douillard, A., Kale, S., Rusu, A. A., Shen, J., Szlam, A., and Ranzato, M. Asynchronous local-sgd training for language modeling. arXiv preprint arXiv:2401.09135 , 2024b. Loshchilov, I. Decoupled weight decay regularization. arXiv preprint arXiv:1711.05101 , 2017. 9Nesterov Method for Asynchronous Pipeline Parallel Optimization 
+
+Merity, S., Xiong, C., Bradbury, J., and Socher, R. Pointer sentinel mixture models, 2016. Mishchenko, K., Bach, F., Even, M., and Woodworth, B. Asynchronous sgd beats minibatch sgd under arbitrary delays. URL https://arxiv. org/abs/2206.07638 , 2(6):7, 2022. Mitliagkas, I., Zhang, C., Hadjis, S., and R ´e, C. Asynchrony begets momentum, with an application to deep learning. In 2016 54th Annual Allerton Conference on Communi-cation, Control, and Computing (Allerton) , pp. 997–1004. IEEE, 2016. Narayanan, D., Harlap, A., Phanishayee, A., Seshadri, V., Devanur, N. R., Ganger, G. R., Gibbons, P. B., and Za-haria, M. Pipedream: Generalized pipeline parallelism for dnn training. In Proceedings of the 27th ACM symposium on operating systems principles , pp. 1–15, 2019. Narayanan, D., Phanishayee, A., Shi, K., Chen, X., and Za-haria, M. Memory-efficient pipeline-parallel dnn training. In International Conference on Machine Learning , pp. 7937–7947. PMLR, 2021a. Narayanan, D., Shoeybi, M., Casper, J., LeGresley, P., Pat-wary, M., Korthikanti, V., Vainbrand, D., Kashinkunti, P., Bernauer, J., Catanzaro, B., et al. Efficient large-scale language model training on gpu clusters using megatron-lm. In Proceedings of the International Conference for High Performance Computing, Networking, Storage and Analysis , pp. 1–15, 2021b. Nesterov, Y. A method for solving the convex programming problem with convergence rate o (1/k2). In Dokl akad nauk Sssr , volume 269, pp. 543, 1983. Nesterov, Y. Introductory lectures on convex optimization: A basic course , volume 87. Springer Science & Business Media, 2013. PyTorch Contributors. Nadam optimizer — pytorch 2.5.0 documentation. https://pytorch.org/docs/ stable/generated/torch.optim.NAdam. html , 2025. Accessed: 2025-01-16. Qi, P., Wan, X., Huang, G., and Lin, M. Zero bubble pipeline parallelism. arXiv preprint arXiv:2401.10241 , 2023. Radford, A., Wu, J., Child, R., Luan, D., Amodei, D., Sutskever, I., et al. Language models are unsupervised multitask learners. OpenAI blog , 1(8):9, 2019. Recht, B., Re, C., Wright, S., and Niu, F. Hogwild!: A lock-free approach to parallelizing stochastic gradient descent. 
+
+Advances in neural information processing systems , 24, 2011. Ryabinin, M. and Gusev, A. Towards crowd-sourced training of large neural networks using decentralized mixture-of-experts. In Advances in Neural Information Processing Systems , vol-ume 33, 2020. URL https://proceedings. neurips.cc/paper/2020/file/ 25ddc0f8c9d3e22e03d3076f98d83cb2-Paper. pdf .Ryabinin, M., Borzunov, A., Diskin, M., Gusev, A., Mazur, D., Plokhotnyuk, V., Bukhtiyarov, A., Samygin, P., Sinitsin, A., and Chumachenko, A. Hivemind: Decentralized Deep Learning in Py-Torch, April 2020. URL https://github.com/ learning-at-home/hivemind .Ryabinin, M., Dettmers, T., Diskin, M., and Borzunov, A. Swarm parallelism: Training large models can be surpris-ingly communication-efficient. In International Confer-ence on Machine Learning , pp. 29416–29440. PMLR, 2023. Stich, S. U. and Karimireddy, S. P. The error-feedback framework: Better rates for sgd with delayed gradi-ents and compressed communication. arXiv preprint arXiv:1909.05350 , 2019. Sutskever, I., Martens, J., Dahl, G., and Hinton, G. On the importance of initialization and momentum in deep learn-ing. In International conference on machine learning , pp. 1139–1147. PMLR, 2013. Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, Ł., and Polosukhin, I. At-tention is all you need. Advances in neural information processing systems , 30, 2017. Wang, B. and Komatsuzaki, A. Gpt-j-6b: A 6 billion param-eter autoregressive language model, 2021. Yang, B., Zhang, J., Li, J., R ´e, C., Aberger, C., and De Sa, C. Pipemare: Asynchronous pipeline parallel dnn training. 
+
+Proceedings of Machine Learning and Systems , 3:269– 296, 2021. Zheng, S., Meng, Q., Wang, T., Chen, W., Yu, N., Ma, Z.-M., and Liu, T.-Y. Asynchronous stochastic gradient descent with delay compensation. In International conference on machine learning , pp. 4120–4129. PMLR, 2017. Zhu, Y., Kiros, R., Zemel, R., Salakhutdinov, R., Urta-sun, R., Torralba, A., and Fidler, S. Aligning books and movies: Towards story-like visual explanations by watch-ing movies and reading books. In The IEEE International Conference on Computer Vision (ICCV) , December 2015. 10 Nesterov Method for Asynchronous Pipeline Parallel Optimization 
+
+# A. Theoretical Analysis 
+
+We first restate our NAG updates, and then turn to the proofs. 
+
+A.1. Nesterov Method for Delayed Gradients 
+
+Our variant of NAG performs the following iterations starting from an initial point w1:
+
+dt = γt(wt − wt−1) , (14) 
+
+wt+1 = wt + dt − η(1 − γt)∇f ( ¯ wt + ¯dt) .
+
+Here, γ1 = 0 and ¯wt and ¯dt denote the delayed versions of weights and look-ahead, respectively, i.e ., 
+
+¯wt = wt−τ = wt − ∆t , (15) 
+
+¯dt = dt−τ ,
+
+where τ ≥ 0 is the delay, and for simplicity we assume it to be fixed. The main difference to the widely used NAG version is the (1 − γt) term for the gradients. Let us introduce some notations that might be helpful later: 
+
+¯gt = ∇f ( ¯ wt + ¯dt) , (16) 
+
+¯ht = −η(1 − γt)¯ gt ,
+
+¯∆t = wt + dt −   ¯wt + ¯dt
+
+ = ∆ t + dt − ¯dt .
+
+gt and ht are analogously defined. From above, we may note the following identities: 
+
+wt+1 = wt + dt + ¯ht , (17) 
+
+dt+1 = γt+1 (dt + ¯ht) ,
+
+We are now ready to prove that the look-ahead step acts as delay correction when the momentum coefficient γt is chosen appropriately. Then, we prove the convergence rate. 
+
+A.2. Look-ahead as Delay Correction Proposition 2. Let γt be an increasing sequence such that lim t→∞ γt = 1 then, lim t→∞ cos(∆ t, ¯dt) = 1 , where cos( ·, ·)
+
+is the cosine similarity. 
+
+Proof. Let us expand the delay term: 
+
+∆t = wt − wt−τ =
+
+> t
+
+X 
+
+> i=t−τ+1
+
+wi − wi−1 =
+
+> t
+
+X 
+
+> i=t−τ+1
+
+di
+
+γi
+
+=
+
+> t
+
+X 
+
+> i=t−τ+1
+
+di−1 + ¯hi−1 =
+
+> τ
+
+X
+
+> i=1
+
+dt−i + ¯ht−i . (18) Note, all dt−i + ¯ht−i can be written in terms of ¯dt = dt−τ :
+
+dt−i + ¯ht−i = Π t−ij=t−τ +1 γj dt−τ +
+
+> t−i
+
+X
+
+> k=t−τ
+
+Πt−ij=k+1 γj ¯hk , (19) 
+
+=  Πt−ij=t−τ +1 γj
+
+ dt−τ − η
+
+> t−i
+
+X
+
+> k=t−τ
+
+
+
+Πt−ij=k+1 γj
+
+
+
+(1 − γk) ¯ gk .
+
+Now we can write ∆t in terms of ¯dt as follows: 
+
+∆t =
+
+> τ
+
+X
+
+> i=1
+
+" Πt−ij=t−τ +1 γj
+
+ ¯dt − η
+
+> t−i
+
+X
+
+> k=t−τ
+
+
+
+Πt−ij=k+1 γj
+
+
+
+(1 − γk) ¯ gk
+
+#
+
+. (20) When, γt → 1, the gradient term vanishes, and cos(∆ t, ¯dt) → 1.Similarly, by writing ∆t in terms of dt, one can show that cos(∆ t, dt) → 1. This effectively shows that when the momentum coefficient γt → 1, the optimization trajectory becomes smooth and the delay and the look-ahead directions align. 11 Nesterov Method for Asynchronous Pipeline Parallel Optimization 
+
+A.3. Convergence Analysis 
+
+In this section, we will prove that NAG with delayed gradients converges at a rate of O( 1 
+
+> t
+
+) similar to the standard gradient descent. The sequence γt will be set as part of the convergence proof. Even though, due to the delay the faster O( 1 
+
+> t2
+
+) rate is not achieved, in practice NAG is as effective as the synchronous alternatives despite the staleness in gradients. 
+
+Theorem 2. Let f be a convex, β-smooth function with bounded gradients, then the iterates in Eq. (14) with η = 1
+
+> β
+
+converges at a rate of O( 1 
+
+> t
+
+).Proof. Our proof largely follows the proof of (Bubeck et al., 2015) while adopting the delayed gradients. Let us first introduce a few useful inequalities: 
+
+f (x) − f (y) − ∇ f (y)T (x − y) ≤ β
+
+2 ∥x − y∥2 , f is β-smooth (21) 
+
+f (x) − f (y) ≤ ∇ f (x)T (x − y) , convex 
+
+∥∇ f (x) − ∇ f (y)∥ ≤ β∥x − y∥ . β-smooth Applying the first inequality above to the update equation, while using Eq. (16) and η = 1 
+
+> β
+
+:
+
+f (wt+1 ) − f ( ¯ wt + ¯dt) ≤ ¯gt ·
+
+
+
+¯∆t − 1 − γt
+
+β ¯gt
+
+
+
++ β
+
+2 ¯∆t − 1 − γt
+
+β ¯gt
+
+> 2
+
+, (22) 
+
+= ¯ gt · ¯∆t − 1 − γt
+
+β ∥¯gt∥2 + β
+
+2
+
+
+
+∥ ¯∆t∥2 − 2(1 − γt)
+
+β ¯gt · ¯∆t + (1 − γt)2
+
+β2 ∥¯gt∥2
+
+
+
+,
+
+= β
+
+2 ∥ ¯∆t∥2 + γt ¯gt · ¯∆t + γ2 
+
+> t
+
+− 12β ∥¯gt∥2 .
+
+Here, · denotes the dot product. Similarly, using convexity: 
+
+f ( ¯ wt + ¯dt) − f (wt) ≤ ¯gt · (¯dt − ∆t) = ¯ gt · (dt − ¯∆t) . (23) Now summing Eq. (22) and Eq. (23): 
+
+δt+1 − δt = f (wt+1 ) − f (wt) ≤ β
+
+2 ∥ ¯∆t∥2 + ( γt − 1)¯ gt · ¯∆t + γ2 
+
+> t
+
+− 12β ∥¯gt∥2 + ¯ gt · dt . (24) where δt+1 = f (wt+1 ) − f (w∗). Similarly, 
+
+δt+1 = f (wt+1 ) − f (w∗) ≤ β
+
+2 ∥ ¯∆t∥2 + ( γt − 1)¯ gt · ¯∆t + γ2 
+
+> t
+
+− 12β ∥¯gt∥2 + ¯ gt · (wt + dt − w∗) . (25) Now, suppose λt > 1 be a sequence. By multiplying Eq. (24) by (λt − 1) and adding to Eq. (25): 
+
+λtδt+1 − (λt − 1) δt ≤ λtβ
+
+2 ∥ ¯∆t∥2 + λt(γt − 1)¯ gt · ¯∆t + λt(γ2 
+
+> t
+
+− 1) 2β ∥¯gt∥2 + ¯ gt · (wt + λtdt − w∗) , (26) 
+
+= Ω t − λt(1 + γt)β
+
+2(1 − γt) ¯h2 
+
+> t
+
+− β
+
+1 − γt
+
+¯ht · (wt + λtdt − w∗) , A
+
+≤ Ωt − λtβ
+
+2(1 − γt) ¯h2 
+
+> t
+
+− β
+
+1 − γt
+
+¯ht · (wt + λtdt − w∗) , B
+
+= Ω t − β
+
+2λt(1 − γt)
+
+ ∥λt ¯ht + wt + λtdt − w∗∥2 − ∥ wt + λtdt − w∗∥2 , C
+
+where, A substitutes Ωt = λtβ 
+
+> 2
+
+∥ ¯∆t∥2 + λt(γt − 1)¯ gt · ¯∆t, B is due to 0 < γ t < 0, λ t > 0, β > 0, and C follows from 
+
+a2 + 2 ab = ( a + b)2 − b2.Now, to enable telescoping sum, we want, 
+
+λt ¯ht + wt + λtdt − w∗ = wt+1 + λt+1 dt+1 − w∗ = wt + dt + ¯ht + λt+1 γt+1 (dt + ¯ht) − w∗ . (27) 12 Nesterov Method for Asynchronous Pipeline Parallel Optimization 
+
+To this end, we set, 
+
+1 + λt+1 γt+1 = λt . (28) Now, let the sequence λt = t, then, 
+
+γt = t − 2
+
+t , and 1 − γt = 2
+
+t . (29) Now, let ut = β 
+
+> 2
+
+∥wt + λdt − w∗∥2. Then, 
+
+λtδt+1 − (λt − 1) δt ≤ Ωt + 1
+
+λt(1 − γt) (ut − ut+1 ) , (30) 
+
+λtδt+1 − λt−1δt ≤ Ωt + 12 (ut − ut+1 ) ,λtδt+1 − λ0δ1 ≤
+
+> t
+
+X
+
+> k=1
+
+Ωk + 12 (u1 − ut+1 ) , Ptk=1 for both sides 
+
+λtδt+1 ≤
+
+> t
+
+X
+
+> k=1
+
+Ωk + 12 u1 , λ0 = 0 , ut+1 ≥ 0
+
+δt+1 ≤ 1
+
+t
+
+> t
+
+X
+
+> k=1
+
+Ωk + β
+
+2t ∥w1 − w∗∥2 , γ1 = 0 
+
+To have the rate O( 1 
+
+> t
+
+), it remains to show that Ptk=1 Ωk grows much slower than O(t). To this end, using the bounded gradients assumption we show ∥wt+1 − wt∥ = O( 1 
+
+> t
+
+). We prove this by induction. The base case for t ≤ τ can be enforced using an appropriate warmup phase. Suppose ∥wt − wt−1∥ = O( 1 
+
+> t
+
+). Then, 
+
+∥wt+1 − wt∥2 = ∥wt + dt + ¯ht − wt∥2 , (31) 
+
+= ∥dt + ¯ht∥2 ,
+
+= γ2 
+
+> t
+
+∥wt − wt−1∥2 + (1 − γt)2
+
+β2 ∥¯gt∥2 − 2γt(1 − γt)
+
+β ¯gt · (wt − wt−1) ,
+
+≤ γ2 
+
+> t
+
+∥wt − wt−1∥2 + (1 − γt)2
+
+β2 ∥¯gt∥2 + 2γt(1 − γt)
+
+β ∥¯gt∥∥ wt − wt−1∥ ,
+
+= O
+
+ 1
+
+t2
+
+
+
+. γt, ∥¯gt∥ = O(1) , 1 − γt = O( 1 
+
+> t
+
+), and , ∥wt − wt−1∥ = O( 1 
+
+> t
+
+)
+
+Now, it is easy to see that ∥dt − ¯dt∥ = O( 1 
+
+> t
+
+) as γt = O(1) and ∥wt − wt−1∥ = O( 1 
+
+> t
+
+). Consequently, ∥ ¯∆t∥ = O( 1 
+
+> t
+
+) due to bounded delay τ . Consider, 
+
+Ωt = λtβ
+
+2 ∥ ¯∆t∥2 + λt(γt − 1)¯ gt · ¯∆t , (32) 
+
+≤ tβ 
+
+2 ∥ ¯∆t∥2 + 2 ∥¯gt∥∥ ¯∆t∥ ,
+
+= O
+
+ 1
+
+t
+
+
+
+.
+
+Therefore, tX
+
+> k=1
+
+Ωk =
+
+> t
+
+X
+
+> k=1
+
+O
+
+ 1
+
+k
+
+
+
+= O(ln t) , (33) which completes the proof. Note here that ¯∆t depends on the delay τ . Despite it being a constant, it may influence the convergence rate if it is sufficiently large. The proof largely follows the existing proof of NAG and analogously it may be extended to non-convex functions. We leave any such analysis to future work. 13 Nesterov Method for Asynchronous Pipeline Parallel Optimization 
+
+Furthermore, it may be intuitive to think of our discounting term (1 − γt) as a learning rate discounting mechanism by considering ηt = 1−γt 
+
+> β
+
+= O( 1 
+
+> t
+
+). Analogously, relationships may be drawn from the convergence proof of such methods (Mishchenko et al., 2022). Nevertheless, in practical deep learning optimization, having a separate η provides greater control over the learning rate schedules and our approach is consistently better than the learning rate discounting mechanism as shown in our experiments. 
+
+# B. Experiments 
+
+B.1. SWARM Training Configuration 
+
+We use the SWARM baseline from Ryabinin et al. (2023) for our large-scale decentralized training framework. For all baselines, the model used is a Transformer language model with architecture similar to that in prior work (Brown et al., 2020; Wang & Komatsuzaki, 2021). Our SWARM configuration consists of 3 worker nodes per stage, for a total of 24 worker nodes. Each worker node is assigned an NVIDIA L4 GPU. We assign 24 trainer nodes to serve the entire pipeline, where each trainer node has a 4-core Intel Cascade Lake CPU with a base clock of 2.2 GHz and 32 GB of RAM. We use the following layer configuration for all baselines: embedding dimension of 768 with 6 attention heads, the hidden layer dimension of the FFN layer of 3072 with 8 layers. Each layer is assigned to its own stage in the pipeline. The microbatch size used is 8 and sequence length is 2048. We employ a learning rate of 2e-4 for the synchronous SWARM setting and our Nesterov-adapted approach. For the asynchronous variant of SWARM, we use a reduced learning rate of 
+
+5e-5, due to training instability (and divergence) observed at higher learning rates. A linear warmup was used for all baselines up to 1k steps and our Nesterov-adapted approach employs a stage-dependent learning rate up to 2k steps ( T in Eq. (13)) and the momentum coefficient β1 is set as per Eq. (13). For the other methods, a default value of β1 = 0 .9 is used. All methods were trained for a total of 10k iterations, using a stage-wise all-reduce batch size of 256. 
+
+B.2. Additional Results 
+
+We provide validation loss trajectories for the main experiments in Fig. 9, training loss vs time for the 1B model in Fig. 10, and more ablation results in Fig. 11. Furthermore, a comparison with the recent XPipe method (Guan et al., 2019) is provided in Fig. 12. Finally, validation loss trajectories for the SWARM experiments are provided in Fig. 13.   
+
+> (a) WikiText (b) BookCorpus (c) OpenWebText
+
+Figure 9: Validation loss trajectory for the base model. The behaviour is the same as training loss where our method consistently outperforms all methods including GPipe. 
+
+14 Nesterov Method for Asynchronous Pipeline Parallel Optimization 
+
+Figure 10: Training loss vs . wall-clock time for the 1B model, where all models were trained for 50k iterations. For faster GPUs (A100 in this case), the runtime discrepancy between GPipe and other asynchronous methods is more pronounced. Note, overhead of our method over PipeDream is negligible.   
+
+> (a) Training Loss (b) Weight Discrepancy for Stage-1 (c) Look-ahead and delay alignment
+
+Figure 11: Ablation study of our main methods additionally showing weight discrepancy at Stage-1 in (b). Constant momentum coefficient of 0.99 performs slightly better than the adaptive version (denoted with ‘-a’). It also shows the best delay correction and alignment between look-ahead and delay. 
+
+Figure 12: WikiText results for the base model for the XPipe method (Guan et al., 2019) for completeness. XPipe is a direct weight prediction method, that extrapolates the previous AdamW step based on the delay. We implemented XPipe following the description from the paper, however, we were unable to reproduce its reported performance on our large-scale language model training. Note, only small-scale image classification experiments were reported in the paper and in our experiments all methods including PipeDream perform similarly (within ∼ 1 pps) on those datasets. 
+
+15 Nesterov Method for Asynchronous Pipeline Parallel Optimization 
+
+Figure 13: Validation loss on WikiText for the SWARM experiment. The observed performance follows a similar trend to the training performance, where our method significantly outperforms the other methods. 
+
+16

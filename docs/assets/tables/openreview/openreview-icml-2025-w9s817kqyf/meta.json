@@ -1,0 +1,168 @@
+{
+  "version": 2,
+  "extractor": "papercropper",
+  "tables": [
+    {
+      "url": "assets/tables/openreview/openreview-icml-2025-w9s817kqyf/table-001.webp",
+      "caption": "",
+      "page": 0,
+      "index": 1,
+      "width": 1374,
+      "height": 552,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-icml-2025-w9s817kqyf/table-002.webp",
+      "caption": "",
+      "page": 0,
+      "index": 2,
+      "width": 749,
+      "height": 647,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-icml-2025-w9s817kqyf/table-003.webp",
+      "caption": "",
+      "page": 0,
+      "index": 3,
+      "width": 721,
+      "height": 651,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-icml-2025-w9s817kqyf/table-004.webp",
+      "caption": "",
+      "page": 0,
+      "index": 4,
+      "width": 1708,
+      "height": 1178,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-icml-2025-w9s817kqyf/table-005.webp",
+      "caption": "",
+      "page": 0,
+      "index": 5,
+      "width": 1275,
+      "height": 1474,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-icml-2025-w9s817kqyf/table-006.webp",
+      "caption": "",
+      "page": 0,
+      "index": 6,
+      "width": 1441,
+      "height": 853,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-icml-2025-w9s817kqyf/table-007.webp",
+      "caption": "",
+      "page": 0,
+      "index": 7,
+      "width": 1428,
+      "height": 1032,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-icml-2025-w9s817kqyf/table-008.webp",
+      "caption": "",
+      "page": 0,
+      "index": 8,
+      "width": 1430,
+      "height": 1346,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-icml-2025-w9s817kqyf/table-009.webp",
+      "caption": "",
+      "page": 0,
+      "index": 9,
+      "width": 1428,
+      "height": 796,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-icml-2025-w9s817kqyf/table-010.webp",
+      "caption": "",
+      "page": 0,
+      "index": 10,
+      "width": 1423,
+      "height": 1041,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-icml-2025-w9s817kqyf/table-011.webp",
+      "caption": "",
+      "page": 0,
+      "index": 11,
+      "width": 1419,
+      "height": 462,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-icml-2025-w9s817kqyf/table-012.webp",
+      "caption": "",
+      "page": 0,
+      "index": 12,
+      "width": 1433,
+      "height": 1475,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-icml-2025-w9s817kqyf/table-013.webp",
+      "caption": "",
+      "page": 0,
+      "index": 13,
+      "width": 804,
+      "height": 208,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-icml-2025-w9s817kqyf/table-014.webp",
+      "caption": "",
+      "page": 0,
+      "index": 14,
+      "width": 1090,
+      "height": 757,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-icml-2025-w9s817kqyf/table-015.webp",
+      "caption": "",
+      "page": 0,
+      "index": 15,
+      "width": 1444,
+      "height": 206,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-icml-2025-w9s817kqyf/table-016.webp",
+      "caption": "",
+      "page": 0,
+      "index": 16,
+      "width": 1537,
+      "height": 236,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-icml-2025-w9s817kqyf/table-017.webp",
+      "caption": "",
+      "page": 0,
+      "index": 17,
+      "width": 801,
+      "height": 342,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-icml-2025-w9s817kqyf/table-018.webp",
+      "caption": "",
+      "page": 0,
+      "index": 18,
+      "width": 1797,
+      "height": 609,
+      "label": "Table"
+    }
+  ]
+}

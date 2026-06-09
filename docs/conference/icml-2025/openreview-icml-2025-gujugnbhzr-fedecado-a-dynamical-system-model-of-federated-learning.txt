@@ -1,0 +1,1468 @@
+Title: FedECADO: A Dynamical System Model of Federated Learning
+
+URL Source: https://openreview.net/pdf?id=gujuGnbhZr
+
+Number of Pages: 19
+
+Markdown Content:
+# FedECADO: A Dynamical System Model of Federated Learning 
+
+Aayushya Agarwal 1 Gauri Joshi 1 Larry Pileggi 1
+
+# Abstract 
+
+Federated learning harnesses the power of dis-tributed optimization to train a unified machine learning model across separate clients. However, heterogeneous data distributions and computa-tional workloads can lead to inconsistent updates and limit model performance. This work tack-les these challenges by proposing FedECADO, a new algorithm inspired by a dynamical system representation of the federated learning process. FedECADO addresses non-IID data distribution through an aggregate sensitivity model that re-flects the amount of data processed by each client. To tackle heterogeneous computing, we design a multi-rate integration method with adaptive step-size selections that synchronizes active client up-dates in continuous time. Compared to prominent techniques, including FedProx, FedExp, and Fed-Nova, FedECADO achieves higher classification accuracies in numerous heterogeneous scenarios. 
+
+# 1. Introduction 
+
+Federated learning collaboratively trains machine learning models across distributed compute nodes, each equipped with a distinct local dataset and computational capabilities (McMahan et al., 2017; Kairouz et al., 2021). Employing techniques from distributed optimization, federated learning samples update from individual clients and calculates an aggregate update to refine the global model. This paradigm yields several advantages, such as improving data privacy by keep data at the edge node, improving model generaliz-ability via collaboration with other nodes, and optimizing efficiency when training large datasets. Nevertheless, compared to distributed optimization, feder-ated learning encounters unique challenges of non-IID data distributions and varying computation capacities amongst          
+
+> 1Department of Electrical and Computer Engineering, Carnegie Mellon University, Pittsburgh, USA. Correspondence to: Aayushya Agarwal <aayushya@andrew.cmu.edu >.
+> Proceedings of the 42 nd International Conference on Machine Learning , Vancouver, Canada. PMLR 267, 2025. Copyright 2025 by the author(s).
+
+local clients. Neglecting the impact of heterogeneity can lead to inconsistent models with limited performance (Wang et al., 2020). However, previous research has often studied federated learning in the context where local clients have identical learning rates and an IID data distribution (Kairouz et al., 2021; Wang et al., 2021). As a result, new techniques for aggregating local updates require careful consideration that synchronize heterogeneous client updates for model consistency while being computationally efficient without extensive hyperparameter tuning. In this work, we design a new consensus algorithm that addresses the challenges of non-IID data distribution and heterogeneous computing in federated learning. We design heuristics inspired by an equivalent circuit model of dis-tributed optimization (Agarwal and Pileggi, 2023) named ECADO (Equivalent Circuit Approach for Distributed Op-timization) which represents the trajectory of the global model’s state variables by an ordinary differential equa-tion (ODE) and whose steady state coincides with the local optimum. These methods draw inspiration from circuit sim-ulation decomposition methods to address key challenges in federated learning. Our main contributions are: • Aggregate Sensitivity Model : A first-order sensitivity model of each client update provides faster conver-gence in the consensus step and reflects the fraction of data for non-IID data distributions amongst clients. • Multi-rate integration with adaptive step sizes : Lo-cal updates from clients with heterogeneous computa-tional capabilities are synchronized in continuous-time using a multi-rate numerical integration. Using proper-ties of numerical accuracy, we propose an aggregation method with adaptive step sizes for faster convergence. The key novelty of our work is the introduction of circuit-inspired modeling and simulation principles to federated learning. FedECADO builds on the distribution framework (Agarwal and Pileggi, 2023) and introduces new methodolo-gies (multi-rate integration and aggregate sensitivity model) to address challenges unique to federated settings including intermittent client availability, heterogeneous client com-putational capabilities, and non-IID data distributions. By reinterpreting these challenges through circuit theory, we are able to use well-established techniques from distributed circuit simulation to handle heterogeneity. This provides a 1FedECADO: A Dynamical System Model of Federated Learning 
+
+new perspective to federated learning for robust and scalable training. Compared to prominent methods including FedProx, Fed-Exp, FedRS and FedNova, our combined approach demon-strates faster convergence and achieves higher classification accuracies for training deep neural network models in nu-merous heterogeneous computing scenarios. 
+
+# 2. Related Work 
+
+Federated learning has received significant attention in ad-dressing challenges related to heterogeneous computation and communication overhead. A comprehensive survey of these methods is available in (Zhu et al., 2021; Kairouz et al., 2021; Wang et al., 2021). We specifically focus on methods that target heterogeneous client computation and non-IID data distributions. Federated learning methods traditionally rely on discrete iterative algorithms, such as FedAvg (Li et al., 2020) which uses SGD for client training and averages the updated results in each consensus step. While FedAvg offers theoretical guarantees, its performance is often limited in settings with heterogeneous computation and non-IID data distribution (Zhao et al., 2018). To address these limitations, several modifications have been proposed, including adjustments to the SGD update using state information from the central agent (Acar et al., 2021; Pathak and Wainwright, 2020; Karimireddy et al., 2020; Li et al., 2020) and a Newton-like update in FedDANE (Li et al., 2019a). One notable method, FedProx (Li et al., 2020), penalizes client updates deviating far from the central agent step. Other variations of FedProx include the following (Acar et al., 2021; Li et al., 2019b). Certain federated learning methods have improved conver-gence rates by introducing new step-size routines (Li et al., 2019b; Malinovsky et al., 2023; Charles and Kone ˇcn `y, 2020) or incorporating momentum into client updates (Das et al., 2022; Xu and Huang, 2022; Khanduri et al., 2021). Adaptive step size selections, as seen in FedYogi, FedADAM, SCAF-FOLD (Karimireddy et al., 2020) and FedAdaGrad (Reddi et al., 2020), as well as FedExp (Jhunjhunwala et al., 2023), have also been explored; however, these methods generally do not address heterogeneous computational challenges. A notable method, FedNova (Wang et al., 2020), specifically addresses heterogeneous computation and data scenarios in federated learning by modifying the gradient update to compensate for variations in client local computation. Our work adopts a new continuous-time formulation of the federated learning process, where the challenges of hetero-geneous computation and non-IID data distributions are seen as updates occurring in parallel in continuous time. This enables us to design new methods based on concepts from dynamical system processes. Our continuous-time for-mulation of optimization is inspired by work on control sys-tems (Behrman, 1998; Attouch and Cominetti, 1996; Polyak and Shcherbakov, 2017; Wilson et al., 2021) and circuit simulation principles (Agarwal et al., 2023; Agarwal and Pileggi, 2023) to design new optimization algorithms. This approach was previously applied to distributed optimization in ECADO (Agarwal and Pileggi, 2023), but was not suit-able for federated learning because it assumed full client participation. Our work specifically extends ECADO’s ideas to address the distinct challenges posed by federated learn-ing. The key distinctions between our work and ECADO are the introduction of an aggregate sensitivity model to account for non-IID data distributions among clients and a multi-rate integration mechanism to synchronize client updates from heterogeneous client computation. 
+
+# 3. Background on Circuit-Inspired Optimization 
+
+In federated learning, n distributed edge devices collectively train a global model. Each device, i, has a local dataset, Di,and coordinates with the central server to update the param-eters of a global machine learning model, represented by a vector x. Due to communication and privacy constraints, the raw local data is not transferred to the central server; instead only model updates or gradients are shared. Each client device trains a localized model, where the local objective function fi(x) is the empirical risk function with respect to the local dataset Di, defined as 
+
+fi(x) = X
+
+> ξ∈D i
+
+ℓ(x; ξ), (1) where ξ is sample index and ℓ(x; ξ) is the sample loss func-tion. The central server seeks to minimize global objective, which is the sum of the local objectives: 
+
+min  
+
+> x
+
+f (x) where f (x) = 
+
+> n
+
+X
+
+> i=1
+
+fi(x). (2) To tackle the challenges of heterogeneous computing and non-IID data distribution, we design a federated learning algorithm inspired by an equivalent circuit (EC) model of the federated learning process. This EC model builds on the framework introduced in (Agarwal and Pileggi, 2023), which employs a circuit-based approach to distributed opti-mization. In the EC approach, the solution trajectory of the global objective is analyzed as a continuous-time ordinary differential equation (ODE), referred to as gradient flow: 
+
+˙x = −∇ f (x) (3) 
+
+= −
+
+> n
+
+X
+
+> i=1
+
+∇fi(x), x(0) = x0 (4) 2FedECADO: A Dynamical System Model of Federated Learning 
+
+Figure 1: The federated learning process is modeled as an equivalent circuit, where node voltages represent state vari-ables, xi, and gradients, ∇fi(xi), are voltage-controlled current sources. Using circuit insights, the gradient flow equations (3) , (4) are modified by introducing an inductor (with an inductance of L) between the central agent state, 
+
+xc, and the state of each sub-problem, xi. The resulting gra-dient flow equations (5) ,(6) , (7) are mapped to the equivalent circuit shown. where x0 are the initial conditions. At steady-state, the gradient flow (4) reaches a point where ˙x = 0 , implying 
+
+∇f (x) = 0 as per (3) . Thus, the steady-state aligns with a critical point of the objective function (2). Directly solving the gradient flow equations, (3) , to steady-state reveals similar convergence characteristics to those of SGD (Agarwal and Pileggi, 2023). To improve conver-gence, new insights are derived by translating the ODE into an equivalent circuit (EC) model, motivating physics-based optimization techniques that can effectively address the challenges in heterogeneous computation. In the EC model depicted in Figure 1, the node voltages correspond to the state variables for the central agent and local sub-problems, while the local gradients, ∇fi(xi), are repre-sented by voltage-controlled current sources. By applying principles from circuit analysis and simulation, we create circuit-inspired algorithms that shape the solution trajectory and select appropriate step sizes. The connection between circuit analysis and the ODEs is provided in Appendix A. To separate the central agent state, xc, from the local state of each subproblem, xi, in the EC model, the gradient flow equations (3) , (4) are first modified by introducing an in-termediate flow variable (representing an inductor current in Figure 1), IiL. The flow variables, IiL, interact with the ODEs of the central agent and local agents according to Kirchhoff’s current law (KCL) of the EC as follows: 
+
+˙xc(t) = 
+
+> n
+
+X
+
+> i=1
+
+IiL(t) (5) 
+
+IiL(t) + ˙ xi(t) + ∇fi(xi(t)) = 0 (6) Inspired by the current-voltage relationship of an inductor, the flow variables, IiL, couple the central agent to the local state variables according to: 
+
+L ˙ILi(t) = xc(t) − xi(t) (7) The flow variable, IiL, represents the cumulative error be-tween the central agent state, xc, and local state, xi, over the simulation window [0 , t ]. This acts as an integral controller for the dynamical system and achieves a second-order effect for faster convergence to steady-state (Agarwal and Pileggi, 2023). At steady-state (i.e., critical point in the optimization function), the system reaches an equilibrium where the flow variables, IiL, are stationary, indicating that xc = xi for all 
+
+i. The settling time for the continuous-time response of the flow variables, IiL, is influenced by the hyperparameter L
+
+and can be tuned to provide fast convergence as shown in (Agarwal and Pileggi, 2023). The modified ODEs (5) - (7) describes a set of differential equations with the states of all local subproblems, xi, implic-itly coupled. In federated learning, the differential equations are solved over a set of distributed compute nodes. To de-couple the circuit equations (i.e., ODEs), an iterative Gauss-Seidel (G-S) method separates each subproblem from the central agent by treating the intermediate flow variable as constant from the prior iteration. Analyzing the distributed computation as a G-S enables us to study the continuous-time convergence of the full set of ODEs without the effect of discrete updates due to client participation. The G-S process separately solves each client independently and subsequently communicates updates the coupling vari-ables at each iteration. During the ( k +1 )-th iteration of G-S, a client first simulates its local sub-problem (i.e., gradient flow) as follows: 
+
+˙xk+1  
+
+> i
+
+(t) + ∇fi(xk+1  
+
+> i
+
+(t)) + Iik 
+
+> L
+
+(t) = 0 , (8) where Iik 
+
+> L
+
+is the intermediate flow variable that couples the local client ODE to the central agent. In the G-S iteration, IiL
+
+is modeled as a constant from the previous G-S iteration (as indicated by Iik 
+
+> L
+
+). The differential equation is solved using a numerical integration method over a time window of [t0, t 1].For example, a Forward Euler integration (equivalent to gradient descent (Agarwal et al., 2023)) solves for the state at each discrete time point: 
+
+xk+1  
+
+> i
+
+(t+∆ t) = xk+1  
+
+> i
+
+(t)−∆t(∇fi(xk+1  
+
+> i
+
+(t))+ Iik 
+
+> L
+
+(t)) (9) 3FedECADO: A Dynamical System Model of Federated Learning 
+
+where ∆t is the time step (or learning rate). During each iteration of G-S, the local subproblem is simu-lated for a number of time steps, corresponding to a number of iterations denoted as ei. Afterwards, active clients com-municate their local states to the central agent. Using the local client updates, the central agent then updates the flow variables, IiL, and central agent state, xc, according to the following ODE: 
+
+˙xk+1  
+
+> c
+
+(t) = 
+
+> n
+
+X
+
+> i=1
+
+Iik+1  
+
+> L
+
+(t) (10) 
+
+L ˙ILik+1 
+
+(t) = xk+1  
+
+> c
+
+(t) − xk+1  
+
+> i
+
+(t). (11) In this update, the state variables of each sub-problem is represented by a constant value, xk+1  
+
+> i
+
+, which effectively models the sub-problem for a given time period. The entire circuit then progresses in time towards its natural steady-state. Through this perspective, we design new fed-erated learning algorithms that aims to efficiently simulate the circuit equations (10) - (11) to the critical point of the objective function in the federated learning setting of hetero-geneous client computation and non-IID data distributions. 
+
+# 4. FedECADO 
+
+The EC model depicted in Figure 1 offers a physical analogy to the underlying optimization problem. However, simulat-ing the EC model for federated learning to a steady-state encounters unique challenges due to heterogeneous client computation and non-IID datasets. While prior work (Agar-wal and Pileggi, 2023) leveraged insights from the EC model to address homogeneous distributed optimization problems, these approaches are not directly applicable to federated learning and are susceptible to model inconsistencies, as highlighted in (Wang et al., 2020). Specifically, (Agarwal and Pileggi, 2023) simulates the circuit model assuming full client participation and uses a global step learning rate consistent for all clients and the central server. However, heterogeneous computation in federated learning creates asynchronous simulation timescales between clients because each client model is trained using a different learning rate and number of epochs. We introduce FedECADO, a new algorithm that leverages circuit-based insights from the EC model in Figure 1 to address the challenges posed by heterogeneous client com-putation and non-IID data distributions in federated learning. Our focus is on deriving the aggregation step for the cen-tral server, which processes updates from each active client based on (6) . Our approach presents a multirate integra-tion method that synchronizes client updates to account for varying client computational capabilities. Additionally, we propose an aggregate sensitivity approach to model non-IID data distributions. 
+
+4.1. Aggregate Sensitivity Model 
+
+In federated learning, non-IID data distributions can result in inconsistent models if not addressed during the consensus step. To represent the non-IID data distributions, we account for these variations in the following joint optimization with non-IID data distributions: 
+
+min  
+
+> x
+
+f (x) (12) 
+
+f (x) = 
+
+> n
+
+X
+
+> i
+
+pifi(x) (13) where pi scales the contribution of fi(x) to the overall ob-jective based on the size of local dataset, Di, relative to the total dataset size, D, defined as: 
+
+pi = |D i|/|D| . (14) The gradient flow equations for the federated learning ob-jective with non-IID data distributions (13) is: 
+
+˙x(t) = −pi∇f (x(t)) , x(0) = x0. (15) Using the modified gradient flow based on the EC in Figure 1, the set of ODEs describing the circuit are: 
+
+˙xc = X
+
+> i∈C
+
+IiL(t) (16) 
+
+IiL(t) + ˙ xi(t) + pi∇fi(xi(t)) = 0 (17) 
+
+L ˙ILi(t) = xc(t) − xi(t), (18) where the local gradients are scaled by the relative dataset size, pi, in (17). However, the constant-value model of each client assumes that a change in the central agent state, xc, does not influence 
+
+xi for the time-period. We improve the consensus updates by modeling the first-order effect of each sub-problem due to changes in the state-variable, xc, using an aggregate sensitivity model of each client’s subproblem, denoted by 
+
+Gth i . This reflects the varying data distributions and the relative dataset size, pi, of each client in the consensus step. Incorporating the first-order sensitivity model has been proven to improve the convergence of the G-S process as we can better capture the coupled interactions between clients and adds a proportional controller to the dynamical system to improve the convergence rate of G-S (Agarwal and Pileggi, 2023)(Dartu and Pileggi, 1998). The aggregate sensitivity model represents a circuit concept known as Thevenin impedance of a client sub-circuit and is defined for the EC in Figure 1 as follows: 
+
+Gith = ∂IiL
+
+∂xi
+
+. (19) 4FedECADO: A Dynamical System Model of Federated Learning 
+
+Using (17), we evaluate the sensitivity model, Gith , as 
+
+Gith = pi
+
+∂∂xi
+
+∇fi(xi) + ∂∂xi
+
+˙xi. (20) The sensitivity model in (20) includes a partial of a time-derivative term. Assuming a BE step for the ODE, we can numerically evaluate Gith as: 
+
+Gith = 1∆t + pi∇2fi(xi). (21) The derivation of Gith is provided in (Agarwal and Pileggi, 2023). However, calculating the Hessian at each G-S itera-tion is a bottleneck for computation and communication. To reduce the computation load of evaluating the Hessian, ∇2f ,for individual datapoints, FedECADO introduces a constant aggregate sensitivity, ˆGth i , which is derived by averaging the Hessian across a subset of datapoints. Employing a con-stant value to approximate the Hessian, ˆH ≈ ∇ 2fi, defines a constant sensitivity model for each client: 
+
+ˆGith = 1∆t + pi ¯Hi (22) 
+
+ˆGith extends the work in (Agarwal and Pileggi, 2023) for the federated learning setting as it captures the relative dataset size, pi, within the first-order sensitivity. Notably, in fed-erated settings with non-IID data, each client’s local loss function exhibits a distinct landscape shaped by its data distribution. The Hessian captures the local curvature and is used to estimate the first-order sensitivity of a client’s model to changes in the global parameters. This enables the central agent to anticipate how aggregation steps will influence individual client updates. This sensitivity model can be periodically updated to re-assess each client’s first-order response, balancing the trade-off between communication and computation. Intuitively, this approach suggests that a client with a larger local dataset will produce a higher ˆGith , thus having a greater influence on the central agent’s state updates. The linear sensitivity model is then incorporated into the G-S process as follows: 
+
+˙xk+1  
+
+> c
+
+(t) = 
+
+> n
+
+X
+
+> i=1
+
+Iik+1  
+
+> L
+
+(t) (23) 
+
+L ˙ILik+1 
+
+(t) = xk+1  
+
+> c
+
+−(Iik+1  
+
+> L
+
+(t) ˆGth −1 
+
+> i
+
++xk+1  
+
+> i
+
+(t)−Iik 
+
+> L
+
+(t) ˆGth −1 
+
+> i
+
+).
+
+(24) The relative values of each client’s linear sensitivities drive the central agent states toward certain client updates. 
+
+4.2. Multi-Rate Integration for Heterogeneous Computation 
+
+The aggregate sensitivity model adjusts the ODE equations to accelerate the convergence of the Gauss-Seidel (G-S) pro-cess in (23) -(24) . To address the challenges posed by hetero-geneous client computations, we introduce a technique that synchronizes and simulates the central agent ODEs (23) -(24), for efficient model convergence in federated learning. During each round of communication, a set of active clients transmit their most recent updates to the central agent. The central agent then numerically solves the ODEs describing the dynamics of the central agent states (23) , (24) . We apply a Backward Euler (BE) integration step to solve for the states. The BE step is numerically stable and improves the convergence rate of the distributed optimization process (Agarwal and Pileggi, 2023). The BE step solves for the states at a time t + ∆ t:
+
+xk+1  
+
+> c
+
+(t + ∆ t) = xk+1  
+
+> c
+
+(t) − ∆t
+
+> n
+
+X
+
+> i=1
+
+Iik+1  
+
+> L
+
+(t + ∆ t) (25) 
+
+Iik+1  
+
+> L
+
+(t + ∆ t) = Iik+1  
+
+> L
+
+(t)+ ∆tL (xk+1  
+
+> c
+
+(t + ∆ t) − (Iik+1  
+
+> L
+
+(t + ∆ t) ˆGth −1
+
+> i
+
++xk+1  
+
+> i
+
+(t + ∆ t) − Iik 
+
+> L
+
+(t + ∆ t) ˆGth −1 
+
+> i
+
+)) .
+
+(26) However, the BE step in (26) assumes a globally syn-chronous timescale, where all clients are simulated with the same time step, ∆t, for the same number of epochs. This assumption is not applicable to federated learning, where the subset of actively participating clients, Ca ∈ C, exhibit a varying step-size, ∆ti, and number of epochs, ei.FedECADO tackles this issue by introducing a multirate in-tegration method grounded in a continuous-time perspective of federated learning. We recognize that in continuous time, each active client simulates its local ODE (6) for a unique time window, Ti:
+
+Ti =
+
+> ei
+
+X
+
+> k=1
+
+∆tki . (27) where ∆tki is the learning rate for the client i during an epoch k.This insight builds upon the equivalence between discrete step-sizes and time steps, ∆ti, resulting in each client es-sentially simulating its local sub-problem for ei time steps (i.e., number of epochs). For instance, a client with a local learning rate of 10 −3 and 3 epochs simulates its local ODE for Ti = 3 × 10 −3 seconds. The continuous-time perspective shows that each active client simulates its local ODE on a distinct timescale and 5FedECADO: A Dynamical System Model of Federated Learning 
+
+communicates its final state, xi(Ti), to the central agent, leading to an asynchronous update. Figure 2 illustrates this issue of asynchronous updates from three active clients. Note, requiring a synchronous timescale is vital for conver-gence, as all clients must reach steady state simultaneously. 
+
+Remark 1: Convergence to a critical point for the central agent is achieved when all clients simultaneously reach a steady state. From a continuous-time point of view, Remark 1 illustrates the importance of maintaining a uniform timescale with each sub-circuit to simultaneously achieve a global steady-state. Inspired by asynchronous distributed circuit simulation (White and Sangiovanni-Vincentelli, 2012), FedECADO introduces a multi-rate integration scheme designed to ad-dress asynchronous local updates in federated learning. This scheme effectively synchronizes the client updates to ensure accuracy and consistency of the central model. During each communication round, the multi-rate integra-tion scheme begins by collecting the latest updates from all active clients, xi(Ti) for all i ∈ Ca, along with each client’s simulation runtime, denoted by Ti. Communicat-ing the simulation time of each client is essential for syn-chronizing local updates at the central client server and adds minimal computation and communication costs. Next, FedECADO solves for the central client states on a syn-chronous timescale at intermediate timepoints. To synchro-nize the client updates, we employ a linear interpolation and extrapolation operator, Γ( xi(t), τ ), that estimates client states, xi(t), at an intermediate time point, τ , defined as: 
+
+Γ( xi(t), τ ) = xi(t2) − xi(t1)
+
+t2 − t1
+
+(τ − t1) + xi(t1), (28) where xi(t2) and xi(t1) represent known state values at time points t2 and t1, respectively. This constructs a synchronous timescale for the central agent to evaluate its state variables over a time window 
+
+τ ∈ [t0, t 0 + max( Ti)] , where t0 is the latest time point in the previous communication round and max (Ti) is the largest simulation time window amongst active clients. The central agent states are now governed by the following ODEs using the operator, Γ( ·):
+
+˙xk+1  
+
+> c
+
+(τ ) = 
+
+> n
+
+X
+
+> i=1
+
+Iik+1  
+
+> L
+
+(τ ) (29) 
+
+L ˙ILik+1 
+
+(τ ) = xk+1  
+
+> c
+
+(τ ) − (Iik+1  
+
+> L
+
+(τ )Gth −1
+
+> i
+
++ Γ( xk+1  
+
+> i
+
+(t), τ ) − Iik 
+
+> L
+
+Gth −1 
+
+> i
+
+), (30) where Γ( xk+1  
+
+> i
+
+(t), τ ) calculates the client states estimated at time τ using the linear interpolation and extrapolation operator (28) . This operator addresses the challenges posed by asynchronous client updates, which can otherwise lead to model inconsistencies and poor performance. Without the operator, Γ( xk+1  
+
+> i
+
+(t), τ ), the central agent would be forced to incorporate asynchronous client states directly, leading to disparate timescales within the coupled system. This would prevent the central agent and local clients from syn-chronously reaching a steady state, which has been estab-lished by Remark 1 as a necessary condition to converge to a stationary point in the objective function. FedECADO solves for the central agent states in (29) ,(30) using a numerically stable BE integration method as follows: 
+
+xk+1  
+
+> c
+
+(τ + ∆ t) = xk+1  
+
+> c
+
+(τ ) − ∆t
+
+> n
+
+X
+
+> i=1
+
+Iik+1  
+
+> L
+
+(τ + ∆ t) (31) 
+
+Iik+1  
+
+> L
+
+(τ + ∆ t) = Iik+1  
+
+> L
+
+(t) + ∆tL (xk+1  
+
+> c
+
+(τ + ∆ t)
+
+−(Iik+1  
+
+> L
+
+(τ + ∆ t)Gth −1 
+
+> i
+
++ Γ( xk+1  
+
+> i
+
+(t), τ + ∆ t)
+
+−Iik 
+
+> L
+
+(τ + ∆ t)Gth −1 
+
+> i
+
+)) .
+
+(32) This results in the following set of linear equations that determine the central agent states at the time-point, τ :
+
+             
+
+> 1+ ∆tˆGth −11
+> L0... −∆tL
+> 01+ ∆tˆGth −12
+> L... −∆tL
+> 00
+
+... −∆tL   
+
+> −∆t−∆t... 1
+
+    
+
+> ILk+1 1(τ+∆ t)
+> ILk+1 2(τ+∆ t)
+
+...  
+
+> xk+1
+> c(τ+∆ t)
+
+ =∆tL
+
+      
+
+> −Γ( xk+1 1(t),τ )+ I1kL(t) ˆGth −11
+> −Γ( xk+1 2(t),τ )+ I2kL(t) ˆGth −12
+
+...
+
+> 0
+
+
+
+(33) Note, ∆t represents the learning rate for the central agent and is independent from the client learning rate. To estab-lish the convergence properties of the multi-rate integration using the linear interpolation and extrapolation operator, 
+
+Γ( ·), we prove that each central agent step in (31) , (32) is a contraction mapping that progressively moves the central agent states toward a stationary point. 
+
+Theorem 4.1. The operator Γ( x, τ ), defined in (28) , syn-chronizes local client updates and at each evaluation of the central agent states via the FedECADO consensus step in 
+
+(33) is a contraction mapping towards a stationary point. 
+
+The proof of Theorem 4.1 is provided in Appendix B. 4.2.1. S ELECTING CENTRAL AGENT STEP -S IZE 
+
+During each communication round, we solve the central agent ODEs (29) ,(30) using a BE integration. The BE in-tegration is a stable numerical method that approximates the central agent state at time points, τ ∈ [t0, t 0 + max (Ti)] 
+
+6FedECADO: A Dynamical System Model of Federated Learning 
+
+Figure 2: Heterogeneous computation among three clients leads to simulation for different time windows ( T1, T 2, T 3). The final states ( x1(T1), x 2(T2), x 3(T3)) are communicated to the central agent, resulting in asynchronous updates. 
+
+Figure 3: FedECADO proposes a multi-rate integration that evaluates the central agent step at intermediate time points by linearly interpolating and extrapolating client states to the synchronized time point. over a time-step, ∆t. We propose adaptively selecting ∆t
+
+using numerical accuracy properties of the BE integration. The accuracy of the BE step for the central agent ODEs ((29) and (30) ) can be measured by a local truncation error (LTE) derived in (Pillage, 1998). The LTE for determining the central agent state, εcBE , from (29) is estimated as: 
+
+εCBE = − −∆t
+
+2
+
+" nX
+
+> i=1
+
+Iik+1  
+
+> L
+
+(τ ) −
+
+> n
+
+X
+
+> i=1
+
+Iik+1  
+
+> L
+
+(τ + ∆ t)
+
+#
+
+.
+
+(34) The LTE of the BE integration step for evaluating the flow variables from (30), denoted εLBE , is estimated as: 
+
+εLBE i = − ∆t
+
+2L [( xk+1  
+
+> c
+
+(t) − Iik+1  
+
+> L
+
+(t) ¯Gth −1 
+
+> i
+
++ xk+1  
+
+> i
+
+(t)−
+
+Iik 
+
+> L
+
+(t) ¯Gth −1 
+
+> i
+
+) − (xk+1  
+
+> c
+
+(t + ∆ t) − Iik+1  
+
+> L
+
+(t + ∆ t) ¯Gth −1 
+
+> i
+
++
+
+xk+1  
+
+> i
+
+(t + ∆ t) − Iik 
+
+> L
+
+(t + ∆ t) ¯Gth −1 
+
+> i
+
+)] (35) where ¯Gth i is the sensitivity model derived in (22). To accurately capture the ODE trajectory, we adaptively select the time step to guarantee that the accuracy of the BE integration step in (31) ,(32) remains within a specified tolerance, δ. At each iteration, a backtracking line-search style method (shown in Algorithm 1) selects a step-size, ∆t,to ensure the following accuracy condition is satisfied: max |εBE | ≤ δ, (36) where εBE = [ εCBE , ε LBE ].The adaptive time step selection in Algorithm 1 is initiated by a time step, ∆t0 > 0, which can be selected as a constant hyperparameter or from the previous communication round. Then a back-tracking line search adjusts ∆t to ensure that the LTE is bounded by δ. Note that convergence in continu-ous time guarantees that there exists a ∆t > 0 that satisfies the BE accuracy condition which ensures that the Algorithm 1 is bounded (Agarwal and Pileggi, 2023). Although ∆t0
+
+is a hyperparameter, it does not affect convergence but can influence the number of iterations in Algorithm 1. 
+
+Algorithm 1 Adaptive Time Stepping Method 
+
+Input: L > 0, δ > 0, ∆t0 > 0 
+
+> 1:
+
+∆t ← ∆t0 
+
+> 2:
+
+do while max( |εBE |) ≤ δ 
+
+> 3:
+
+hi  
+
+> 4:
+
+∆t = δmax (∥εBE ∥) ∆t 
+
+> 5:
+
+Compute xk+1        
+
+> c(τ+ ∆ t),Iik+1
+> L(τ+ ∆ t)using (33) 6:
+
+Evaluate εBE = [ εCBE , ε LBE ] using (34),(35)  
+
+> 7:
+
+Return ∆t
+
+# 5. Experiments 
+
+We evaluate FedECADO’s performance by training multiple models distributed across multiple clients. The FedECADO workflow is shown in Algorithm 2 in Appendix C. We bench-mark our approach against established federated learning methods designed for heterogeneous computation, includ-ing FedProx (Li et al., 2020), FedNova (Wang et al., 2020), FedExp (Jhunjhunwala et al., 2023), FedDecorr (Shi et al., 2022) and FedRS (Li and Zhan, 2021). Our experiments focus on two key challenges: non-IID data distribution and asynchronous client training. We then demonstrate the scal-ability of FedECADO on larger models with both non-IID data distributions and asynchronous training in Section D. In these scenarios, FedECADO achieves higher classifica-tion accuracy, thus demonstrating its efficacy for real-world federated learning applications. 
+
+5.1. Non-IID Data Distribution 
+
+We evaluate FedECADO’s performance by training a VGG model (Simonyan and Zisserman, 2014) on the non-IID CIFAR-10 (Krizhevsky et al., 2009) dataset distributed across 100 clients. To model realistic scenarios, we set an active participation ratio of 0.1, meaning only 10 clients actively participate in each communication round. The data distribution adheres to a non-IID Dirichlet distribu-tion ( Dir 16 (0 .1) ). The specific dataset size, |D i|, for each client is predetermined according to the Dirichlet distribu-tion before training and used to precalculate the average sensitivity model proposed in (22) . In these experiments, 7FedECADO: A Dynamical System Model of Federated Learning 
+
+Classification Acc. (%) FedECADO FedNova FedProx FedExp FedDecorr FedRS Mean (Std.) 57.8 (3.6) 48.9 (2.9) 44.3 (3.2) 45.3 (4.7) 45.3 (4.7) 46.1 (4.2) Table 1: Classification accuracies for training a VGG-11 model on CIFAR-10 dataset distributed across 100 with Dirichlet data distribution for 100 epochs Classification Acc. (%) FedECADO FedNova FedProx FedExp FedDecorr FedRS Mean (Std.) 72.2 (3.8) 67.6 (5.2) 61.4 (4.8) 64.6 (3.8) 60.3 (5.1) 69.3 (2.8) Table 2: Classification accuracies for a VGG-11 model trained on a CIFAR-10 dataset across 100 clients with each client learning rate and epochs set by (37),(38). Classification Acc. (%) FedECADO FedNova FedProx FedExp FedDecorr FedRS Mean (Std.) 81.3 (4.8) 69.5 (5.1) 70.6 (4.1) 68.6 (10.2) 61.3 (5.5) 72.3 (5.8) Table 3: Classification accuracies for training ResNet34 model on CIFAR-100 dataset distributed across 100 clients with Dirichlet data distribution and random learning rates for 200 epochs. the average sensitivity model is not updated during training. Using each method, we train for 100 epochs, examining the classification accuracy at each step. As illustrated in Figure 4a, FedECADO achieves the highest classification accuracy throughout the training process (with an improvement of 7% compared to FedNova and 13% compared to FedProx). This demonstrates the efficacy of its aggregate sensitivity model in adapting to data heterogeneity. To test FedECADO’s robustness, we repeat the experiment 20 times with random data partitioning sampled by Dirichlet distribution. Table 1 shows the mean and standard deviation (std) of each methods’ classification accuracies after 100 epochs. FedECADO exhibits the highest mean accuracy with low variance, demonstrating its effectiveness across diverse data distributions. 
+
+5.2. Asynchronous Computation 
+
+In this experiment, we evaluate the performance of the multi-step integration proposed in Section 4.2. We train the VGG-11 model (Simonyan and Zisserman, 2014) on a CIFAR-10 dataset (Krizhevsky et al., 2009) for 100 epochs across 100 clients with an IID data distribution. However, each client exhibits a different learning rate, lr i, and number of epochs, 
+
+ei, whose values are sampled by a uniform distribution: 
+
+lr i ∼ U [10 −4, 10 −3] (37) 
+
+ei ∼ U [1 , 10] . (38) Figure 4b highlights the training loss and classification accuracy for a single random sample of lr i and ei using FedECADO, FedNova, and FedProx. FedECADO’s multi-rate integration synchronizes the up-dates of active clients at each communication round, result-ing in faster convergence toward a steady-state and a higher classification accuracy. Note, due to the IID data distribu-tion, the improvement is solely attributed to the multi-rate integration because ¯Gth is identical for each client. FedECADO’s improvement is further demonstrated across multiple runs, where the learning rate and number of epochs are randomly selected according to (37) ,(38) . As shown in Table 2, FedECADO achieves a higher mean classification accuracy and the low variance indicates that it performs well across a range of client settings. 
+
+5.3. Scaling FedECADO for heterogeneous FL 
+
+To showcase the effectiveness of our method in heteroge-neous settings, we evaluate FedECADO on larger ResNet-34 model trained on CIFAR-100 dataset. In this setup, we study the efficacy of our methodology where the data is distributed according to a non-IID Dirichlet distribution and each client is assigned a random learning rate defined in (37) .The result of these experiments are shown in Table 3, where FedECADO further demonstrate its scalability and efficacy in heterogeneous settings as compared to the state-of-the-art optimizers. 
+
+Scaling to Other Datasets and Models : We demonstrate FedECADO’s ability to scale across additional datasets, including Sentiment140 and TinyImageNet, using diverse models such as ResNet-18, ResNet-34, and LSTM in a heterogeneous setting. Appendix D presents the results, comparing FedECADO against FedNova, FedProx, FedExp, FedDecorr, and FedRS. 
+
+Runtime Analysis : FedECADO achieves a runtime compa-rable to the baseline methods, as shown in Appendix E. 
+
+Comparison with ECADO : FedECADO addresses the challenges of heterogeneous federated learning overlooked by ECADO (Agarwal and Pileggi, 2023) and achieves 8FedECADO: A Dynamical System Model of Federated Learning 
+
+higher classification accuracies as shown in Appendix F. 
+
+# 6. Conclusion 
+
+We introduce a new federated learning algorithm, FedECADO, inspired by a dynamical system of the under-lying optimization problem, which addresses the challenges of heterogeneous computation and non-IID data distribution. To handle non-IID data distribution, FedECADO constructs an aggregate sensitivity model that is integrated into the central agent update for more accurate model adjustments. To address heterogeneous computation in federated learning, FedECADO employs a linear interpolation and extrapola-tion algorithm that synchronizes client updates at each com-munication round. The central model state is then evaluated using a new multi-rate integration, which adaptively selects step-sizes based on numerical accuracy, thus guaranteeing convergence to a critical point. We demonstrate the effi-cacy of FedECADO through distributed training of multiple DNN models across diverse heterogeneous settings. Com-pared to prominent federated learning methods, FedECADO consistently achieves higher classification accuracies, under-scoring its effectiveness in training distributed DNN models with varying client capabilities and data distributions. 
+
+# Impact Statement 
+
+This paper presents work whose goal is to advance the field of Machine Learning. There are many potential societal consequences of our work, none which we feel must be specifically highlighted here. 
+
+# References 
+
+Durmus Alp Emre Acar, Yue Zhao, Ramon Matas Navarro, Matthew Mattina, Paul N Whatmough, and Venkatesh Saligrama. Federated learning based on dynamic regular-ization. arXiv preprint arXiv:2111.04263 , 2021. Aayushya Agarwal and Larry Pileggi. An equivalent cir-cuit approach to distributed optimization. arXiv preprint arXiv:2305.14607 , 2023. Aayushya Agarwal, Carmel Fiscko, Soummya Kar, Larry Pileggi, and Bruno Sinopoli. An equivalent circuit work-flow for unconstrained optimization, 2023. Hedy Attouch and Roberto Cominetti. A dynamical ap-proach to convex minimization coupling approximation with the steepest descent method. Journal of Differential Equations , 128(2):519–540, 1996. William Behrman. An efficient gradient flow method for unconstrained optimization . stanford university, 1998. Zachary Charles and Jakub Kone ˇcn `y. On the outsized im-portance of learning rates in local update methods. arXiv preprint arXiv:2007.00878 , 2020. Florentin Dartu and Lawrence T Pileggi. Teta: Transistor-level engine for timing analysis. In Proceedings of the 35th annual Design Automation Conference , pages 595– 598, 1998. Rudrajit Das, Anish Acharya, Abolfazl Hashemi, Sujay Sanghavi, Inderjit S Dhillon, and Ufuk Topcu. Faster non-convex federated learning via global and local momentum. In Uncertainty in Artificial Intelligence , pages 496–506. PMLR, 2022. Divyansh Jhunjhunwala, Shiqiang Wang, and Gauri Joshi. Fedexp: Speeding up federated averaging via extrapola-tion. arXiv preprint arXiv:2301.09604 , 2023. Peter Kairouz, H Brendan McMahan, Brendan Avent, Aur ´elien Bellet, Mehdi Bennis, Arjun Nitin Bhagoji, Kallista Bonawitz, Zachary Charles, Graham Cormode, Rachel Cummings, et al. Advances and open problems in federated learning. Foundations and trends® in machine learning , 14(1–2):1–210, 2021. Sai Praneeth Karimireddy, Satyen Kale, Mehryar Mohri, Sashank Reddi, Sebastian Stich, and Ananda Theertha Suresh. Scaffold: Stochastic controlled averaging for fed-erated learning. In International conference on machine learning , pages 5132–5143. PMLR, 2020. Prashant Khanduri, Pranay Sharma, Haibo Yang, Mingyi Hong, Jia Liu, Ketan Rajawat, and Pramod Varshney. Stem: A stochastic two-sided momentum algorithm achieving near-optimal sample and communication com-plexities for federated learning. Advances in Neural In-formation Processing Systems , 34:6050–6061, 2021. Alex Krizhevsky, Geoffrey Hinton, et al. Learning multiple layers of features from tiny images. 2009. Tian Li, Anit Kumar Sahu, Manzil Zaheer, Maziar San-jabi, Ameet Talwalkar, and Virginia Smithy. Feddane: A federated newton-type method. In 2019 53rd Asilomar Conference on Signals, Systems, and Computers , pages 1227–1231. IEEE, 2019a. Tian Li, Anit Kumar Sahu, Manzil Zaheer, Maziar San-jabi, Ameet Talwalkar, and Virginia Smith. Federated optimization in heterogeneous networks. Proceedings of Machine learning and systems , 2:429–450, 2020. Xiang Li, Kaixuan Huang, Wenhao Yang, Shusen Wang, and Zhihua Zhang. On the convergence of fedavg on non-iid data. arXiv preprint arXiv:1907.02189 , 2019b. 9FedECADO: A Dynamical System Model of Federated Learning 
+
+Xin-Chun Li and De-Chuan Zhan. Fedrs: Federated learning with restricted softmax for label distribution non-iid data. In Proceedings of the 27th ACM SIGKDD conference on knowledge discovery & data mining , pages 995–1005, 2021. Grigory Malinovsky, Konstantin Mishchenko, and Peter Richt ´arik. Server-side stepsizes and sampling without replacement provably help in federated optimization. In 
+
+Proceedings of the 4th International Workshop on Dis-tributed Machine Learning , pages 85–104, 2023. Brendan McMahan, Eider Moore, Daniel Ramage, Seth Hampson, and Blaise Aguera y Arcas. Communication-efficient learning of deep networks from decentralized data. In Artificial intelligence and statistics , pages 1273– 1282. PMLR, 2017. Reese Pathak and Martin J Wainwright. Fedsplit: An algorithmic framework for fast federated optimization. 
+
+Advances in neural information processing systems , 33: 7057–7066, 2020. Lawrence Pillage. Electronic Circuit & System Simulation Methods (SRE) . McGraw-Hill, Inc., 1998. Boris Polyak and Pavel Shcherbakov. Lyapunov functions: An optimization theory perspective. IFAC-PapersOnLine ,50(1):7456–7461, 2017. Sashank Reddi, Zachary Charles, Manzil Zaheer, Zachary Garrett, Keith Rush, Jakub Kone ˇcn `y, Sanjiv Kumar, and H Brendan McMahan. Adaptive federated optimization. 
+
+arXiv preprint arXiv:2003.00295 , 2020. Yujun Shi, Jian Liang, Wenqing Zhang, Vincent YF Tan, and Song Bai. Towards understanding and mitigating dimensional collapse in heterogeneous federated learning. 
+
+arXiv preprint arXiv:2210.00226 , 2022. Karen Simonyan and Andrew Zisserman. Very deep con-volutional networks for large-scale image recognition. 
+
+arXiv preprint arXiv:1409.1556 , 2014. Jianyu Wang, Qinghua Liu, Hao Liang, Gauri Joshi, and H Vincent Poor. Tackling the objective inconsistency problem in heterogeneous federated optimization. Ad-vances in neural information processing systems , 33: 7611–7623, 2020. Jianyu Wang, Zachary Charles, Zheng Xu, Gauri Joshi, H Brendan McMahan, Maruan Al-Shedivat, Galen An-drew, Salman Avestimehr, Katharine Daly, Deepesh Data, et al. A field guide to federated optimization. arXiv preprint arXiv:2107.06917 , 2021. Jacob K White and Alberto L Sangiovanni-Vincentelli. Re-laxation techniques for the simulation of vlsi circuits. 2012. Ashia C Wilson, Ben Recht, and Michael I Jordan. A lya-punov analysis of accelerated methods in optimization. 
+
+Journal of Machine Learning Research , 22(113):1–34, 2021. An Xu and Heng Huang. Coordinating momenta for cross-silo federated learning. In Proceedings of the AAAI Con-ference on Artificial Intelligence , volume 36, pages 8735– 8743, 2022. Yue Zhao, Meng Li, Liangzhen Lai, Naveen Suda, Damon Civin, and Vikas Chandra. Federated learning with non-iid data. arXiv preprint arXiv:1806.00582 , 2018. Hangyu Zhu, Jinjin Xu, Shiqing Liu, and Yaochu Jin. Feder-ated learning on non-iid data: A survey. Neurocomputing ,465:371–390, 2021. 10 FedECADO: A Dynamical System Model of Federated Learning 
+
+# A. Background on Circuit Formulation 
+
+Federated learning trains a global model by aggregating updates from distributed clients, each training on local datasets. The update to the global model can be written as: 
+
+xk+1 = xk − α
+
+> N
+
+X
+
+> i=1
+
+∇fi(xk), (39) where α is the learning rate and ∇fi(xk) is the local gradient from client i. As α → 0, this update can be modeled as a continuous-time gradient flow: 
+
+˙x(t) = −
+
+> N
+
+X
+
+> i=1
+
+∇fi(x(t)) . (40) This defines an ordinary differential equation (ODE) that assumes each client computes its local gradients using global state, 
+
+xc(t). However, in federated settings, each client maintains its own local model state that is periodically communicated to the central agent. To address this, (Agarwal et al., 2023) introduced a continuous-time dynamical model that couples global and client states via auxiliary flow vector, IL(t), resulting in the following dynamical system: 
+
+ddt xc(t) + 
+
+> |C|
+
+X
+
+> i=1
+
+IiL(t) = 0 , (41) 
+
+Li ˙IiL(t) = xc(t) − xi(t), (42) 
+
+˙xi(t) = IiL(t) − ∇ fi(xi(t)) , (43) where xc(t) is the global model, xi(t) is the state of client i, and the hyperparameter Li controls how strongly each client is coupled to the central agent. The dynamical system is modeled by an ordinary differential equation (ODE) that models the continuous-time evolution of the client and central agent state variables. These state variables converge to a steady-state which coincides with the stationary point of the global objective in (39) . By viewing the federated learning setting as an ODE, this reframes the federated learning method as simulating the ODE to its steady-state. However, in general, maintaining accurate and efficient simulation of ODEs is challenging. To efficiently simulate the ODEs to their steady-state, we adopt methods from circuit simulation, which has demonstrated robust methodologies capable of scaling to billions of transistor devices. We model the dynamical system as an electrical circuit in Figure 1. In the equivalent circuit model, node voltages represent the model states at each component of the system: the global state, 
+
+xc(t), is represented by the voltage at the central server node, while each client’s local state, xi(t), is modeled by the voltage at a corresponding node. These nodes are connected using an electrical device known as an inductor to represent the flow of information between clients and the server. The dynamics of each client is captured by a capacitor, an electrical component that stores energy and resists sudden changes in voltage. In this context, the capacitor captures the continuous-time evolution of the client’s model. The current-voltage behavior of the capacitor is governed by: 
+
+IC = C ˙xi(t), (44) where IC is the total current into the capacitor and ˙xi is the rate of change of the client’s state. This reflects how the client integrates incoming signals to update its model parameters. Each client node is then connected to the central node via an inductor, a component that resists changes in current and introduces momentum-like dynamics into the system. In this equivalent circuit model, the inductor is connected between the central agent node and a client node. Therefore, the voltage across each inductor is given by xc(t) − xi(t), representing the difference in the client and global state-variables. The inductor then captures the accumulation of difference between the global and local states over time, and is represented by the following current-voltage relation: 
+
+xc(t) − xi(t) = Li ˙IiL(t), , (45) 11 FedECADO: A Dynamical System Model of Federated Learning 
+
+where Li is the inductance, and IiL(t) is the current flowing from the server to client i. The inductor effectively damps the interaction between client and server, mitigating sharp transitions. The behavior of the overall system is governed by Kirchhoff’s Current Law (KCL), a fundamental principle in circuit theory that states that the total current entering a node must equal the total current leaving it. Applying KCL to each node in the equivalent circuit, we observe that : (1) the current from the central server capacitor equals to the sum from all client branches sum, (2) at each client, the current from the inductor equals the sum of the client capacitor current and gradient-induced currents, ∇fi(xi). This correspondence between circuit behavior and federated optimization dynamics forms the foundation for our simulation-driven approach. 
+
+# B. Proof of Theorem 4.1 
+
+Proof. The convergence proof of FedECADO relies on the following assumptions for each local objective function, f(x).
+
+Assumption 1. (Boundedness) f ∈ C2 and inf x∈Rn f (x) > −R for some R > 0.
+
+Assumption 2. (Coercive) f is coercive (i.e., lim ∥x∥→∞ f (x) = + ∞)
+
+Assumption 3. (Lipschitz and bounded gradients): for all x, y ∈ Rn, ∥∇ f (x) − ∇ f (y)∥ ≤ L∥x − y∥, and ∥∇ f (x)∥ ≤ B
+
+for some B > 0.
+
+In order to analyze the convergence of the FedECADO consensus step (33) using the interpolation/extrapolation operator (28) , we represent all the state variables of the central agent, including the central agent state xc and the flow variables IiL,as a vector X = [ I1
+
+> L
+
+, I2
+
+> L
+
+, . . . , InL, xc, ]. The ODE for the central agent state in FedECADO, as defined by equations (31) and (32), can be generalized as follows: ˙X(t) = g(X(t), xi(t)) , (46) where g(X) is defined as 
+
+g(X) = 
+
+ Pni=1 IiL(τm)
+
+xk+1  
+
+> c
+
+(τm) − Γ( xi(t), τ m).
+
+
+
+(47) Here, τm represents the discretized time point indexed by m. Furthermore, we generalize the BE integration of the central agent ODE (33) as: 
+
+ρ(Xk+1 (τm)) = ∆ tσ (g(Xk(τm), Γ( xk+1 1 (T1), τ m), Γ( xk+1 2 (T1), τ m), · · · )) , (48) where the operator, ρ(·), is defined as 
+
+ρ =
+
+
+
+1 + ∆tG th −11 
+
+> L
+
+0 . . . − ∆tL
+
+0 1 + ∆tG th −12 
+
+> L
+
+. . . − ∆tL
+
+0 0 . . . −∆tL
+
+−∆t −∆t . . . 1
+
+ , (49) and σ(·), is defined as 
+
+σ =
+
+
+
+−Γ( xk+1 1 (T1), τ m) + I1k 
+
+> L
+
+(τm)Gth −1
+
+> 1
+
+−Γ( xk+1 2 (T2), τ m) + I2k 
+
+> L
+
+(τm)Gth −1
+
+> 2
+
+...
+
+0
+
+ . (50) Note, the operator, ρ(·), can be inverted to evaluate the central agent states: 
+
+Xk+1 (τ ) = ∆ tρ −1σ(g(Xk(τm), Γ( xk+1 1 (T1), τ m), Γ( xk+1 2 (T1), τ m), · · · )) . (51) The continuous-time ODE of (31) ,(32) converges to a stationary point characterized by xc = xi for all i ∈ C and 
+
+˙IiL = 0 . The proof of convergence is provided in (Agarwal and Pileggi, 2023). In this analysis, we study the multi-rate discretization of the ODE to ensure the Gauss-Seidel process of solving the coupled system converges toward the steady 12 FedECADO: A Dynamical System Model of Federated Learning 
+
+state at each iteration. This proof uses the analysis for a multirate waveform relaxation for circuit simulation from (White and Sangiovanni-Vincentelli, 2012). This analysis is based on proving that the central agent step is a contraction mapping towards the steady state (i.e., the stationary point of the global objective function). The multi-rate integration uses the linear operator, Γ( ·), to interpolate and extrapolate state variables at intermediate time points. Two important properties of the linear operator are the following: 1. Given two signals, y(t) and z(t):
+
+Γ( y(t) + z(t), τ ) = Γ( y(t), τ ) + Γ( z(t), τ )
+
+2. Given a signal y(t), and a scalar, α:
+
+Γ( αy(t), τ ) = αΓ( y(t), τ )
+
+To prove convergence of the multi-rate integration step, we employ a continuous-time β > 0 norm defined as: 
+
+∥y∥β = max [0 ,T ]e−βt [max iΓ( yi(t), τ ) ∀i ∈ C] (52) Under certain conditions, (51) is a contraction mapping on the β norm. To prove this relation, we evaluate the difference between two series, {Xk(τm)} and {Y k(τm)}, as follows: 
+
+{Xk+1 (τm)} − { Y k+1 (τm)} = ∆ tρ −1σ(g(Xk(τm), Γ( xk+1 1 (T1), τ m), Γ( xk+1 2 (T1), τ m), · · · )) 
+
+− ∆tρ −1σ(g(Y k(τm), Γ( yk+1 1 (T1), τ m), Γ( yk+1 2 (T1), τ m), · · · )) . (53) Exploiting the linearity of the operators, Γ( ·) and ρ, leads to the following: 
+
+{Xk+1 (τm)} − { Y k+1 (τm)} = ∆ tρ −1σ[g(Xk(τm), Γ( xk+1 1 (T1), τ m), Γ( xk+1 2 (T2), τ m), · · · )
+
+− g(Y k(τm), Γ( yk+1 1 (T1), τ m), Γ( yk+1 2 (T2), τ m), · · · )] . (54) The BE operator ρ−1σ(·) can be expanded into a series of summations, as shown in Appendix B.1, using the following equation: 
+
+{Xk+1 (τm)} − { Y k+1 (τm)} = ∆ t
+
+> m
+
+X
+
+> l=0
+
+γl[g(Xk(τ ), Γ( xk+1 1 (T1), τ m−l), Γ( xk+1 2 (T1), τ ), · · · )
+
+− g(Y k(τ ), Γ( yk+1 1 (T1), τ ), Γ( yk+1 2 (T1), τ ), · · · )] (55) where γl is a scalar that determines the weight of the past state values in the numerical integration method. To prove that the difference between the series is a contraction mapping, the following two lemmas are useful. 
+
+Lemma B.1. Given two sequences, {X(τ )} and {Y (τ )}, if X(Ti) > Y (Ti) ∀i, then Γ( X(Ti), τ ) > Γ( Y (Ti), τ ). Further-more, if X(Ti) = K ∀i where K is a constant value, then Γ( X(Ti), τ ) = K.
+
+Lemma B.2. The β norm on the following series of XK is bounded according to the following: 
+
+max   
+
+> [0 ,T ]
+
+e−βτ ∥
+
+> m
+
+X
+
+> l=0
+
+∥γlΓ( X, τ m−l)∥∥ ≤ M
+
+1 − e−β∆t e−βτ ∥Γ( X, τ m)∥, (56) 
+
+where M is equal to max l ∥γl∥.
+
+Proof of the two lemmas is provided in Appendixes B.2 and B.3. Using Lemma B.1 and the Lipschitz constant of ∇f , we can bound (55) as follows: 
+
+{Xk+1 (τ )} − { Y k+1 (τ )} ≤ | 
+
+> m
+
+X
+
+> l=0
+
+|γl|
+
+
+
+> i
+
+X
+
+> j=1
+
+∆tiLij |Γ( Xk+1  
+
+> j
+
+− Y k+1  
+
+> j
+
+, τ m−l)| +
+
+> n
+
+X
+
+> j=i+1
+
+∆tiLij |Γ( Xkj − Y kj , τ m−l)|
+
+ ,
+
+(57) 13 FedECADO: A Dynamical System Model of Federated Learning 
+
+where Lij is the Lipschitz constant of the ith row of g with respect to Xj . Using the triangle inequality, we formulate this as follows: 
+
+{Xk+1 (τ )} − { Y k+1 (τ )} ≤ | 
+
+> i
+
+X
+
+> j=1
+
+∆tiLij mX
+
+> l=0
+
+|γl|| Γ( Xk+1  
+
+> j
+
+− Y k+1  
+
+> j
+
+, τ m−l)| +
+
+> n
+
+X
+
+> j=i+1
+
+∆tiLij mX
+
+> l=0
+
+|γl|| Γ( Xkj − Y kj , τ m−l)|.
+
+(58) Multiplying both sides by e−βt and taking the maximum over the time window, [0 , T ], results in the following: 
+
+max   
+
+> [0 ,T ]
+
+e−βt {Xk+1 (τ )} − { Y k+1 (τ )} ≤ | 
+
+> i
+
+X
+
+> j=1
+
+∆tiLij max   
+
+> [0 ,T ]
+
+e−βt mX
+
+> l=0
+
+|γl|| Γ( Xk+1  
+
+> j
+
+− Y k+1  
+
+> j
+
+, τ m−l)|
+
++
+
+> n
+
+X
+
+> j=i+1
+
+∆tiLij max   
+
+> [0 ,T ]
+
+e−βt mX
+
+> l=0
+
+|γl|| Γ( Xkj − Y kj , τ m−l)|, (59) where T = max (Ti). Using Lemma B.2, we conclude the following: 
+
+max   
+
+> [0 ,T ]
+
+e−βt {Xk+1 (τ )} − { Y k+1 (τ )} ≤ 
+
+ M ∆ti
+
+1 − e−β∆ti
+
+> i
+
+X
+
+> j=1
+
+Lij 
+
+ ∥Xk+1 − Y k+1 ∥β
+
++
+
+ M ∆ti
+
+1 − e−β∆ti
+
+> n
+
+X
+
+> j=i+1
+
+Lij 
+
+ ∥Xk − Y k∥β , (60) where ∥ · ∥ β is the β norm defined in (56). Assuming all time steps, ∆ti > 0 are positive and a β > 0, then there exists a scalar, δ > 0 such that: 
+
+δ > M ∆ti
+
+1 − e−β∆ti
+
+> n
+
+X
+
+> j=i+1
+
+Lij . (61) Using the definition of δ, we conclude the following: 
+
+max   
+
+> [0 ,T ]
+
+e−βt {Xk+1 (τ )} − {Y k+1 (τ )} ≤ δ∥Xk+1 − Y k+1 ∥β + δ∥Xk − Y k∥β . (62) Because the value of δ holds for all time-steps (indexed by i), then: 
+
+|{ Xk+1 (τ )} − {Y k+1 (τ )}| β ≤ δ∥Xk+1 − Y k+1 ∥β + δ∥Xk − Y k∥β , (63) which can be rewritten as: 
+
+∥Xk+1 − Y k+1 ∥β ≤ δ
+
+1 − δ ∥Xk − Y k∥β . (64) This proves that for a value of δ such that δ 
+
+> 1−δ
+
+< 1, the multirate integration scheme, ρ−1σ(·), is a contraction mapping whereby the series {Xk+1 (τ )} and {Y k+1 (τ )} converges to a stationary point. Note, the rate of the contraction mapping, determined by δ 
+
+> 1−δ
+
+, is not affected by the ratio of client step-sizes, ∆ti. This enables clients to take vastly different step sizes, with accuracy considerations imposed by a Local Truncation Error (LTE). The LTE estimates the error in the approximation of the numerical integration and is a key measure of the accuracy at any iteration. To prove convergence to a stationary point of the global objective function, we consider the contraction mapping between two series, {Xk} and {X∗}, where X∗ is the state at the stationary point (i.e., g(X∗) = 0 ). The difference between the series is diminished according to the contraction mapping: 
+
+∥Xk+1 − X∗∥β ≤ δ
+
+1 − δ ∥Xk − X∗∥β . (65) This implies that for a ∆t ensuring δ 
+
+> 1−δ
+
+< 1, the FedECADO update asymptotically converges to a stationary point, with a convergence rate determined by δ 
+
+> 1−δ
+
+.14 FedECADO: A Dynamical System Model of Federated Learning 
+
+B.1. Expanding Backward Euler Operator 
+
+Given a general ODE 
+
+˙z(t) = s(z, t ) (66) with an initial known state of z(0) , the state of z at a time point, τm is determined by solving the following: 
+
+z(τm) = z(τm−1) + 
+
+Z τm
+
+> τm−1
+
+s(z(τ ), τ )dτ. (67) The integral on the right-hand side generally does not have a closed form solution and is approximated using a generalized numerical integration method: 
+
+z(τm) = z(τm−1) + 
+
+> n
+
+X
+
+> l=0
+
+kls(τl, τ l), (68) where kl is a scalar used to weight the contribution of the state at time τl. This expression can be further generalized: 
+
+z(τm) = 
+
+> m
+
+X
+
+> l=0
+
+γls(τl, τ l) + z(0) , (69) where γl weights the contribution of past states. We can apply this form for the Backward-Euler integration step of the ODE (46), which is generally written as follows: 
+
+X(τm) = X(τm−1) + ∆ tmg(X(τm, x i(τm)) , (70) where the index m represents the iteration of Backward Euler steps taken. An equivalent representation is the following: 
+
+X(τm) = 
+
+> m
+
+X
+
+> j=0
+
+∆tm−j g(X(τm−j , x i(τm−j )) + X(0) . (71) This expresses the latest state X(τm) as a summation of previous values of g(·).
+
+B.2. Proof of Lemma B.1 
+
+The proof of Lemma B.1 is a direct consequence of the linearity of the operator, Γ. Consider two sequences, X(τ ) and 
+
+Y (τ ), which are evaluated at time points t1 and t2, where by: 
+
+X(t1) > Y (t1) (72) 
+
+X(t2) > Y (t2). (73) Applying the linear operator, Γ( ·, τ ) for a time point τ ∈ [t1, t 2], is defined as follows: 
+
+Γ( X, τ ) = X(t2) − X(t1)
+
+t2 − t1
+
+(τ − t1) + X(t1) (74) 
+
+Γ( Y, τ ) = Y (t2) − Y (t1)
+
+t2 − t1
+
+(τ − t1) + Y (t1) (75) Because X > Y at time points t1 and t2, we observe the following: 
+
+X(t2) − X(t1)
+
+t2 − t1
+
+(τ − t1) + X(t1) > Y (t2) − Y (t1)
+
+t2 − t1
+
+(τ − t1) + Y (t1) (76) thereby proving that Γ( X, τ ) > Γ( Y, τ ). Expanding this proof to multiple evaluated time points Ti, we note that if 
+
+X(Ti) > Y (Ti)∀i, then Γ( X, τ ) > Γ( Y, τ ).15 FedECADO: A Dynamical System Model of Federated Learning 
+
+B.3. Proof for Lemma B.2 
+
+The proof of Lemma B.2 is reconstructed in the following from [(White and Sangiovanni-Vincentelli, 2012)]. From the definition of the β-norm, we see that: 
+
+∥
+
+> m
+
+X
+
+> l=0
+
+γlX(τm−l)∥β = max  
+
+> m
+
+e−β∆tm ∥
+
+> m
+
+X
+
+> l=0
+
+γlX(τm−l)∥, (77) which can be upper-bounded using the triangle inequality as: 
+
+∥
+
+> m
+
+X
+
+> l=0
+
+γlX(τm−l)∥β ≤ max  
+
+> m
+
+e−β∆tm mX
+
+> l=0
+
+|γl|∥ X(τm−l)∥. (78) Multiplying eβ(m−l)∆ te−β(m−l)∆ t (equal to 1) into the right-hand side of the equation above leads to 
+
+∥
+
+> m
+
+X
+
+> l=0
+
+γlX(τm−l)∥β ≤ max  
+
+> m
+
+e−β∆tm mX
+
+> l=0
+
+|γl|eβ(m−l)∆ te−β(m−l)∆ t∥X(τm−l)∥. (79) Because e−β(m−l)∆ t∥X(τm−l)∥ ≤ ∥ X(τm−l∥β , then 
+
+∥
+
+> m
+
+X
+
+> l=0
+
+γlX(τm−l)∥β ≤ max  
+
+> m
+
+e−β∆tm mX
+
+> l=0
+
+|γl|∥ X(τm−l)∥β . (80) Suppose |γl| is upper-bounded by M , then the inequality becomes 
+
+∥
+
+> m
+
+X
+
+> l=0
+
+γlX(τm−l)∥β ≤ M
+
+> m
+
+X
+
+> l=0
+
+[e−β∆tm ]∥X(τm−l)∥β (81) Because e−β∆m > 0 and Pml=0 e−β∆m ≤ P∞ 
+
+> l=0
+
+e−β∆m, then the inequality is as follows: 
+
+∥
+
+> m
+
+X
+
+> l=0
+
+γlX(τm−l)∥β ≤ M
+
+> ∞
+
+X
+
+> l=0
+
+[e−β∆tm ]∥X(τm−l)∥β . (82) The infinite series can be directly computed as: 
+
+> ∞
+
+X
+
+> l=0
+
+e−β∆m = e−β∆t
+
+1 − e−β∆t , (83) where the upper bound is as follows: 
+
+∥
+
+> m
+
+X
+
+> l=0
+
+γlX(τm−l)∥β ≤ M e−β∆t
+
+1 − e−β∆t e−β∆tm ]∥X(τm−l)∥β , (84) which proves Lemma B.2. 
+
+# C. FedECADO Algorithm 
+
+The full workflow for the FedECADO algorithm is shown in Algorithm 2. The algorithm begins by initializing the state values in Steps 1–4 and precomputing the constant sensitivity model, ¯Gth , for all clients in Step 5. The hyperparameters for the algorithm are L > 0 and the local truncation error tolerance, η > 0.For each epoch, FedECADO begins by simulating the set of active clients, Ca ∈ C, in step 10, for a number of epochs, ei.The client ODE is solved by using numerical integration selected by the user (further details are provided in (Agarwal et al., 2023)). In step 11 of Algorithm 2, we use a Forward-Euler integration to simulate the local ODE. 16 FedECADO: A Dynamical System Model of Federated Learning 
+
+The active clients then communicate their final states, xk+1  
+
+> i
+
+(t + Ti), and simulation time, Ti, to the central agent server, which evaluates its own states at intermediate time points (steps 12-16). First the central agent estimates the active client state values at a time point, τ , using the operator, Γ( ·, τ ). Then after selecting a time step, ∆t, that satisfies the accuracy conditions in (34) ,(35) , the central agent solves for its states at the proceeding time point, τ + ∆ t, in step 15. The central agent server progresses through time (performing steps 13-14), until it has simulated the maximum client simulation time window determined by max( Ti).Note, for a given time-step, ∆t, the central agent LU-factorizes the left hand matrix in Step 16 of Algorithm 2 (33) , so that any subsequent central agent steps with the same step size only requires a forward-backward substitution to solve for the central agent states. In practice, once an appropriate step size, ∆t, is selected that satisfies the accuracy conditions in (34) -(35) , it is infrequently updated. As a result, re-using the same LU-factor provides a computational advantage across multiple central agent evaluations and improves the overall runtime performance of FedECADO. 
+
+Algorithm 2 FedECADO Central Update 
+
+Input: ∇f (·),x(0) , η > 0, L > 0 
+
+> 1:
+
+xc ← x(0)  
+
+> 2:
+
+xi ← x(0)  
+
+> 3:
+
+ILi ← 0 
+
+> 4:
+
+t ← 0 
+
+> 5:
+
+Precompute ¯Gth i ∀i ∈ C 
+
+> 6:
+
+do while ∥ ˙xc∥2 > 0 
+
+> 7:
+
+xkc ← xk+1  
+
+> c
+> 8:
+
+xki ← xik+1  
+
+> 9:
+
+Parallel Solve for active client states, xk+1  
+
+> i
+
+(t + Ti)∀i ∈ Ca, by simulating:  
+
+> 10:
+
+for ei epochs:  
+
+> 11:
+
+xk+1  
+
+> i
+
+(t + ∆ ti) = xk+1  
+
+> i
+
+(t) − ∆ti∇f (xk+1  
+
+> i
+
+(t)) − ∆tiILk 
+
+> i
+
+(t) 
+
+> 12:
+
+for τ ∈ [t, t + max( Ti)]  
+
+> 13:
+
+Select ∆t according to Algorithm 1  
+
+> 14:
+
+Evaluate active client states at timepoint τ : Γ( xk+1  
+
+> i
+
+, τ ) ∀i ∈ Ca 
+
+> 15:
+
+Solve for xk+1  
+
+> c
+
+(τ + ∆ t), I Lk+1  
+
+> i
+
+(τ + ∆ t) according to (33)  
+
+> 16:
+
+τ = τ + ∆ t 
+
+> 17:
+
+Return xc
+
+# D. Scaling the FedECADO Algorithm 
+
+The previous experiments highlight the individual contribution of the proposed aggregate sensitivity model and multi-rate integration on distributed training. In this experiment, we study the impact of both methods to address the challenges of federated learning across multiple datasets and models. We demonstrate the effectiveness and scalability of FedECADO by training multiple models (ResNet 34, ResNet18 and LSTM) on datasets including CIFAR-100, TinyImageNet and Sentiment140, distributed among 100 clients using a Dirichlet allocation. In this setup, only 10% of clients participate in each training round, and each client is assigned a random learning rate as defined in equation (37) . We train a larger ResNet-34 model on a CIFAR-100 dataset distributed across 100 clients with both non-IID data distribution as well as heterogeneous learning rates and numbers of epochs, determined by (37) , (38) .Tables 3, 4, 5 demonstrates the efficacy of FedECADO and larger and varied datasets and models. Figure 5 showcases FedECADO’s advantage over FedNova and FedProx in training the ResNet-34 model. Our approach achieves a lower training loss, indicating more efficient convergence, as well as higher classification accuracy after 100 epochs (4.6% higher than FedNova and 8.6% higher than FedProx). 17 FedECADO: A Dynamical System Model of Federated Learning 
+
+Figure 4: The training loss and classification accuracy for a VGG-11 model trained on a CIFAR-10 dataset across 100 clients with (a) non-IID Dirichlet distribution and identical learning rates, and (b) each client’s learning rate and number of epochs is randomly determined by (37),(38) . Classification Acc. (%) FedECADO FedNova FedProx FedExp FedDecorr FedRS 58.9 45.4 40.7 47.6 41.9 44.3 Table 4: Classification accuracies for training a ResNet-18 on TinyImageNet dataset distributed across 100 clients with Dirichlet data distribution and random learning rates for 60 epochs. Testing Errors FedECADO FedNova FedProx FedExp FedDecorr FedRS 79.9 77.1 78.6 78.4 79.2 77.4 Table 5: Testing errors for training a LSTM model [R2] on Sentiment140 dataset distributed across 10 clients with Dirichlet data distribution and random learning rates for 10 epochs. 
+
+Figure 5: Scaling FedECADO to train ResNet34 model on CIFAR-100 dataset distributed on 100 clients with heterogeneous computation (non-IID data distribution and asynchronous updates. 18 FedECADO: A Dynamical System Model of Federated Learning 
+
+# E. Runtime Analysis 
+
+Despite evaluating the central agent multiple times for multi-rate integration, FedECADO’s clock time for centralized updates is comparable to those of FedNova and FedProx (only 1% slower than FedNova and 2.4% slower than FedProx). The complete comparison of runtime analysis is shown in Table 6. The main computational cost of Algorithm 2 occurs on the subset of active clients during each communication round, which is significantly smaller than the total client base. The resulting BE matrix (33) is relatively small, with dimensions of Ra×a, where a is the size of the active client list. Additionally, we pre-compute the LU matrix of in (33) to minimize the computation time for central agent evaluations. Furthermore, a potential bottleneck for FedECADO’s runtime can be attributed to the adaptive server step sizes routine in Algorithm 2. This routine is initiated by the step size from the prior communication round and in practice, does not require multiple iterations to satisfy the LTE conditions in equation (34) and (35). FedECADO FedNova FedProx FedExp FedDecorr FedRS Normalized Runtime 1.06 1.0 1.02 1.04 1.02 1.0 Table 6: Normalized per-epoch runtime (normalized to FedProx) of a centralized server step for training VGG model on CIFAR-10 dataset distributed across 100 clients. 
+
+# F. Comparison with ECADO 
+
+FedECADO uses the distributed optimization method from ECADO (Agarwal and Pileggi, 2023) as a basis to derive insights for the unique challenges of federated learning including heterogenous dataset distributions and varying client computational capabilities (i.e., learning rates). However, ECADO is not equipped to handle the heterogenous challenges of federated learning, and is prone to model drifts, an issue demonstrated in (Wang et al., 2020). Nonetheless, the unique perspective of an equivalent circuit model of the federated learning process allows us to derive intuitive methodologies. For example, the challenge of heterogeneous client learning rates is clearly identified as a challenge of asynchronous communications in the continuous-time representation. From the circuit perspective which views the distributed computation as splitting a large circuit, the immediate solution to this problem is using an interpolation/extrapolation operator to synchronize client computations, as described in Section 4.2. As a result of these improvements, we observe that FedECADO improves the convergence of ECADO in the federated learning setting. The difference is shown in in Table 7, where we observe a significant improvement in performance when training distributed CIFAR-100 dataset with non-IID data distributions and varying client learning rates. Classification Acc. FedECADO ECADO Mean (std) % 81.3 (4.8) 76.5 (2.1) Table 7: Classification accuracies for training a ResNet-34 model on CIFAR-100 dataset distributed across 100 clients with Dirichlet data distribution and random learning rates for 200 epochs. 19

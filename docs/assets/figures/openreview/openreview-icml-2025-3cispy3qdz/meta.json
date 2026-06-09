@@ -1,0 +1,78 @@
+{
+  "version": 2,
+  "extractor": "papercropper",
+  "figures": [
+    {
+      "url": "assets/figures/openreview/openreview-icml-2025-3cispy3qdz/fig-001.webp",
+      "caption": "",
+      "page": 0,
+      "index": 1,
+      "width": 860,
+      "height": 208,
+      "label": "Figure"
+    },
+    {
+      "url": "assets/figures/openreview/openreview-icml-2025-3cispy3qdz/fig-002.webp",
+      "caption": "",
+      "page": 0,
+      "index": 2,
+      "width": 868,
+      "height": 379,
+      "label": "Figure"
+    },
+    {
+      "url": "assets/figures/openreview/openreview-icml-2025-3cispy3qdz/fig-003.webp",
+      "caption": "",
+      "page": 0,
+      "index": 3,
+      "width": 1780,
+      "height": 674,
+      "label": "Figure"
+    },
+    {
+      "url": "assets/figures/openreview/openreview-icml-2025-3cispy3qdz/fig-004.webp",
+      "caption": "",
+      "page": 0,
+      "index": 4,
+      "width": 1710,
+      "height": 471,
+      "label": "Figure"
+    },
+    {
+      "url": "assets/figures/openreview/openreview-icml-2025-3cispy3qdz/fig-005.webp",
+      "caption": "",
+      "page": 0,
+      "index": 5,
+      "width": 1716,
+      "height": 480,
+      "label": "Figure"
+    },
+    {
+      "url": "assets/figures/openreview/openreview-icml-2025-3cispy3qdz/fig-006.webp",
+      "caption": "",
+      "page": 0,
+      "index": 6,
+      "width": 1781,
+      "height": 1055,
+      "label": "Figure"
+    },
+    {
+      "url": "assets/figures/openreview/openreview-icml-2025-3cispy3qdz/fig-007.webp",
+      "caption": "",
+      "page": 0,
+      "index": 7,
+      "width": 1666,
+      "height": 2324,
+      "label": "Figure"
+    },
+    {
+      "url": "assets/figures/openreview/openreview-icml-2025-3cispy3qdz/fig-008.webp",
+      "caption": "",
+      "page": 0,
+      "index": 8,
+      "width": 1668,
+      "height": 561,
+      "label": "Figure"
+    }
+  ]
+}

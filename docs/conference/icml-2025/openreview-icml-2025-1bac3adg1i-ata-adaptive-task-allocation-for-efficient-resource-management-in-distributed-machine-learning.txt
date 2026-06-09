@@ -1,0 +1,3592 @@
+Title: cherryATA: cherryAdaptive cherryTask cherryAllocation for Efficient Resource Management  in Distributed Machine Learning
+
+URL Source: https://openreview.net/pdf?id=1BaC3AdG1i
+
+Number of Pages: 31
+
+Markdown Content:
+## ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+Artavazd Maranjyan 1 El Mehdi Saad 1 Peter Richt´ arik 1 Francesco Orabona 1
+
+Abstract 
+
+Asynchronous methods are fundamental for par-allelizing computations in distributed machine learning. They aim to accelerate training by fully utilizing all available resources. However, their greedy approach can lead to inefficiencies using more computation than required, especially when computation times vary across devices. If the computation times were known in advance, train-ing could be fast and resource-efficient by assign-ing more tasks to faster workers. The challenge lies in achieving this optimal allocation without prior knowledge of the computation time distri-butions. In this paper, we propose ATA (Adaptive Task Allocation), a method that adapts to het-erogeneous and random distributions of worker computation times. Through rigorous theoretical analysis, we show that ATA identifies the optimal task allocation and performs comparably to meth-ods with prior knowledge of computation times. Experimental results further demonstrate that ATA 
+
+is resource-efficient, significantly reducing costs compared to the greedy approach, which can be arbitrarily expensive depending on the number of workers. 
+
+1. Introduction 
+
+In this work, we address a very general yet fundamental and important problem arising in various contexts and fields. In particular, there are n workers/nodes/devices collaborating to run some iterative algorithm which has the following structure:                         
+
+> 1King Abdullah University of Science and Technol-ogy (KAUST), Thuwal, Saudi Arabia. Correspondence to: Artavazd Maranjyan <arto.maranjyan@gmail.com >,El Mehdi Saad <mehdi.saad@kaust.edu.sa >,Peter Richt ´arik
+> <peter.richtarik@kaust.edu.sa >,Francesco Orabona
+> <francesco@orabona.com >.
+> Proceedings of the 42 nd International Conference on Machine Learning , Vancouver, Canada. PMLR 267, 2025. Copyright 2025 by the author(s).
+
+• In order to perform a single iteration of the algorithm, a certain number ( B) of tasks needs to be performed. • Each task can be computed by any worker, and the tasks are not temporally related. That is, they can be computed in any order, in parallel, and so on. • Whenever a worker is asked to perform a single task, the task will take a certain amount of time, modeled as a nonnegative random variable drawn from an un-known distribution specific to that worker. The stochas-tic assumption makes sense because in real systems computation times are not fixed and can vary with each iteration (Dean & Barroso, 2013; Chen et al., 2016a; Dutta et al., 2018; Maranjyan et al., 2025a). • Each worker can only work on a single task at a time. That is, a worker processes all tasks it has to perform sequentially. Different workers work in parallel. A natural goal in this setup is to make sure all tasks are completed as fast as possible (in expectation), which mini-mizes the (expected) time it takes for a single iteration of the algorithm to be performed provided that the task completion time is the dominant time factor of the iteration. Provided we are willing to waste resources, there is a simple solution to this problem, a Greedy Task Allocation ( GTA ) strategy, which follows this principle: Make sure all workers are always busy working on some task, and stop once B tasks have been completed. In GTA , we initially ask all n workers to start working on a task, and as soon as some worker is done with a task, we ask it to start completing another task. This process is repeated until B tasks have been completed. While GTA minimizes the completion time, it can be im-mensely wasteful in terms of the total worker utilization time needed to collect all B tasks. Indeed, consider the scenario with n = 1000 workers and B = 10 tasks. In this case, GTA will lead to at least n − B = 990 unnecessary tasks being run in each iteration! This is highly undesirable in situations where the workers are utilized across multiple other jobs besides running the iterative algorithm mentioned above. The goal of our work is to design new task allocation strate-gies, with rigorous theoretical support, that would attempt 1ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+to minimize the expected completion time subject to the 
+
+constraint that such wastefulness is completely eliminated. That is, we ensure that no more than B tasks are completed in each round. 
+
+1.1. A Motivating Example: Optimal Parallel SGD 
+
+A key inspiration for our work, and the prime example of the general task collection problem described above, relates to recent development in the area of parallel stochastic gradient descent ( SGD ) methods. Consider the problem of finding an approximate stationary point of the optimization problem 
+
+min 
+
+> x∈Rd
+
+{f (x) := Eξ∼D [fξ(x)] } ,
+
+where fξ : Rd → R are smooth nonconvex functions, and 
+
+f is assumed to be bounded from below. We assume that 
+
+Eξ∼D 
+
+∥fξ(x) − ∇ f (x)∥2 ≤ σ2
+
+for all x ∈ Rd.In a recent breakthrough, Tyurin & Richt ´arik (2024) re-cently developed a parallel SGD method, optimal in terms of a novel notion of complexity called time complexity , for solving the above problem with n parallel workers, assum-ing that it takes τi > 0 seconds to worker i to compute a stochastic gradient of f (this corresponds to a task). Their method, Rennala SGD , corresponds to Minibatch SGD of minibatch size B (which depends on the target accuracy and 
+
+σ only), with the B tasks (stochastic gradients) completed via GTA . While minimax optimal in terms of time com-plexity, the GTA task allocation strategy employed within  
+
+> Rennala SGD
+
+can be wasteful, as explained above. Recently, Maranjyan et al. (2025b) proposed Ringmaster ASGD , a fully asynchronous SGD method, matching the optimal time complexity of Rennala SGD and achieving op-timality for arbitrary compute time patterns associated with the tasks (stochastic gradients), including random, as consid-ered in our setup. However, Ringmaster ASGD also employs a greedy task allocation strategy, leading to wastefulness. Numerous other parallel/distributed methods involve the im-plementation of a task allocation strategy, including stochas-tic proximal point methods (task = evaluation of the stochas-tic prox operator), higher-order methods (task = evaluation of stochastic Hessian), and beyond. So, by addressing the general task allocation problem, we aim to tame the inherent resource wastefulness of all these methods. 
+
+1.2. Contributions 
+
+In this work, we formalize the task allocation problem as a combinatorial online learning problem with partial feed-back and non-linear losses . Then, we introduce ATA , a lower-confidence bound-based algorithm designed to solve the proposed allocation problem. ATA is agnostic to work-ers’ computation times, and our theoretical analysis demon-strates that the total computation time achieved by our meth-ods remains within a small multiplicative factor of the op-timal computation time (i.e., the one attainable with full knowledge of the workers’ arm distributions). Additionally, we present ATA-Empirical , a variant of ATA that leverages a novel data-dependent concentration inequality and achieves better empirical results. Finally, we validate our approach through numerical simulations. 
+
+2. Related Work 
+
+Most of the literature on asynchronous methods focuses on demonstrating advantages over their synchronous counter-parts. For the simplest method, SGD , this was only recently established by Tyurin & Richt ´arik (2024). With this result in place, the community can now shift its focus to reducing the overhead of asynchrony. Our work may be the first step in this direction. In federated learning (FL) (Kone ˇcn ´y et al., 2016; McMahan et al., 2016; Kairouz et al., 2021), several works account for system heterogeneity. The most well-known FL method,  
+
+> FedAvg
+
+(McMahan et al., 2017), operates by performing multiple local steps on workers, where each step can be viewed as a task. Some works adjust the number of local steps based on worker computation times (Li et al., 2020; Maranjyan et al., 2022), effectively adapting task assign-ments to worker speed. However, these methods rely on prior knowledge of these times rather than learning them adaptively, as we do. We reformulate our problem as an online bandit problem. The literature on bandit algorithms is vast, and we refer the reader to Lattimore & Szepesv ´ari (2020) for an introduction to this subject. Our algorithm is based on the approach of us-ing Lower Confidence Bounds (LCBs) on the true means of the arms. This idea, originally proposed by Auer (2002) for the classical Multi-Armed Bandit (MAB) setting, has since been widely adopted in the stochastic combinatorial bandits literature (Gai et al., 2012; Chen et al., 2013; Combes et al., 2015; Kveton et al., 2015). Using LCBs instead of the em-pirical estimates of the means allows to trade-off optimally exploration and exploitation. The “greedy” approach we employ, which involves select-ing the action that minimizes the loss function based on lower confidence bounds instead of the unknown means, is a standard technique in the literature (Chen et al., 2013; Lin et al., 2015). However, note that our larger action space and the discontinuity of our loss function necessitates a more tailored analysis. To the best of our knowledge, this is the first work addressing a non-continuous loss function in a stochastic combinatorial MAB-like framework. To over-2ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+come this challenge, we exploit the specific structures of our loss function and action space to control the number of rounds where suboptimal actions are chosen. Additionally, our procedure is computationally efficient. 
+
+3. Problem Setup 
+
+In this section, we formally describe the problem setup. 
+
+3.1. Task Allocation Protocol 
+
+We consider a system of n workers, each responsible for computing gradients. In each round, the allocation algo-rithm has a budget of B units that must be allocated among the n workers. Each unit allocation will result in one gra-dient computation. We denote by K the total number of rounds, which is assumed to be unknown to the learner. We denote by X(u) 
+
+> i,k
+
+the computation time of the worker 
+
+i ∈ [n] := {1, 2, . . . , n } for round k ∈ [K] on its u-th gradient. Consequently, the computation time required for worker i to perform its task of computing ai,k gradients in round k is given by ai,k 
+
+X
+
+> u=1
+
+X(u)
+
+> i,k
+
+if ai,k ≥ 1, and 0 otherwise. In each round k, the allocation algorithm must choose an allocation vector ak ∈ Nn such that ∥a∥1 = B, based on the information available prior to round k. The feedback consists of ai,k observed times for all the chosen workers. We will denote the action set by 
+
+A := {a ∈ Nn : ∥a∥1 = B},
+
+where N is the set of natural numbers, including the 0.The objective of the allocation strategy in each round k is to minimize the total computation time. Hence, the objective is to minimize C : A → R+, the computation time that the optimizer waits to receive B gradients using an allocation vector a ∈ A , defined as 
+
+C(ak) := max  
+
+> i∈supp (ak)
+> ai,k
+
+X
+
+> u=1
+
+X(u) 
+
+> i,k
+
+. (1) 
+
+3.2. Modeling Assumptions 
+
+We assume that the computation time of each worker i ∈ [n]
+
+are i.i.d. drawn from a random variable Xi following a probability distribution νi. We denote by μ = ( μ1, . . . , μ n)
+
+the vector of unknown means. Hence, the random variables 
+
+(X(u) 
+
+> i,k
+
+) with u ∈ { 1, . . . , a i,k } are ai,k i.i.d. samples drawn from νi.We assume that the distribution νi of the computation times to be sub-exponential random variables. To quantify this assumption, we recall the definition of the sub-exponential norm, also known as the Orlicz norm, for a centered real-valued random variable X:
+
+∥X∥ψ1 := inf {C > 0 : E[exp( |X| /C )] ≤ 2} . (2) Hence, formally we make the following assumption. 
+
+Assumption 3.1. Let α ≥ 0. For all i ∈ [n], Xi is a positive random variable and ∥Xi − μi∥ψ1 ≤ α.In the remainder of this paper we denote αi := ∥Xi∥ψ1 for each i ∈ [n], let α := max i∈[n] αi.The considered class encompasses several other well-known classes of distributions in the literature, such as support-bounded and sub-Gaussian distributions. Moreover, it in-cludes exponential distributions, which are frequently used in the literature to model waiting or computation times in queuing theory and resource allocation in large distributed systems (Gelenbe & Mitrani, 2010; Gross et al., 2011; Had-jis et al., 2016; Mitliagkas et al., 2016; Dutta et al., 2018; Nguyen et al., 2022). 
+
+3.3. Objective of the Allocation Algorithm 
+
+The main objective of this work is to develop an online allocation strategy with small expected total computation time, defined as 
+
+CK := 
+
+> K
+
+X
+
+> k=1
+
+E[C(ak)] .
+
+If the distributions of the arms were known in advance, the optimal allocation a∗ ∈ A would be selected to minimize the expected computation time per round, E[C(·)] , and this allocation would be used consistently over K rounds, lead-ing to the optimal total computation time 
+
+C∗ 
+
+> K
+
+= KE[C(a∗)] .
+
+Our goal is to design a strategy that ensures the computation time CK remains within a small multiplicative factor of the optimal time C∗ 
+
+> K
+
+, plus an additional negligible term. Specifically, we aim to satisfy 
+
+CK ≤ γ · C ∗ 
+
+> K
+
++ EK , (3) where γ ≥ 1 is a constant close to 1, and EK is a negligible term compared to C∗ 
+
+> K
+
+when K → ∞ . This would assure us that in the limit we are a constant multiplicative factor away from the performance of the optimal allocation strategy that has full knowledge of the distributions of the computational times of the workers. Finding a strategy solving the objective in (3) presents sev-eral technical challenges. First, the action space A is dis-crete, and the nonlinearity of the computation time functions 3ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+C(·) prevents reducing our objective to a convex problem. Second, the size of A is combinatorial, growing on the or-der of  n+B−1
+
+> B
+
+, which necessitates exploiting the inherent problem structure to develop efficient strategies. Third, be-cause the workers’ computation times are stochastic, any solution must account for uncertainty. Finally, the online setting forces the learner to balance exploration and exploita-tion under a limited allocation budget of B units per round and partial feedback—only the computation times of work-ers who receive allocations are observed. This last point naturally suggests adopting a MAB approach. In the next section, we show how to reduce this problem to a MAB problem and how to efficiently solve it. 
+
+4. Adaptive Task Allocation 
+
+Here, we first show how to reduce the problem in (3) to a 
+
+non-linear stochastic Multi-Armed Bandit (MAB) problem. Then, we propose an efficient algorithm for this formulation. 
+
+4.1. Reduction to Multi-Armed Bandit and Proxy Loss 
+
+The stochastic MAB problem is a fundamental framework in sequential decision-making under uncertainty. It involves a scenario where an agent must choose among a set of arms, each associated with an unknown reward distribution. The agent aims to maximize cumulative reward (or equivalently minimize the cumulative loss) over time by balancing explo-ration (gathering information about the reward distributions) and exploitation (leveraging the best-known arm). The chal-lenge lies in the trade-off between exploring suboptimal arms to refine reward estimates and exploiting the arm with the highest observed reward, given the stochastic nature of the outcomes. Using the terminology from bandit literature, here we will refer to each worker as an “arm.” However, differently from the standard MAB problem, we have a harder problem because E [C(ak)] depends on the joint distribution of all the arms in the support of ak, rather than on their expectations only. This dependency potentially renders the task of relying on estimates of E [C(a)] for a ∈A computationally challenging due to the combinatorial nature of the set A.To solve this issue, our first idea is to introduce a proxy loss 
+
+ℓ : A × Rn 
+
+> ≥0
+
+→ R≥0, defined as 
+
+ℓ(a, μ) := max  
+
+> i∈[n]
+
+aiμi . (4) Due to the convexity of C(·), the introduced proxy-loss underestimates the expected computation time. However, in Appendix D.3 we prove that this quantity also upper bounds the expected computation time up to a constant that depends on the distribution of the arms. In particular, for any a ∈ A ,we show that 
+
+ℓ(a, μ) ≤ E [C(a)] ≤ (1 + 4 η ln( B)) ℓ(a, μ), (5) where η is defined as 
+
+η := max 
+
+> i∈[n]
+
+αi
+
+μi
+
+. (6) In words, η provides an upper bound on the ratio between the standard deviation and the mean of the arms. Note that in the literature, it is common to consider exponential, Er-lang, or Gamma distributions, where the ratio η is typically 1
+
+bounded by 1.The bound above will allow us to derive guarantees on the total computation time of an allocation strategy based on its guarantees for the proxy loss ℓ(·), up to a factor of the order 
+
+1 + 4 η ln( B). We remark that in the special case where the arms’ distributions are deterministic ( η = 0 ) or the query budget is unitary ( B = 1 ), the two targets E [C(a)] and ℓ
+
+exactly coincide. 
+
+4.2. Comparison with the Combinatorial Bandits Setting 
+
+Our setting is closely related to the Combinatorial Multi-Armed Bandits (CMAB) framework (Cesa-Bianchi & Lu-gosi, 2012), particularly due to the combinatorial nature of the action space and the semi-bandit feedback, where the learner observes outcomes from all chosen arms. However, our formulation differs in two significant ways. First, while CMAB typically involves selecting a subset of n arms, re-sulting in an action space with a maximum size of 2n, our action space A has a cardinality of  n+B−1
+
+> B
+
+. The ratio between these two can be extremely large, potentially grow-ing exponentially with n. Second, although most works in this domain assume a linear loss function in the arms’ means, some notable exceptions address non-linear reward functions (Chen et al., 2013; Lin et al., 2015; Chen et al., 2016b; Wang & Chen, 2018). However, these approaches generally rely on assumptions such as smoothness, Lipschitz continuity, or higher-order differentiability of the reward function. In contrast, our loss function ℓ(·, μ) is not contin-uous with respect to the arms’ means. Finally, motivated by the practical requirements of our setting, we place a strong emphasis on computational efficiency that rules out most of the approaches based on CMAB. 
+
+4.3. Adaptive Task Allocation Algorithm 
+
+Now, we introduce our Adaptive Task Allocation algorithm (ATA ). ATA does not require prior knowledge of the hori-zon K and only relies on an upper bound α satisfying      
+
+> 1For Gamma( α, λ ),σ/μ = 1 /√α, so the claim holds for
+> α≥1.
+
+4ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+Algorithm 1 ATA (Adaptive Task Allocation)  
+
+> 1:
+
+Input : allocation budget B, α > 0 
+
+> 2:
+
+Initialize : empirical means ˆμi, 1 = 0 , usage counts 
+
+Ki, 1 = 0 , and usage times Ti, 1 = 0 , for all i ∈ [n] 
+
+> 3:
+
+for k = 1 , . . . , K do  
+
+> 4:
+
+Compute LCBs (si,k ) for all i ∈ [n] using (7)  
+
+> 5:
+
+Find allocation: ak ∈ arg min a∈A ℓ(a, sk) 
+
+> 6:
+
+Allocate ai,k tasks to each worker i ∈ [n] 
+
+> 7:
+
+Update optimization parameters  
+
+> 8:
+
+for i such that ai,k ̸ = 0 do  
+
+> 9:
+
+Ki,k +1 = Ki,k + ai,k  
+
+> 10:
+
+Ti,k +1 = Ti,k + Pai,k  
+
+> j=1
+
+X(j) 
+
+> i,k
+> 11:
+
+ˆμi,k +1 = Ti,k +1 /K i,k +1  
+
+> 12:
+
+end for  
+
+> 13:
+
+end for 
+
+α ≥ max i∈[n] ∥Xi − μi∥ψ1 for the Orlicz norms of the arm distributions. Recall that ∥Xi − μi∥ψ1 ≤ 2 ∥Xi∥ψ1 , so an upper bound on ∥Xi∥ψ1 also provides one for ∥Xi − μi∥ψ1 .The core idea of the procedure is to allocate the workers based on lower confidence bound estimates on the arm means (μi)i∈[n], in order to balance exploration and ex-ploitation. For each arm i ∈ [n] and round k ∈ [K], let Ki,k represent the number of samples collected from the distribution of arm 
+
+i up to round k. At each round k, we compute an empirical mean, denoted by ˆμi,k , using the Ki,k samples obtained so far. Based on these empirical means, we define the lower confidence bounds si,k as 
+
+si,k = (ˆ μi,k − conf (i, k )) + , (7) where (x)+ = max {x, 0} and conf (·, ·) is defined as 
+
+conf( i, k ) = 
+
+(
+
+2α
+
+q ln(2 k2) 
+
+> Ki,k
+
++ ln(2 k2)
+
+> Ki,k
+
+
+
+, Ki,k ≥ 1,
+
++∞, Ki,k = 0 .
+
+The term conf (·, ·) is derived from a known concentration inequality for sub-exponential variables with an Orlicz norm bounded by α (Lemma E.1 in the Appendix). Given the confidence bounds sk := ( s1,k , . . . , s n,k ), the learner selects the action ak ∈ A at round k that minimizes the loss ℓ(·, sk), defined in (4) . While nonconvex, we show in Appendix C that this optimization problem can be solved using a recursive routine, whose computational efficiency is 
+
+O(n ln(min {B, n }) + min {B, n }2).
+
+Remark 4.1 . Line 7 of the algorithm acts as a placeholder for the optimization method, where the optimization pa-rameters are updated using the quantities computed by the workers (e.g., gradients in the case of SGD ). In this view, the allocation algorithm is independent of the specifics of the chosen optimization algorithm. Refer to Appendix B for further details. As last step, the feedback obtained after applying the alloca-tion ak is used to update the lower confidence bounds. The complete pseudocode for ATA is provided in Algorithm 1. 
+
+4.4. Upper-Bound on the Total Computation Time 
+
+We provide guarantees for ATA in the form of an upper bound on the expected total computation time required to perform 
+
+K iterations of the optimization procedure. Recall that the proxy loss ℓ(·, μ) and the expected computation time are related through (5) . This relationship and Theorem 6.1 allow us to derive guarantees on the expected total computation time, denoted by 
+
+CK := 
+
+> K
+
+X
+
+> k=1
+
+E [C(ak)] .
+
+We define the optimal allocation for minimizing the compu-tation time as 
+
+a∗ ∈ arg min 
+
+> a∈A
+
+E [C(a)] .
+
+Consequently, the optimal expected total computation time in this framework is given by 
+
+C∗ 
+
+> K
+
+:= KE [C(a∗)] .
+
+Theorem 4.2 (Proof in Appendix D.3) . Suppose Assump-tion 3.1 holds and let η := max i∈[n] αi/μ i. Then, the total expected computation time after K rounds, using the allo-cation prescribed by ATA with inputs (B, α ) satisfies 
+
+CK ≤ (1 + 4 η ln( B)) C∗ 
+
+> K
+
++ O(ln K) .
+
+Remark 4.3 . The O(·) term hides an instance dependent factor. We will give its full specifics in the regret upper bound of Theorem 6.1. The bound in Theorem 4.2 shows that the total expected computation time of ATA remains within a multiplicative factor of 1 + 4 η ln( B) of the optimal computation time C∗ 
+
+> K
+
+,with an additional remainder term that scales logarithmically with K. Since CK = Ω( K), this additive term is negligible compared to C∗ 
+
+> K
+
+. In practical scenarios, where computation time follows common distributions such as exponential or Gamma, the factor η is typically of order 1, and ln( B)
+
+remains relatively small for the batch sizes commonly used in optimization algorithms like SGD .The reader might wonder if the more ambitious goal of de-riving bounds with a multiplicative factor of exactly 1 is achievable. However, achieving this goal would require significantly more precise estimates of the expected compu-tation time E[C(a)] for all a ∈ A . Since E[C(a)] depends 5ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+on the joint distribution of all workers in the support a, ob-taining such precise estimates would come at the cost of computational efficiency in the allocation strategy. We note that it is unsurprising that η appears in the upper bound of Theorem 4.2, since having a heavier-tailed dis-tribution increases the gap between ℓ(a, μ) and E [C(a)] 
+
+through the convexity of C(·). Instead, the factor ln( B)
+
+arises because C(·) is expressed as the maximum of up to 
+
+B random variables. Moreover, in the edge cases where 
+
+η = 0 (deterministic case) or B = 1 (linear cost function), we guarantee that the expected computation time is at most an additive factor away from the optimal one. 
+
+5. Empirical Adaptive Task Allocation 
+
+The ATA procedure is based on a lower confidence bound approach that relies on concentration inequalities. These bounds play a key role in performance, as sharper concen-tration bounds lead to more accurate estimates and reduce exploration of suboptimal options. Since workers’ com-putation times follow sub-exponential distributions, their concentration behavior is determined by the Orlicz norm of the corresponding variables. In ATA , the only prior knowl-edge available is an upper bound on the largest Orlicz norm among all arms. When the Orlicz norms of the arms’ distri-butions vary significantly, this uniform bound may result in loose confidence intervals and inefficient exploration. To address this issue, we introduce ATA-Empirical , which better adapts to the distribution of each arm, particularly its Orlicz norm. This adaptation is achieved through a novel data-dependent concentration inequality for sub-exponential variables. Unlike ATA , which depends on the maximum Or-licz norm, ATA-Empirical accounts for the individual Orlicz norms of all arms, denoted by (αi)i∈[n]. This improvement is reflected in the upper bounds on regret presented in Sec-tion 6. In practice, this leads to improved performance at least some settings, as shown in our simulations in Section 7. However, this increased adaptivity comes with a trade-off since ATA-Empirical requires an upper bound on the quantity 
+
+η = max i αi/μ i, rather than a bound on the largest Orlicz norm. That said, for many distributions of interest, the ratios 
+
+αi/μ i across different arms tend to be of the same order, whereas their Orlicz norms can vary significantly. The ATA-Empirical procedure differs from ATA only in the lower confidence bounds it uses. These bounds are derived from the novel concentration inequality in Lemma 6.2 and are defined for arm i ∈ [n] at round k ∈ [K] as 
+
+ˆsi,k = ˆ μi,k 
+
+"
+
+1 − 2 η
+
+s
+
+ln(2 k2)
+
+Ki,k 
+
++ ln(2 k2)
+
+Ki,k 
+
+!# 
+
+> +
+
+, (8) where η = max i∈[n] αi/μ i.The expected total computation time CK of ATA-Empirical 
+
+satisfies the same guarantee presented in Theorem 6.1, but we obtain an improved multiplicative factor of the additive logarithmic term. The precise expressions of these factors are provided in the next section, and they show that the guar-antees of ATA-Empirical adapt to the Orlicz norms ∥Xi∥ψ1
+
+of each arm, while the guarantees of ATA depend on the maximum Orlicz norm max i ∥Xi∥ψ1 .
+
+6. Theoretical Results 
+
+In this section, we sketch the derivation of Theorem 4.2 for ATA and ATA-Empirical , through a regret analysis on the proxy losses. We define the expected cumulative regret of the proxy loss ℓ(·, μ) after K rounds 
+
+RK := 
+
+> K
+
+X
+
+> k=1
+
+E [ℓ(ak, μ)] − K · ℓ(¯ a, μ), (9) where ¯a ∈ arg min a∈A ℓ(a, μ) represents the optimal allo-cation over the workers. If multiple optimal actions exist, we consider the one returned by the optimization sub-routine used in ATA (line 5 of Algorithm 2). We derive upper bounds on the expected cumulative regret 
+
+RK . Based on these bounds, we provide the guarantees on the expected total computation time required to complete K
+
+iterations of the optimization process. 
+
+6.1. Guarantees for ATA 
+
+For each worker i ∈ [n], recall that ¯ai denote the prescribed allocation of the optimal action ¯a. Define ki as the smallest integer satisfying 
+
+(¯ ai + ki)μi > ℓ (¯ a, μ) . (10) From the definition above, it follows that if the learner plays an action ak at round k such that ak,i ≥ ¯ai + ki, then 
+
+ℓ(ak, μ) ≥ ℓ(¯ a, μ). Thus, ki can be interpreted as the smallest number of additional units allocated to worker i that result in a suboptimal loss. Moreover, for every worker i ∈
+
+[n], we have ki ∈ { 1, 2} (see Lemma D.1 in the Appendix). The next result provides an upper bound on the expected regret of ATA .
+
+Theorem 6.1 (Proof in Appendix D.1) . Suppose that As-sumption 3.1 holds. Then, the expected regret of ATA with inputs (B, α ) satisfies 
+
+RK ≤ 2n max 
+
+> i∈[n]
+
+{Bμ i − ℓ(¯ a, μ)}
+
++ c ·
+
+> n
+
+X
+
+> i=1
+
+α2(¯ ai + ki)( Bμ i − ℓ(¯ a, μ)) ((¯ ai + ki)μi − ℓ(¯ a, μ)) 2 · ln K, 
+
+where α ≥ max i∈[n] ∥Xi − μi∥ψ1 , and c is a numerical constant. 
+
+6ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+The first term in the regret upper bound is independent on the number of rounds K. The second term, however, grows logarithmically with K, which aligns with the behavior observed in stochastic bandit problems in the literature. In the case where B = 1 , our setting reduces to the problem of regret minimization for the standard multi-armed bandits. Observe that in this case ℓ(¯ a, μ) = min i∈[n] μi, ki = 1 
+
+for all i ∈ [n]. Therefore, the guarantees of Theorem 6.1 recover the known optimal bound 
+
+O X
+
+> i
+
+ln( K)/∆i
+
+!
+
+of the standard MAB setting, where ∆i := μi − min j μj .
+
+Proof sketch. In standard and combinatorial MAB prob-lems, regret bounds are typically derived by controlling the number of rounds in which the learner selects subopti-mal arms. These bounds are often of the order ln( K)/∆2,where ∆ denotes the suboptimality gap and quantifies the exploration cost required to distinguish optimal actions from suboptimal ones. In our setting, the problem is more complex since the learner must not only choose which arms to pull but also determine the allocation of resources across selected arms. With this in mind, we develop the following key arguments leading to the bound in Theorem 6.1. We define over-allocation for worker i at round k as the event where ai,k ≥ ¯ai + ki. By definition of ki (see (10) ), this implies that ℓ(ak, μ) > ℓ (¯ a, μ). We define a bad round 
+
+as a round where ℓ(ak, μ) > ℓ (¯ a, μ), and we say that a bad round is triggered by arm i when ai,k μi = ℓ(ak, μ) >ℓ(¯ a, μ). Then, the proof revolves around establishing an upper bound on the total number of bad rounds. To derive this bound, we consider the number of samples required to verify that the mean computation time of worker 
+
+i under over-allocation exceeds the optimal waiting time 
+
+ℓ(¯ a, μ). Specifically, we need to test whether the mean of the corresponding distribution, at least (¯ ai +ki)μi, surpasses the threshold ℓ(¯ a, μ). This is equivalent to testing whether 
+
+
+
+μi > ℓ(¯ a, μ)¯ai + ki
+
+
+
+.
+
+Using the concentration inequality applied in our analysis, the number of samples required for this test is of the order: 
+
+α2
+
+> i
+
+
+
+μi − ℓ(¯ a,μ)¯ai+ki
+
+−2
+
+= α2  
+
+> i(¯ ai+ki)2
+> ((¯ ai+ki)μi−ℓ(¯ a,μ)) 2
+
+. (11) During rounds where worker i is over-allocated, the learner collects at least ¯ai + ki samples from the corresponding dis-tribution. Therefore, the total number of rounds required to accumulate enough samples to stop over-allocating worker 
+
+i can be upper-bounded by 
+
+α2 
+
+> i
+
+(¯ ai + ki)((¯ ai + ki)μi − ℓ(¯ a, μ)) 2 .
+
+In the regret bound of Theorem 6.1, the term α2 appears in-stead of α2 
+
+> i
+
+because the learner’s prior knowledge is limited to an upper bound α ≥ max i ∥Xi − μi∥ψ1 on the maxi-mal Orlicz norm of the arm distributions. Finally, consid-ering that the worst-case excess loss incurred when over-allocating worker i is Bμ i − ℓ(¯ a, μ), we obtain the stated bound. 
+
+6.2. Guarantees for ATA-Empirical 
+
+We present theoretical guarantees for ATA-Empirical by pro-viding an upper bound on the expected cumulative regret (9) .As discussed in Section 4, ATA-Empirical leverages lower confidence bounds derived from a novel data-dependent concentration inequality introduced below. The proof of this result is detailed in Appendix E. 
+
+Lemma 6.2. Let X1, . . . , X n be i.i.d. positive random vari-ables with mean μ, such that α = ∥X1 − μ∥ψ1 < +∞. Let 
+
+ˆXn denote the empirical mean. For δ ∈ (0 , 1) , let 
+
+Cn,δ := 2 
+
+r log(2 /δ )
+
+n + 2 log(2 /δ )
+
+n ,
+
+where η = α/μ . Then, with probability at least 1 − δ, we have 
+
+μ ≥ ˆXn (1 − ηC n,δ )+ .
+
+Moreover, if ηC n,δ ≤ 14 , then, we have with probability at least 1 − δ, we have 
+
+ˆXn (1 − ηC n,δ )+ ≤ μ ≤ ˆXn
+
+
+
+1 + 43 ηC n,δ 
+
+
+
+.
+
+Using the concentration inequality above, we construct the lower confidence bounds ˆsi,k as defined in (8) . The fol-lowing theorem provides an upper bound on the regret of 
+
+> ATA-Empirical
+
+.
+
+Theorem 6.3 (Proof in Appendix D.2) . Suppose that As-sumption 3.1 holds. Then, the expected regret of ATA-Empirical with inputs (B, η ), satisfies 
+
+RK ≤ 2n max 
+
+> i∈[n]
+
+{Bμ i − ℓ(¯ a, μ)}
+
++ cη 2 ·
+
+> n
+
+X
+
+> i=1
+
+μ2 
+
+> i
+
+(¯ ai + ki)( Bμ i − ℓ(¯ a, μ)) ((¯ ai + ki)μi − ℓ(¯ a, μ)) 2 · ln K, 
+
+where η ≥ max i∈[n] αi/μ i and c is a numerical constant. 
+
+7ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+Comparing the bounds for ATA-Empirical and ATA , we ob-serve a key differences. Unlike the bound in Theorem 6.1, which incurs a squared maximal Orlicz norm penalty of α2
+
+for all terms in the upper bound, ATA-Empirical benefits from its adaptive nature, leading to a term-specific factor of η2μ2 
+
+> i
+
+.In the case where the arm distributions have a ratio αi/μ i of the same order (such as the exponential distributions), the bound of Theorem 6.3 shows that ATA-Empirical adapts to the quantities αi as we have, in the last case, ημ i = αi.
+
+7. Experiments 
+
+In this section, we validate our algorithms by simulating a scenario with n workers, where we solve a simple problem using SGD . In each iteration, we collect B = 23 gradients from the workers and perform a gradient descent step. The objective function f : Rd → R is a convex quadratic defined as 
+
+f (x) = 12 x⊤Ax − b⊤x,
+
+where 
+
+A = 14
+
+
+
+2 −1 0
+
+−1 . . . . . .. . . . . . −10 −1 2
+
+ ∈ Rd×d ,
+
+b = 14
+
+
+
+−10
+
+...
+
+0
+
+ ∈ Rd .
+
+We denote f ∗ as the minimum value of the function f . Each of the n workers is able to calculate unbiased stochastic gradients g(x) that satisfy 
+
+E
+
+h
+
+∥g(x) − ∇ f (x)∥2i
+
+≤ 0.01 2 .
+
+This is achieved by adding Gaussian noise to the gradients of f .The computation time for worker i is modeled by the distri-bution 
+
+νi = 29 √i + Exp 
+
+
+
+29 √i
+
+
+
+,
+
+for all i ∈ [n], where Exp( β) denotes the exponential dis-tribution with scale parameter β. The expected value of this distribution is μi = 2 · 29 √i. Furthermore, the Orlicz norm satisfies the bound αi ≤ 2μi.We consider three benchmark algorithms. GTA-SGD , orig-inally introduced as Rennala SGD by Tyurin & Richt ´arik (2024). Additionally, we include OFTA (Optimal Fixed Task Allocation), which assumes the oracle knowledge of the mean computation times and uses the optimal allocation ¯a
+
+in (9) in each iteration, and UTA (Uniform Task Allocation), which distributes B tasks uniformly among the n workers. If n > B , then in UTA we select B workers at random, each one tasked to calculate one stochastic gradient. Our algorithms aim to achieve a performance close to the one of 
+
+> OFTA
+
+, without any prior knowledge of the true means. For ATA we set α = αn = 4 ·29 √n, while for ATA-Empirical 
+
+we use η = 1 . The results of our experiments are shown in Figure 1. As expected, GTA is the fastest in terms of runtime (first column), but it performs poorly in terms of total worker time (second column). This is because it uses all devices, most of which perform useless computations that are never used, leading to worse performance as the number of workers increases. In fact, its performance can become arbitrarily worse. On the other hand, OFTA performs best in terms of total worker time. Although it is slower in terms of runtime, the difference is by a constant factor that does not increase as n grows. This is because additional workers are less efficient and do not provide significant benefits for 
+
+> GTA
+
+.Turning our attention to our algorithms, both ATA and ATA-Empirical initially behave like UTA , as it is expected by the need to perform an initial exploration phase with uniform al-locations. However, after this phase, they begin to converge to the performance of OFTA .The last two columns contain plots that confirm our theo-retical derivations. The third plot validates Theorem 4.2, showing that ATA and ATA-Empirical converge to OFTA up to a constant. The final column shows the averaged cumulative regret, vanishing over time as predicted by Theorems 6.1 and 6.3. Table 1: Ratios of total worker times and runtimes required to achieve f (x) − f ∗ < 10 −5. For total worker time, we divide the total worker time of GTA by the corresponding total worker times of the other algorithms listed. For run-time, we do the opposite, dividing the runtime of the other algorithms by the runtime of GTA , since GTA is the fastest. To simplify the naming, we refer to ATA-Empirical as ATA-E .                                
+
+> nTOT .WORKER TIME RATIO RUNTIME RATIO
+> ATA ATA-E OFTA ATA ATA-E OFTA
+> 17 1.31.26 1.26 1.73 1.75 1.74 51 2.91 2.69 3.03 2.43 2.45 2.17 153 7.22 7.02 9.13.44 3.14 2.17 459 12 .45 14 .127 .36.36 5.51 2.17
+
+In Table 1, we compare the results numerically. Both the total worker time ratio and runtime ratio increase as n grows. The total worker time ratio increases because GTA becomes less efficient, using more resources than necessary. The runtime ratio grows for ATA and ATA-Empirical since a larger 8ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 0.0 0.5 1.0 1.5 2.0 2.5 
+
+Runtime 1e9      
+
+> 10 -5
+> 10 -4
+> 10 -3
+> 10 -2
+> 10 -1
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5
+
+Total worker time 1e10       
+
+> 10 -5
+> 10 -4
+> 10 -3
+> 10 -2
+> 10 -1
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5 3.0
+
+Iterations 1e6       
+
+> 200
+> 400
+> 600
+> 800
+> 1000
+> 1200
+> 1400
+> 1600
+> Average iteration time
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5 3.0
+
+Iterations 1e6      
+
+> 0
+> 200
+> 400
+> 600
+> 800
+> 1000
+> 1200
+> 1400
+> Average regret
+> ATA
+> ATA: Empirical
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5
+
+Runtime 1e9      
+
+> 10 -5
+> 10 -4
+> 10 -3
+> 10 -2
+> 10 -1
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5
+
+Total worker time 1e10       
+
+> 10 -5
+> 10 -4
+> 10 -3
+> 10 -2
+> 10 -1
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5 3.0
+
+Iterations 1e6       
+
+> 200
+> 400
+> 600
+> 800
+> 1000
+> 1200
+> Average iteration time
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5 3.0
+
+Iterations 1e6      
+
+> 100
+> 150
+> 200
+> 250
+> 300
+> 350
+> 400
+> 450
+> Average regret
+> ATA
+> ATA: Empirical
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5
+
+Runtime 1e9      
+
+> 10 -5
+> 10 -4
+> 10 -3
+> 10 -2
+> 10 -1
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5
+
+Total worker time 1e10       
+
+> 10 -5
+> 10 -4
+> 10 -3
+> 10 -2
+> 10 -1
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5 3.0
+
+Iterations 1e6       
+
+> 200
+> 400
+> 600
+> 800
+> 1000
+> 1200
+> 1400
+> Average iteration time
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5 3.0
+
+Iterations 1e6      
+
+> 250
+> 300
+> 350
+> 400
+> 450
+> 500
+> 550
+> Average regret
+> ATA
+> ATA: Empirical
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5
+
+Runtime 1e9      
+
+> 10 -5
+> 10 -4
+> 10 -3
+> 10 -2
+> 10 -1
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5
+
+Total worker time 1e10       
+
+> 10 -5
+> 10 -4
+> 10 -3
+> 10 -2
+> 10 -1
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5 3.0
+
+Iterations 1e6       
+
+> 500
+> 1000
+> 1500
+> 2000
+> 2500
+> 3000
+> Average iteration time
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5 3.0
+
+Iterations 1e6 
+
+> 600
+> 650
+> 700
+> 750
+> 800
+> 850
+> 900
+> 950
+> 1000
+> Average regret
+> ATA
+> ATA: Empirical
+> UTA
+
+Figure 1: Each row increases the number of workers by a factor of 3, starting from 17 , that is, n = 17 , 51 , 153 , 459 from top to bottom. The first column shows runtime vs. suboptimality. The second column also plots suboptimality, but against total worker time, i.e., Pni=1 Ti,k in Algorithm 1. The third column presents the average iteration time, given by Ck/k over all iterations k. The last column displays the averaged cumulative regret, as defined in (9). number of workers requires more exploration. However, for 
+
+OFTA this ratio remains unchanged, as discussed earlier. We remark that in these experiments we started all runs for ATA and ATA-Empirical without prior knowledge of the computation time distribution. However, in real systems, where these algorithms are used multiple times, prior esti-mates of computation times from previous runs could be available. With this information, ATA and ATA-Empirical 
+
+would be much faster, as they would spend less time on ex-ploration, approaching the performance of OFTA in a faster way. We validate this through experiments presented in Appendix A.5. In Appendix A.1, we conducted similar experiments with a different time distribution, where the mean times vary linearly across the arms. In Appendix A.2, we examine sce-narios with varying client time distributions. Additionally, in Appendix A.3, we analyze regret performance, confirm-ing its logarithmic behavior as predicted by Theorems 6.1 and 6.3. Finally, in Appendix A.4, we trained a simple CNN on the CIFAR-100 dataset (Krizhevsky et al., 2009) using Adam (Kingma & Ba, 2014). 
+
+Acknowledgments 
+
+The research reported in this publication was supported by funding from King Abdullah University of Science and Technology (KAUST): i) KAUST Baseline Research Scheme, ii) Center of Excellence for Generative AI, under award number 5940, iii) SDAIA-KAUST Center of Excel-lence in Artificial Intelligence and Data Science. 
+
+Impact Statement 
+
+This paper presents work whose goal is to advance the field of Machine Learning. There are many potential societal consequences of our work, none which we feel must be specifically highlighted here. 9ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+References 
+
+Auer, P. Finite-time analysis of the multiarmed bandit prob-lem, 2002. Boucheron, S., Bousquet, O., Lugosi, G., and Massart, P. Moment inequalities for functions of independent random variables. 2005. Cesa-Bianchi, N. and Lugosi, G. Combinatorial bandits. 
+
+Journal of Computer and System Sciences , 78(5):1404– 1422, 2012. Chen, J., Pan, X., Monga, R., Bengio, S., and Jozefowicz, R. Revisiting distributed synchronous SGD. arXiv preprint arXiv:1604.00981 , 2016a. Chen, W., Wang, Y., and Yuan, Y. Combinatorial multi-armed bandit: General framework and applications. In 
+
+International Conference on Machine Learning , pp. 151– 159. PMLR, 2013. Chen, W., Hu, W., Li, F., Li, J., Liu, Y., and Lu, P. Combina-torial multi-armed bandit with general reward functions. 
+
+Advances in Neural Information Processing Systems , 29, 2016b. Combes, R., Talebi, M. S., Proutiere, A., and Lelarge, M. Combinatorial bandits revisited. Advances in Neural Information Processing Systems , 28, 2015. Dean, J. and Barroso, L. A. The tail at scale. Communica-tions of the ACM , 56(2):74–80, 2013. Dutta, S., Joshi, G., Ghosh, S., Dube, P., and Nagpurkar, P. Slow and stale gradients can win the race: Error-runtime trade-offs in distributed SGD. In International Conference on Artificial Intelligence and Statistics , pp. 803–812. PMLR, 2018. Gai, Y., Krishnamachari, B., and Jain, R. Combinatorial network optimization with unknown variables: Multi-armed bandits with linear rewards and individual obser-vations. IEEE/ACM Transactions on Networking , 20(5): 1466–1478, 2012. Gelenbe, E. and Mitrani, I. Analysis and synthesis of com-puter systems , volume 4. World Scientific, 2010. Gross, D., Shortle, J. F., Thompson, J. M., and Harris, C. M. 
+
+Fundamentals of queueing theory , volume 627. John wiley & sons, 2011. Hadjis, S., Zhang, C., Mitliagkas, I., Iter, D., and R ´e, C. Omnivore: An optimizer for multi-device deep learning on CPUs and GPUs. arXiv preprint arXiv:1606.04487 ,2016. Kairouz, P., McMahan, H. B., Avent, B., Bellet, A., Bennis, M., Bhagoji, A. N., Bonawitz, K., Charles, Z., Cormode, G., Cummings, R., et al. Advances and open problems in federated learning. Foundations and Trends® in Machine Learning , 14(1–2):1–210, 2021. Kingma, D. P. and Ba, J. Adam: A method for stochastic optimization. arXiv preprint arXiv:1412.6980 , 2014. Kone ˇcn ´y, J., McMahan, H. B., Yu, F. X., Richtarik, P., Suresh, A. T., and Bacon, D. Federated learning: Strate-gies for improving communication efficiency. In NIPS Workshop on Private Multi-Party Machine Learning ,2016. Krizhevsky, A., Hinton, G., et al. Learning multiple layers of features from tiny images. Technical report, University of Toronto, Toronto, 2009. Kveton, B., Wen, Z., Ashkan, A., and Szepesvari, C. Tight regret bounds for stochastic combinatorial semi-bandits. In Artificial Intelligence and Statistics , pp. 535–543. PMLR, 2015. Lattimore, T. and Szepesv ´ari, C. Bandit algorithms . Cam-bridge University Press, 2020. Li, T., Sahu, A. K., Zaheer, M., Sanjabi, M., Talwalkar, A., and Smith, V. Federated optimization in heterogeneous networks. Proceedings of Machine Learning and Systems ,2:429–450, 2020. Lin, T., Li, J., and Chen, W. Stochastic online greedy learning with semi-bandit feedbacks. Advances in Neural Information Processing Systems , 28, 2015. Maranjyan, A., Safaryan, M., and Richt ´arik, P. Grad-Skip: Communication-accelerated local gradient meth-ods with better computational complexity. arXiv preprint arXiv:2210.16402 , 2022. Maranjyan, A., Omar, O. S., and Richt ´arik, P. MindFlayer SGD: Efficient parallel SGD in the presence of heteroge-neous and random worker compute times. In Conference on Uncertainty in Artificial Intelligence , 2025a. Maranjyan, A., Tyurin, A., and Richt ´arik, P. Ringmaster ASGD: The first Asynchronous SGD with optimal time complexity. In International Conference on Machine Learning , 2025b. Maurer, A. and Pontil, M. Concentration inequalities un-der sub-Gaussian and sub-exponential conditions. Ad-vances in Neural Information Processing Systems , 34: 7588–7597, 2021. McMahan, B., Moore, E., Ramage, D., Hampson, S., and y Arcas, B. A. Communication-efficient learning of deep 10 ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+networks from decentralized data. In Artificial Intelli-gence and Statistics , pp. 1273–1282. PMLR, 2017. McMahan, H. B., Moore, E., Ramage, D., and y Arcas, B. A. Federated learning of deep networks using model averaging. arXiv preprint arXiv:1602.05629 , 2:2, 2016. Mitliagkas, I., Zhang, C., Hadjis, S., and R ´e, C. Asynchrony begets momentum, with an application to deep learning. In 2016 54th Annual Allerton Conference on Communi-cation, Control, and Computing (Allerton) , pp. 997–1004. IEEE, 2016. Nguyen, J., Malik, K., Zhan, H., Yousefpour, A., Rabbat, M., Malek, M., and Huba, D. Federated learning with buffered asynchronous aggregation. In International Con-ference on Artificial Intelligence and Statistics , pp. 3581– 3607. PMLR, 2022. Tyurin, A. and Richt ´arik, P. Optimal time complexities of parallel stochastic optimization methods under a fixed computation model. Advances in Neural Information Processing Systems , 36, 2024. Wang, S. and Chen, W. Thompson sampling for combi-natorial semi-bandits. In International Conference on Machine Learning , pp. 5114–5122. PMLR, 2018. 11 ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 0 1 2 3 4 5 6 7
+
+Runtime 1e9 
+
+10 -5 
+
+10 -4 
+
+10 -3 
+
+10 -2 
+
+10 -1 
+
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA
+
+0 1 2 3 4 5
+
+Total worker time 1e10 
+
+10 -5 
+
+10 -4 
+
+10 -3 
+
+10 -2 
+
+10 -1 
+
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 
+
+Iterations 1e6 
+
+1000 
+
+2000 
+
+3000 
+
+4000 
+
+5000 
+
+6000 
+
+> Average iteration time
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 
+
+Iterations 1e6 
+
+0
+
+1000 
+
+2000 
+
+3000 
+
+4000 
+
+5000 
+
+6000 
+
+> Average regret
+> ATA
+> ATA: Empirical
+> UTA
+
+0 1 2 3 4 5 6 7
+
+Runtime 1e9 
+
+10 -5 
+
+10 -4 
+
+10 -3 
+
+10 -2 
+
+10 -1 
+
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA
+
+0 1 2 3 4 5
+
+Total worker time 1e10 
+
+10 -5 
+
+10 -4 
+
+10 -3 
+
+10 -2 
+
+10 -1 
+
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 
+
+Iterations 1e6 
+
+1000 
+
+2000 
+
+3000 
+
+4000 
+
+5000 
+
+> Average iteration time
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 
+
+Iterations 1e6 
+
+500 
+
+1000 
+
+1500 
+
+2000 
+
+2500 
+
+> Average regret
+> ATA
+> ATA: Empirical
+> UTA
+
+0 1 2 3 4 5 6 7
+
+Runtime 1e9 
+
+10 -5 
+
+10 -4 
+
+10 -3 
+
+10 -2 
+
+10 -1 
+
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA
+
+0 1 2 3 4 5
+
+Total worker time 1e10 
+
+10 -5 
+
+10 -4 
+
+10 -3 
+
+10 -2 
+
+10 -1 
+
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 
+
+Iterations 1e6 
+
+0
+
+2500 
+
+5000 
+
+7500 
+
+10000 
+
+12500 
+
+15000 
+
+17500 
+
+> Average iteration time
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0 
+
+Iterations 1e6 
+
+1000 
+
+2000 
+
+3000 
+
+4000 
+
+5000 
+
+6000 
+
+7000 
+
+8000 
+
+> Average regret
+> ATA
+> ATA: Empirical
+> UTA
+
+Figure 2: We use the same setup as in Figure 1, with each row tripling the number of workers, starting from n = 17 .
+
+A. Additional Experiments 
+
+The objective function is a convex quadratic function f : Rd → R defined as 
+
+f (x) = 12 x⊤Ax − b⊤x,
+
+where 
+
+A = 14
+
+
+
+2 −1 0
+
+−1 . . . . . .. . . . . . −10 −1 2
+
+ ∈ Rd×d , and b = 14
+
+
+
+−10
+
+...
+
+0
+
+ ∈ Rd .
+
+We denote f ∗ as the minimum value of the function f . Each of the n workers is able to calculate unbiased stochastic gradients g(x) that satisfy 
+
+E
+
+h
+
+∥g(x) − ∇ f (x)∥2i
+
+≤ 0.01 2 .
+
+This is achieved by adding Gaussian noise to the gradients of f .The experiments were implemented in Python. The distributed environment was emulated on machines with Intel(R) Xeon(R) Gold 6248 CPU @ 2.50GHz. 
+
+A.1. Linear Noise 
+
+In this section we model the computation time for worker i by the distribution 
+
+νi = 29 i + Exp(29 i), for all i ∈ [n] .
+
+The expected value of this distribution is μi = 2 · 29 i . Furthermore, the Orlicz norm satisfies the bound αi ≤ 2μi.We again set B = 23 and run simulations similar to those in Section 7. The results are shown in Figure 2. 12 ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+The important difference to the previous Figure 1 is that here ATA-Empirical performs better than ATA . This is because the Orlicz norm α = 4 · 29 n is much larger. Similarly, we provide a numerical comparison in Table 2. Table 2: This table presents ratios similar to those in Table 1.                          
+
+> nTOTAL WORKER TIME RATIO RUNTIME RATIO
+> ATA ATA-Empirical OFTA ATA ATA-Empirical OFTA
+> 17 2.32 1.91 2.11.71 1.71 1.58 51 6.71 5.02 6.29 3.27 2.12 1.58 153 3.41 8.68 18 .87 7.96 4.51.58
+
+A.2. Heterogeneous Time Distributions 
+
+So far, we have only considered cases where clients follow the same distributions but with different means. In this section, we extend our experiments to cases where the distributions themselves differ. We consider five distributions: Exponential, Uniform, Half-Normal, Lognormal, and Gamma. We group five workers with these five distributions so that each group has the same mean, then vary the mean across different groups. More concretely, we use: • Exp( c(5 g + 1)) ,• Uniform 
+
+ c(5 g+1) 2 , 3 c(5 g+1) 2
+
+
+
+,• N  0, c (5 g + 1) p π
+
+> 2
+
+ ,• Lognormal 
+
+
+
+log( c(5 g + 1)) /2, plog( c(5 g + 1)) 
+
+
+
+,• Gamma 
+
+
+
+(c(5 g + 1)) 2, 1
+
+> c(5 g+1)
+
+
+
+with shape and scale parameters. Next, we add a constant c(5 g + 1) to all the distributions, where c = 29 , and g represents the group number, starting from 0. The clients are divided into n/ 5 groups. The results of the experiments are shown in Figure 3. The plots demonstrate that the algorithms are robust across different distributions. 
+
+A.3. Regret 
+
+In this section, we verify Theorems 6.1 and 6.3 on regret through simulations. We set n = 20 and B = 5 , with the computation time for worker i following the distribution 
+
+νi = Exp(2 i), for all i ∈ [n] .
+
+We ran the simulation five times, and the plots include standard deviation bars, although they are not visible. The results are presented in Figure 4. As expected, the regret grows logarithmically. 
+
+A.4. Real Dataset 
+
+In this section, we present an experiment where we train a convolutional neural network (CNN) on the CIFAR-100 dataset (Krizhevsky et al., 2009). The network consists of three convolutional layers and two fully connected layers, with a total of 160k parameters. We use the Adam optimizer (Kingma & Ba, 2014) with a constant step size of 8 · 10 −5. The computation time of the workers follows the same setup as in Figure 2. The results are shown in Figure 5. 13 ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 0 1 2 3 4 5 6 7                                                                             
+
+> Runtime 1e9
+> 10 -5
+> 10 -4
+> 10 -3
+> 10 -2
+> 10 -1
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 012345
+> Total worker time 1e10
+> 10 -5
+> 10 -4
+> 10 -3
+> 10 -2
+> 10 -1
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5 3.0
+> Iterations 1e6
+> 250
+> 500
+> 750
+> 1000
+> 1250
+> 1500
+> 1750
+> 2000
+> Average iteration time
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5 3.0
+> Iterations 1e6
+> 0
+> 200
+> 400
+> 600
+> 800
+> 1000
+> Average regret
+> ATA
+> ATA: Empirical
+> UTA 01234567
+> Runtime 1e9
+> 10 -5
+> 10 -4
+> 10 -3
+> 10 -2
+> 10 -1
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 012345
+> Total worker time 1e10
+> 10 -5
+> 10 -4
+> 10 -3
+> 10 -2
+> 10 -1
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5 3.0
+> Iterations 1e6
+> 0
+> 1000
+> 2000
+> 3000
+> 4000
+> 5000
+> Average iteration time
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5 3.0
+> Iterations 1e6
+> 250
+> 500
+> 750
+> 1000
+> 1250
+> 1500
+> 1750
+> 2000
+> Average regret
+> ATA
+> ATA: Empirical
+> UTA 01234567
+> Runtime 1e9
+> 10 -5
+> 10 -4
+> 10 -3
+> 10 -2
+> 10 -1
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 012345
+> Total worker time 1e10
+> 10 -5
+> 10 -4
+> 10 -3
+> 10 -2
+> 10 -1
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5 3.0
+> Iterations 1e6
+> 0
+> 5000
+> 10000
+> 15000
+> 20000
+> 25000
+> 30000
+> 35000
+> Average iteration time
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5 3.0
+> Iterations 1e6
+> 1000
+> 2000
+> 3000
+> 4000
+> 5000
+> 6000
+> 7000
+> 8000
+> Average regret
+> ATA
+> ATA: Empirical
+> UTA
+
+Figure 3: Each row corresponds to an increasing number of workers, with n = 15 , 45 , 150 from top to bottom. We consider five distributions—Exponential, Uniform, Half-Normal, Lognormal, and Gamma—grouping them to have the same mean and then varying the mean across different groups. The results demonstrate that the algorithms remain robust across different distributions. The columns represent the same as in Figure 1. 
+
+A.5. Impact of Prior Knowledge on Time Distributions 
+
+In real-world systems where multiple machine learning models are trained, estimates of computation times from previous runs may be available. With this prior knowledge, ATA and ATA-Empirical can be much faster, as they spend less time on exploration and quickly approach the performance of OFTA .To illustrate this, we vary the number of prior runs, P . Since our algorithms operate independently of the underlying optimization process, we first focus solely on the bandit component, updating the confidence scores of machines over several iterations. We then apply the loss curves to different segments of the bandit phase and compare the results as P increases. A larger P yields more accurate estimates. The optimization setup remains the same as in Figure 5, with B = 23 and n = 51 . The results are presented in Figure 6. 
+
+B. Concrete Optimization Methods 
+
+In this section, we provide concrete examples of optimization algorithms using the ATA and GTA allocation strategies. For optimization problems, we focus on SGD and Asynchronous SGD . Other methods, such as stochastic proximal point methods and higher-order methods, can be developed in a similar fashion. 
+
+B.1. Stochastic Gradient Descent 
+
+For SGD , it is important to distinguish homogeneous and heterogeneous cases. Let us start from the homogeneous case. B.1.1. H OMOGENEOUS REGIME 
+
+Consider the problem of finding an approximate stationary point of the optimization problem 
+
+min 
+
+x∈Rd
+
+{f (x) := Eξ∼D [f (x; ξ)] } . (12) 14 ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0  
+
+> Iterations 1e6
+> 0
+> 1
+> 2
+> 3
+> 4
+> 5
+> 6
+> 7
+> Regret
+> 1e6
+> ATA
+> ATA: Empirical
+
+Figure 4: Regret growth over iterations. We assume that each worker is able to compute stochastic gradient f (x; ξ) satisfying Eξ∼D 
+
+∥f (x; ξ) − ∇ f (x)∥2 ≤ σ2
+
+for all x ∈ Rd.In this case, SGD with allocation budget B becomes Minibatch SGD with batch size B. The next step is determining how the batch is collected. For ATA , we refer to this method as SGD-ATA , as described in Algorithm 2. 
+
+Algorithm 2 SGD-ATA (Homogeneous) 
+
+1: Optimization inputs : initial point x0 ∈ Rd, stepsize γ > 0
+
+2: Allocation inputs : allocation budget B
+
+3: Initialize : empirical means ˆμi, 1 = 0 , usage counts Ki, 1 = 0 , and usage times Ti, 1 = 0 , for all i ∈ [n]
+
+4: for k = 1 , . . . , K do 
+
+5: Compute LCBs (si,k ) for all i ∈ [n]
+
+6: Find allocation: ak ∈ arg min a∈A ℓ(a, sk) .
+
+7: Allocate ai,k tasks to each worker i ∈ [n]
+
+8: Update x:
+
+xk+1 = xk − γB
+
+> n
+
+X
+
+> i=1
+> ai,k
+
+X
+
+> j=1
+
+∇f
+
+
+
+xk; ξji
+
+
+
+9: for i such that ai,k ̸ = 0 do 
+
+10: Ki,k +1 = Ki,k + ai,k 
+
+11: Ti,k +1 = Ti,k + Pai,k  
+
+> j=1
+
+X(j)
+
+> i,k
+
+12: ˆμi,k +1 = Ti,k +1 
+
+> Ki,k +1
+
+13: end for 
+
+14: end for 
+
+In this case, each task consists in calculating the gradient using the device’s local data, which is assumed to have the same distribution as the data on all other devices. Because of this, it does not matter which device performs the task. The method then averages these gradients to obtain an unbiased gradient estimator and performs a gradient descent step. Now, let us give the version of Minibatch SGD using greedy allocation Algorithm 3. 15 ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 0.0 0.2 0.4 0.6 0.8 1.0 1.2 1.4 1.6                                   
+
+> Runtime 1e9
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> 3.5
+> 4.0
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 02468
+> Total worker time 1e9
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> 3.5
+> 4.0
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5
+> Runtime 1e9
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> 3.5
+> 4.0
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5
+> Total worker time 1e10
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> 3.5
+> 4.0
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 01234567
+> Runtime 1e9
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> 3.5
+> 4.0
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 012345
+> Total worker time 1e10
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> 3.5
+> 4.0
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA
+
+Figure 5: We use the CIFAR-100 dataset (Krizhevsky et al., 2009). The model is a CNN with three convolutional layers and two fully connected layers, totaling 160k parameters. The Adam optimizer (Kingma & Ba, 2014) is used with a constant step size of 8 · 10 −5. The computation time of the workers follows the same setup as in Figure 2, where the mean time increases linearly. The batch size remains the same at B = 23 . Each row corresponds to a different number of workers, with 
+
+n = 17 , 51 , 153 from top to bottom. 
+
+Algorithm 3 SGD-GTA (Homogeneous) 
+
+1: Input : initial point x0 ∈ Rd, stepsize γ > 0, allocation budget B
+
+2: for k = 1 , . . . , K do 
+
+3: b = 0 
+
+4: Query single gradient from each worker i ∈ [n]
+
+5: while b < B do 
+
+6: Gradient ∇f (xk; ξkb ) arrives from worker ikb
+
+7: gk = gk + ∇f (xk; ξkb ); b = b + 1 
+
+8: Query gradient at xk from worker ikb
+
+9: end while 
+
+10: Update the point: xk+1 = xk − γ gk
+
+B
+
+11: end for 
+
+Algorithm 3 is exactly Rennala SGD method proposed by Tyurin & Richt ´arik (2024), which has optimal time complexity when the objective function is non-convex and smooth. If the computation times are deterministic, then GTA makes the same allocation in each iteration. In that case, SGD-ATA will 16 ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5 
+
+Runtime 1e9      
+
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> 3.5
+> 4.0
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5
+
+Total worker time 1e10        
+
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> 3.5
+> 4.0
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5
+
+Runtime 1e9      
+
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> 3.5
+> 4.0
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5
+
+Total worker time 1e10        
+
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> 3.5
+> 4.0
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5 3.0 3.5
+
+Runtime 1e9      
+
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> 3.5
+> 4.0
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA 0.0 0.5 1.0 1.5 2.0 2.5
+
+Total worker time 1e10 
+
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> 3.5
+> 4.0
+> f(xk) ¡ f ¤
+> ATA
+> ATA: Empirical
+> FTA: Optimal
+> GTA
+> UTA
+
+Figure 6: We use the same optimization setup as in Figure 5, with B = 23 and n = 51 . The number of prior iterations, 
+
+P , varies across rows, starting from the top with P = 0 , 5 · 10 5, 5 · 10 6. As the number of prior iterations increases, we observe that the training of ATA and ATA-Empirical accelerates, bringing their performance closer to the optimal performance of OFTA .converge to this fixed allocation. If the times are random, the allocation found by GTA may vary in each iteration. In this case, SGD-ATA will approach the best allocation for the expected times. B.1.2. H ETEROGENEOUS REGIME 
+
+Now let us consider the following heterogeneous problem 
+
+min 
+
+x∈Rd
+
+(
+
+f (x) := 1
+
+n
+
+nX
+
+i=1 
+
+Eξi∼D i [fi(x; ξi)] 
+
+)
+
+.
+
+Here each worker i has its own data distribution Di.We start with the greedy allocation. The algorithm is presented in Algorithm 4. 17 ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+Algorithm 4 SGD-GTA (Heterogeneous) 
+
+1: Input : initial point x0 ∈ Rd, stepsize γ > 0, parameter S
+
+2: for k = 1 , . . . , K do 
+
+3: si = 0 and gi,k = 0 for all i ∈ [n]
+
+4: Query single gradient from each worker i ∈ [n]
+
+5: while 
+
+ 1
+
+> n
+
+Pni=1 1
+
+> si
+
+−1
+
+< Sn do 
+
+6: Gradient ∇fj (xk; ξk) arrives from worker j
+
+7: gj,k = gj,k + ∇fj (xk; ξk); sj = sj + 1 
+
+8: Query gradient at xk from worker j
+
+9: end while 
+
+10: Update the point: xk+1 = xk − γ 1
+
+> n
+
+Pni=1 1 
+
+> si
+
+gi,k 
+
+11: end for 
+
+Algorithm 5 presents the Malenia SGD algorithm, proposed by Tyurin & Richt ´arik (2024), which is also optimal for non-convex smooth functions. In each iteration, Algorithm 4 receives at least one gradient from each worker. Building on this idea, we design a method incorporating ATA , given in Algorithm 5. 
+
+Algorithm 5 SGD-ATA (Heterogeneous) 
+
+1: Optimization inputs : initial point x0 ∈ Rd, stepsize γ > 0
+
+2: Allocation inputs : allocation budget B
+
+3: Initialize : empirical means ˆμi, 1 = 0 , usage counts Ki, 1 = 0 , and usage times Ti, 1 = 0 , for all i ∈ [n]
+
+4: for k = 1 , . . . , K do 
+
+5: Compute LCBs (si,k ) for all i ∈ [n]
+
+6: Find allocation: ak = RAS (sk; B)
+
+7: Allocate ai,k + 1 tasks to each worker i ∈ [n]
+
+8: Update x:
+
+xk+1 = xk − γn
+
+> n
+
+X
+
+> i=1
+
+1
+
+ai,k + 1  
+
+> ai,k +1
+
+X
+
+> j=1
+
+∇fi
+
+
+
+xk; ξji
+
+
+
+9: For all i ∈ [n], update: 
+
+Ki,k +1 = Ki,k + ai,k 
+
+Ti,k +1 = Ti,k +
+
+> ai,k
+
+X
+
+> j=1
+
+X(j)
+
+> i,k
+
+ˆμi,k +1 = Ti,k +1 
+
+Ki,k +1 
+
+10: end for B.2. Asynchronous SGD 
+
+Here, we focus on the homogeneous problem given in Equation (12). The greedy variant, Ringmaster ASGD , was proposed by Maranjyan et al. (2025b) and, like Rennala SGD , achieves the best runtime. We now present its version with ATA , given in Algorithm 6. Here, the task remains gradient computation, but each worker’s subsequent tasks use different points for computing the gradient. These points depend on the actual computation times and the asynchronous nature of the method, hence the name 18 ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+Algorithm 6 ASGD-ATA 
+
+1: Optimization inputs : initial point x0 ∈ Rd, stepsize 
+
+γ > 0
+
+2: Allocation inputs : allocation budget B
+
+3: Initialize : empirical means ˆμi, 1 = 0 , usage counts 
+
+Ki, 1 = 0 , and usage times Ti, 1 = 0 , for all i ∈ [n]
+
+4: for k = 1 , . . . , K do 
+
+5: Compute LCBs (si,k ) for all i ∈ [n]
+
+6: Find allocation: ak = RAS (sk; B)
+
+7: Update xk using Algorithm 7 with allocation ak
+
+8: For all i such that ai,k ̸ = 0 , update: 
+
+Ki,k +1 = Ki,k + ai,k 
+
+Ti,k +1 = Ti,k +
+
+> ai,k
+
+X
+
+> j=1
+
+X(j)
+
+> i,k
+
+ˆμi,k +1 = Ti,k +1 
+
+Ki,k +1 
+
+9: end for Algorithm 7 ASGD 
+
+1: Input: Initial point x0 ∈ Rd, stepsize γ > 0, allocation vector a with ∥a∥1 = B
+
+2: Workers with ai > 0 start computing stochastic gradi-ents at x0
+
+3: for s = 0 , 1, . . . , B − 1 do 
+
+4: Receive gradient ∇f (xs+δs ; ξis+δs ) from worker i
+
+5: Update: xs+1 = xs − γ∇f (xs+δs ; ξis+δs )
+
+6: if ai > 0 then 
+
+7: Worker i begins computing ∇f (xs+1 ; ξis+1 )
+
+8: Decrease remaining allocation for worker i by one: 
+
+ai = ai − 1
+
+9: end if 
+
+10: end for 
+
+11: return: xB
+
+The sequence {δs} represents delays, where δs ≥ 0 is the difference between the iteration when worker i started computing the gradient and iteration s, when it was applied. 
+
+Asynchronous SGD .
+
+C. Recursive Allocation Selection Algorithm 
+
+In this section, we introduce an efficient method for finding the best allocation. Given LCBs sk and allocation budget B,each iteration of ATA (Algorithm 1) determines the allocation by solving 
+
+ak ∈ arg min 
+
+> a∈A
+
+ℓ(a, sk),
+
+where 
+
+ℓ(a, μ) := max  
+
+> i∈[n]
+
+aiμi = ∥a ⊙ μ∥∞ ,
+
+with ⊙ denoting the element-wise product. When clear from context, we write ℓ(a) instead of ℓ(a, μ).In the early iterations, when some si values are 0, ATA allocates uniformly across these arms until all si values become positive. After that, the allocation is determined using the recursive routine in Algorithm 8. 
+
+Remark C.1 . The iteration complexity of RAS is O(n ln(min {B, n }) + min {B, n }2). In fact, the first n ln(min {B, n })
+
+term arises from identifying the smallest B scores. For the second term, note that in (13), we have r ≤ min {B, n }.
+
+C.1. Optimality 
+
+We now prove that RAS finds the optimal allocation, as stated in the following lemma. 
+
+Lemma C.2. For positive scores 0 < s 1 ≤ s2 ≤ . . . ≤ sn, RAS (Algorithm 8) finds an optimal allocation h ∈ A , satisfying 
+
+h ∈ arg min 
+
+> a∈A
+
+∥a ⊙ s∥∞ .
+
+Proof. We prove the claim by induction on the allocation budget B.
+
+Base Case ( B = 1 ): When B = 1 , RAS (Algorithm 8) allocates the task to worker with the smallest score (line 9). Thus, the base case holds. 
+
+Inductive Step: Assume that RAS finds an optimal allocation for budget B − 1, denoted by 
+
+¯h = RAS (s1, . . . , s n; B − 1) .
+
+19 ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+Algorithm 8 Recursive Allocation Selection ( RAS ) 
+
+> 1:
+
+Input: Scores s1, . . . , s n, allocation budget B 
+
+> 2:
+
+Assume without loss of generality that s1 ≤ s2 ≤ · · · ≤ sn (i.e., sort the scores)  
+
+> 3:
+
+if B = 1 then  
+
+> 4:
+
+return: (1 , 0, . . . , 0)  
+
+> 5:
+
+end if  
+
+> 6:
+
+Find the previous best allocation: 
+
+a = ( a1, . . . , a n) = RAS (s1, . . . , s n; B − 1)  
+
+> 7:
+
+Determine the first zero allocation: 
+
+r =
+
+(
+
+min {i | ai = 0 }, if an = 0 
+
+n, otherwise (13)  
+
+> 8:
+
+Find the best next query allocation set: 
+
+M = arg min 
+
+> i∈[r]
+
+∥(a + ei) ⊙ s∥∞ ,
+
+where ei is the unit vector in direction i. 
+
+> 9:
+
+Select j ∈ M such that the cardinality of 
+
+arg max 
+
+> i∈[r]
+
+(ai + ej,i )si
+
+is minimized  
+
+> 10:
+
+return: a + ej
+
+We need to prove that the solution returned for budget B, denoted by h = ¯h + er , is also optimal. Assume, for contradiction, that there exists a ∈ A such that a̸ = h and ℓ(a) < ℓ (h). Write a = ¯ a + eq for some q ∈ [n].Observe that ∥¯a∥1 = B − 1 because a ∈ A .We consider two cases based on the value of ℓ  ¯h + er
+
+:• ℓ  ¯h + er
+
+ = hksk for some k̸ = r. In this case, adding one unit to index r does not change the maximum value, i.e., 
+
+ℓ  ¯h = ℓ  ¯h + er
+
+. By the inductive hypothesis, ¯h minimizes ℓ(x) for budget B − 1. Therefore, we have 
+
+ℓ(a) ≥ ℓ (¯ a) ≥ ℓ  ¯h = ℓ  ¯h + er
+
+ = ℓ(h),
+
+which contradicts the assumption that ℓ(a) < ℓ (h).• ℓ  ¯h + er
+
+ =  ¯hr + 1  sr . By the algorithm’s logic,  ¯hr + 1  sr ≤  ¯hi + 1  si for all i̸ = r. Since ℓ(¯h + er ) ≤
+
+ℓ(¯h + eq ) and we assumed ℓ(¯ a + eq ) = ℓ(a) < ℓ (h) = ℓ(¯h + er ), then ¯a̸ = ¯h otherwise ℓ(¯ a + eq ) < ℓ (¯ a + er ).Given that ∥¯h∥1 = ∥¯a∥1, this implies that there exists some u ∈ [n] such that 0 ≤ ¯au ≤ ¯hu − 1 and another index 
+
+v ∈ [n] where ¯av ≥ ¯hv + 1 .In addition, note that r is chosen such that ℓ  ¯h + er
+
+ is minimum. Using the fact that ℓ  ¯h + er
+
+ =  ¯hr + 1  sr , we have that for any index q, we also necessarily have ℓ  ¯h + eq
+
+ =  ¯hq + 1  sq . Using this, we deduce 
+
+ℓ(h) = ℓ  ¯h + er
+
+ ≤ ℓ  ¯h + ev
+
+ =  ¯hv + 1  sv ≤ max  
+
+> i
+
+¯aisi = ℓ (¯ a) ≤ ℓ(a),
+
+where in the second inequality we used the fact that ¯av ≥ ¯hv + 1 and in the last inequality we used the fact that the loss is not decreasing for we add one element to the vector. This chain of inequalities again contradicts the assumption that 
+
+ℓ(a) < ℓ (h).Since both cases lead to contradictions, we conclude that no a ∈ A exists with ℓ(a) < ℓ (h). Thus, RAS produces an optimal allocation for budget B.20 ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+C.2. Minimal Cardinality 
+
+Among all possible allocations RAS choose one that always minimizes the cardinality of the set: 
+
+arg max 
+
+> i∈[n]
+
+aisi .
+
+The reason for this choice is just technical as it allows the Lemma D.1 to be true. 
+
+Lemma C.3. The output of RAS ensures the smallest cardinality of the set: 
+
+arg max 
+
+> i∈[n]
+
+aisi
+
+among all the optimal allocations a.Proof. This proof uses similar reasoning as the one before. Let h = RAS (s; B), and denote the cardinality of the set arg max i∈[n] aisi for allocation a by 
+
+CB (a) = arg max 
+
+> i∈[n]
+
+aisi ≥ 1 .
+
+We prove the claim by induction on B.
+
+Base Case ( B = 1 ): For B = 1 , there is a single coordinate allocation, thus C1(h) = 1 , which is the smallest possible cardinality. 
+
+Inductive Step: Assume that RAS finds an optimal allocation for budget B − 1 with the smallest cardinality, denote its output by 
+
+¯h = RAS (s1, . . . , s n; B − 1) .
+
+We need to prove that h = ¯h + er minimizes CB (a) among all optimal allocations for budget B.Assume, for contradiction, that there exists a ∈ A such that a̸ = h, ℓ(a) = ℓ(h), and CB (a) < C B (h). Write a = ¯ a + eq
+
+for some q ∈ [n]. We consider three cases: • CB (h) = 1 . Since the minimum cardinality is exactly 1, we must have CB (a) ≥ 1 = CB (h), that contradicts our assumption. • CB (h) = CB−1
+
+ ¯h > 1. This occurs when ℓ(h) = ℓ  ¯h̸ =  ¯hr + 1  sr . By the optimality of h, we have 
+
+ℓ  ¯h ≤ ℓ (¯ a) ≤ ℓ(a) = ℓ(h) = ℓ(¯h), which implies ℓ (¯ a) = ℓ(a). Therefore, CB−1 (¯ a) ≤ CB (a). Since the induction hypothesis holds for B − 1, we have CB−1
+
+ ¯h ≤ CB−1 (¯ a). Thus, 
+
+CB (h) = CB−1
+
+ ¯h ≤ CB−1 (¯ a) ≤ CB (a),
+
+which leads to a contradiction. • CB (h) = CB−1
+
+ ¯h + 1 . This occurs when ℓ(h) = ℓ  ¯h =  ¯hr + 1  sr . Proceeding as in the previous case, we have ℓ (¯ a) = ℓ(a), and hence CB−1 (¯ a) ≤ CB (a). Since the induction hypothesis holds for B − 1, we know 
+
+CB−1
+
+ ¯h ≤ CB−1 (¯ a).We now have additional cases: 
+
+– If CB−1 (¯ a) = CB−1
+
+ ¯h + 1 , then 
+
+CB (h) = CB−1
+
+ ¯h + 1 = CB−1 (¯ a) ≤ CB (a),
+
+which leads to a contradiction. 21 ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+– Now assume CB−1 (¯ a) = CB−1
+
+ ¯h. We will show that in this case, CB (a) = CB−1 (¯ a) + 1 . By contradiction, suppose CB (a) = CB−1 (¯ a), which implies (¯ aq + 1) sq < ℓ (a). Let k be an index such that ¯aksk = ℓ(a).Construct a new allocation a′ = ¯ a + eq − ek. Then, 
+
+CB−1 (a′) = CB−1 (¯ a) − 1 < C B−1
+
+ ¯h ,
+
+which contradicts the induction hypothesis. Thus, CB (a) = CB−1 (¯ a) + 1 . Using this, we have 
+
+CB (h) = CB−1
+
+ ¯h + 1 = CB−1 (¯ a) + 1 = CB (a),
+
+which again contradicts CB (a) < C B (h).This concludes the proof. 
+
+D. Proofs of Theorem 6.1, Theorem 6.3, and Theorem 4.2 
+
+We start by recalling the notation. For i ∈ [n] and k ∈ [K], (X(u) 
+
+> i,k
+
+)u∈[B] denote B independent samples at round k from distribution νi. When using an allocation vector ak ∈ A , the total computation time of worker i at round k is Pai,k  
+
+> u=1
+
+X(u) 
+
+> i,k
+
+,when ai,k > 0. μ = ( μ1, . . . , μ K ) is the vector of means. For each k ∈ [K], when using the allocation vector ak, we recall the definition of the proxy loss ℓ : A × Rn 
+
+> ≥0
+
+→ R≥0 by 
+
+ℓ(ak, λ) = max  
+
+> i∈[n]
+
+ai,k λi,
+
+where λ = ( λ1, . . . , λ n) is a vector of non-negative components. When λ = μ, we drop the dependence on the second input of ℓ. For each λ, let ¯aλ ∈ A , be the action minimizing this loss 
+
+¯aλ ∈ arg min 
+
+> a∈A
+
+ℓ(a, λ) .
+
+We drop the dependency on μ from ¯aμ to ease notation. The actual (random) computation time at round k is denoted by 
+
+C : A → R+:
+
+C(ak) := max 
+
+> i∈[n]
+> ai,k
+
+X
+
+> u=1
+
+X(u) 
+
+> i,k
+
+. (14) Let a∗ be the action minimizing the expected time 
+
+a∗ ∈ arg min 
+
+> a∈A
+
+E [C(a)] .
+
+The expected regret after K rounds is defined as follows 
+
+RK := 
+
+> K
+
+X
+
+> t=1
+
+E [ℓ(ak) − ℓ(¯ a)] .
+
+For the remainder of this analysis we consider ¯a ∈ arg min a∈A ℓ(a) found using the RAS procedure. For each i ∈ [n],recall that ki is the smallest integer such that 
+
+(¯ ai + ki)μi > ℓ (¯ a) . (15) Below we present a technical lemma used in the proofs of Theorems 6.1 and 6.3. 
+
+Lemma D.1. Let x = ( x1, . . . , x n) ∈ Rn
+
+> ≥0
+
+. Let a be the output of RAS (x; B). For each i, j ∈ [n], we have 
+
+aj xj ≤ (ai + 1) xi .
+
+Proof. Fix x ∈ Rn
+
+> +
+
+, and let a = RAS (x; B). The result is straightforward when min  
+
+> i∈[n]
+
+xi = 0 .22 ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+Suppose that xi > 0 for all i ∈ [n]. Let s ≥ 1 denote the cardinality 
+
+s := arg max 
+
+> i∈[n]
+
+aixi .
+
+Fix i, j ∈ [n], let k ∈ arg max i∈[n] aixi. We need to show that 
+
+akxk ≤ (ai + 1) xi .
+
+We use a proof by contradiction. Suppose that we have akxk > (ai + 1) xi consider the allocation vector a′ ∈ A given by 
+
+a′ 
+
+> k
+
+= ak − 1, a′ 
+
+> i
+
+= ai + 1 and a′ 
+
+> u
+
+= ¯ au when u / ∈ { i, k }. Let R := max u̸=i,k {auxu}. We have 
+
+ℓ(a′, x) = max  
+
+> u∈[n]
+
+a′
+
+> u
+
+xu = max {(ai + 1) xi, (ak − 1) xk, R } .
+
+We consider two cases: • Suppose that s = 1 (i.e., the only element in [n] such that auxu = ℓ(a, x) is k), then we have necessarily R < a kxk.Moreover, by the contradiction hypothesis, (ai + 1) xi < a kxk. Therefore, 
+
+ℓ(a′, x) = max {(ai + 1) xi, (ak − 1) xk, R } < a kxk = ℓ(a, x),
+
+which contradicts the definition of a.• Suppose that s ≥ 2, since by hypothesis akxk > (ai + 1) xi, we clearly have aixi < ℓ (a, x) therefore among the set 
+
+[n] \ { k, i } there are exactly s − 1 elements such that auxu = ℓ(a, x). In particular, this gives 
+
+ℓ(a′, x) = max  
+
+> u∈[n]
+
+{(ai + 1) xi, (ak − 1) xk, R } = R = ℓ(a, x) .
+
+Therefore, a′ ∈ arg min a∈A ℓ(a, x) and the number of elements such that a′
+
+> i
+
+xi = ℓ(a′, x) = ℓ(a, x) is at most s − 1,which contradicts the fact that s is minimal given the RAS choice and Lemma C.3. As a conclusion we have akxk ≤ (ai + 1) xi.
+
+Remark D.2 . Recall that Lemma D.1 guarantees that ki defined in (15) satisfy: ki ∈ { 1, 2} for each i ∈ [n].
+
+D.1. Proof of Theorem 6.1 
+
+Below we restate the theorem. 
+
+Theorem 6.1. Suppose that Assumption 3.1 holds. Let ¯a ∈ arg min a∈A ℓ(a), in case of multiple optimal actions, we consider the one output by RAS when fed with μ. Then, the expected regret of ATA with inputs (B, α ) satisfies 
+
+RK ≤ 2n max 
+
+> i∈[n]
+
+{Bμ i − ℓ(¯ a)} + c ·
+
+> n
+
+X
+
+> i=1
+
+α2(¯ ai + ki)( Bμ i − ℓ(¯ a)) ((¯ ai + ki)μi − ℓ(¯ a)) 2 · ln K, 
+
+where α = max i∈[n] ∥Xi − μi∥ψ1 , and c is a constant. Proof. Let Ki,k be the number of rounds where arm i was queried prior to round k (we take Ki, 1 = 0 ). Recall that we chose the following confidence bound: if Ki,k ≥ 1, then conf (i, k ) = 2 α
+
+s
+
+ln(2 k2)
+
+Ki,k 
+
++ 2 α ln(2 k2)
+
+Ki,k 
+
+,
+
+and conf (i, k ) = ∞ otherwise. Recall that ˆμi,k denotes the empirical mean of samples from νi observed prior to k if 
+
+Ki,k ≥ 0 and ˆμi,k = 0 if Ki,k = 0 . Let si,k denote the lower confidence bound used in the algorithm: 
+
+si,k = (ˆ μi,k − conf (i, k )) + .
+
+23 ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+We introduce the events Ei,k for i ∈ [n] and k ∈ [K] defined by 
+
+Ei,k := {| ˆμi,k − μi| > conf (i, k )} .
+
+Let 
+
+Ek = ∪i∈[n]Ei,k .
+
+Let us prove that for each k ∈ [K] and i ∈ [n]: P (Ei,k ) ≤ 1 
+
+> k2
+
+, which gives using a union bound P(Ek) ≤ nk2 . Let i ∈ [n],using Lemma E.1 and taking δ = 1 /k 2, we have 
+
+P(Ei,k ) = P{| ˆμi,k − μ| > conf (i, k )} ≤ 1
+
+k2 .
+
+We call a “bad round”, a round k where we have ℓ(ak) > ℓ (¯ a). Let us upper bound the number of bad rounds. Observe that in a bad round there is necessarily an arm i ∈ [K] such that ai,k μi > ℓ (¯ a). For each i ∈ [n], let Ni(k) denote the number of rounds q ∈ { 1, . . . , k } where ai,q μi > ℓ (¯ a) and i ∈ arg max j∈[n] aj,q μj (this corresponds to a bad round triggered by worker i)
+
+Ni(k) := |{ q ∈ { 1, . . . , k } : ai,q μi > ℓ (¯ a) and ai,q μi = ℓ(aq )}| .
+
+We show that in the case of ℓ(ak) > ℓ (¯ a), the following event will hold: there exists i ∈ [n] such that 
+
+Ei,k := Ek or 
+
+(
+
+Ni(k − 1) ≤ 24 α2(¯ ai + ki) ln(2 K2)((¯ ai + ki)μi − ℓ(¯ a)) 2
+
+)
+
+.
+
+To prove this we use a contradiction argument. Suppose that for each i ∈ [n], ¬Ei,k holds and that ℓ(ak) > ℓ (¯ a). This means that k is a bad round, let i be an arm that triggered this bad round (i.e., i ∈ arg max j∈[n] aj,k μj ). Event ¬Ei,k gives in particular 
+
+Ni(k − 1) > 24 α2(¯ ai + ki) ln(2 K2)((¯ ai + ki)μi − ℓ(¯ a)) 2 . (16) Observe that in each round where Ni(·) is incremented, the number of samples received from the distribution νi increases by at least ¯ai + ki. Therefore, we have (16) implies 
+
+Ki,k > 24 α2(¯ ai + ki)2 ln(2 K2)((¯ ai + ki)μi − ℓ(¯ a)) 2 = 24 α2 ln(2 K2)
+
+
+
+μi − ℓ(¯ a)¯ai+ki
+
+2 .
+
+Then we have, using the expressions of conf (·) and the bound above 
+
+2conf (i, k ) = 4 α
+
+s
+
+ln(2 k2)
+
+Ki,k 
+
++ 4 α ln(2 k2)
+
+Ki,k 
+
+≤ μi − ℓ(¯ a)¯ai + ki
+
+. (17) The contradiction hypothesis gives that ai,k μi > ℓ (¯ a), then we have, using the definition of ki that ai,k ≥ ¯ai + ki. Therefore, (17) gives 
+
+2conf (i, k ) < μ i − ℓ(¯ a)
+
+ai,k 
+
+. (18) Observe that in each round ∥ak∥0 = B, therefore if we have ai,k ≥ ¯ai + ki > ¯ai for some i, we necessarily have that there exists j ∈ [n] \ { i} such that aj,k ≤ ¯aj − 1. Using the fact that ℓ(¯ a) ≥ ¯aj μj with (18), we get 
+
+ai,k (μi − 2conf (i, k )) > ¯aj μj . (19) Since both ¬E i,k and ¬E j,k hold (because ¬Ei,k implies ¬E k), we have that 
+
+μi − 2conf (i, k ) ≤ ˆμi,k − conf (i, k ) ≤ si,k , (20) 24 ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+and μj ≥ ˆμj,k − conf (j, k ). Recall that μj ≥ 0, therefore 
+
+μj ≥ (ˆ μj,k − conf (j, k )) + = sj,k . (21) Using the bounds (20) and (21) in (19), we have 
+
+ai,k si,k > ¯aj sj,k ≥ (aj,k + 1) sj,k ,
+
+where we used the definition of j in the second inequality. This contradicts the statement of Lemma D.1, which concludes the contradiction argument. Therefore, the event that k is a bad round implies that Ei,k holds for at least one i ∈ [n]. We say that a bad round was triggered by arm i, a round where Ni(·) was incremented. Observe that if k ∈ [K] is not a bad round then E [ℓ(ak)] − ℓ(¯ a) = 0 , otherwise if k is a bad round triggered by i ∈ [n] then E [ℓ(ak)] − ℓ(¯ a) ≤ Bμ i − ℓ(¯ a). To ease notation we introduce for i ∈ [n]
+
+Hi := 24 α2(¯ ai + ki) ln(2 K2)((¯ ai + ki)μi − ℓ(¯ a)) 2 .
+
+The expected regret satisfies 
+
+RK =
+
+> K
+
+X
+
+> i=1
+
+E [ℓ(ak) − ℓ(¯ a)] 
+
+≤
+
+> n
+
+X
+
+> i=1
+
+(Bμ i − ℓ(¯ a)) E[Ni(K)] =
+
+> n
+
+X
+
+> i=1
+> K
+
+X
+
+> k=1
+
+(Bμ i − ℓ(¯ a)) E [1(k is a bad round triggered by i)] 
+
+≤ max 
+
+> i∈[n]
+
+{(Bμ i − ℓ(¯ a)) } · 
+
+> K
+
+X
+
+> t=1
+
+P(Ek) + 
+
+> n
+
+X
+
+> i=1
+
+(Bμ i − ℓ(¯ a)) 
+
+> K
+
+X
+
+> k=1
+
+E [1(k is a bad round triggered by i) | ¬E k]
+
+≤ max 
+
+> i∈[n]
+
+{(Bμ i − ℓ(¯ a)) } · 
+
+> K
+
+X
+
+> t=1
+
+P(Ek) + 
+
+> n
+
+X
+
+> i=1
+
+(Bμ i − ℓ(¯ a)) 
+
+> K
+
+X
+
+> k=1
+
+E [1(Ni(k) = 1 + Ni(k − 1) and Ni ≤ Hi) | ¬E k]
+
+≤ max 
+
+> i∈[n]
+
+{(Bμ i − ℓ(¯ a)) } · 
+
+> K
+
+X
+
+> k=1
+
+P(Ek) + 
+
+> n
+
+X
+
+> i=1
+
+(Bμ i − ℓ(¯ a)) Hi
+
+≤ 2n max 
+
+> i∈[n]
+
+{(Bμ i − ℓ(¯ a)) } +
+
+> n
+
+X
+
+> i=1
+
+24 α2(¯ ai + ki)( Bμ i − ℓ(¯ a)) ln(2 K2)((¯ ai + ki)μi − ℓ(¯ a)) 2 .
+
+D.2. Proof of Theorem 6.3 Theorem 6.3. Suppose that Assumption 3.1 holds. Let ¯a ∈ arg min a∈A ℓ(a), in case of multiple optimal actions, we consider the one output by RAS when fed with μ. Then, the expected regret of ATA-Empirical with the empirical confidence bounds using the inputs (B, η ) satisfies 
+
+RK ≤ 2n max 
+
+> i∈[n]
+
+{Bμ i − ℓ(¯ a)} + c ·
+
+> n
+
+X
+
+> i=1
+
+η2μ2 
+
+> i
+
+(¯ ai + ki)( Bμ i − ℓ(¯ a)) ((¯ ai + ki)μi − ℓ(¯ a)) 2 · ln K, 
+
+where η = max i∈[n] αi/μ i, and c is a constant. Proof. We build on the techniques used in the proof of Theorem 6.1. Recall the expression of η:
+
+η = max 
+
+> i∈[n]
+
+αi
+
+μi
+
+.
+
+Define the quantities Ci,k by 
+
+Ci,k = 2 
+
+s
+
+ln(2 k2)
+
+Ki,k 
+
++ 2 ln(2 k2)
+
+Ki,k 
+
+.
+
+25 ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+Recall that the lower confidence bounds used here are defined as 
+
+ˆsi,k = ˆ μi,k (1 − ηC i,k )+ .
+
+We additionally define the following quantities 
+
+ˆui,k := ˆ μi,k 
+
+
+
+1 + 43 ηC i,k 
+
+
+
+.
+
+We introduce the events Ei,k for i ∈ [n] and k ∈ [K] defined by 
+
+Ei,k := {μi < ˆsi,k } or 
+
+
+
+ηC i,k ≤ 14 and μi > ˆui,k 
+
+
+
+.
+
+Let 
+
+Ek = ∪i∈[n]Ei,k .
+
+We have, using Lemma E.3, for each k ∈ [K] and i ∈ [n]: P (Ei,k ) ≤ 1 
+
+> k2
+
+, which gives using a union bound P(Ek) ≤ nk2 .Following similar steps as in the proof of Theorem 6.1, we call a “bad round”, a round k where we have ℓ(ak) > ℓ (¯ a). Let us upper bound the number of bad rounds. Observe that in a bad round there is necessarily an arm i ∈ [K] such that ai,k μi > ℓ (¯ a). For each i ∈ [n], let Ni(k) denote the number of rounds q ∈ { 1, . . . , k } where ai,q μi > ℓ (¯ a) and i ∈ arg max j∈[n]{aj,q μj } (this corresponds to a bad round triggered by worker q): 
+
+Ni(k) := |{ q ∈ { 1, . . . , k } : ai,q μi > ℓ (¯ a) and ai,q μi = ℓ(aq )}| .
+
+We show that in the case of ℓ(ak) > ℓ (¯ a), the following event will hold: there exists i ∈ [n] such that 
+
+Ei,k := Ek or 
+
+(
+
+Ni(k − 1) ≤ 185 η2μ2 
+
+> i
+
+(¯ ai + ki) ln(2 K2)((¯ ai + ki)μi − ℓ(¯ a)) 2
+
+)
+
+.
+
+To prove this, suppose for a contradiction argument that we have for some i ∈ [n]: ¬Ei,k and that k is a bad round triggered by arm i (i.e., ℓ(ak) > ℓ (¯ a) and i ∈ arg max j∈[n] aj,k μj ). This gives in particular 
+
+Ni(k − 1) > 185 η2μ2 
+
+> i
+
+(¯ ai + ki) ln(2 K2)((¯ ai + ki)μi − ℓ(¯ a)) 2 . (22) Observe that in each round where Ni(·) is incremented, the number of samples received from the distribution νi increases by at least ¯ai + ki. Therefore, we have (22) implies 
+
+Ki,k > 185 η2μ2 
+
+> i
+
+(¯ ai + ki)2 ln(2 K2)((¯ ai + ki)μi − ℓ(¯ a)) 2 = 185 η2μ2 
+
+> i
+
+ln(2 K2)
+
+
+
+μi − ℓ(¯ a)¯ai+ki
+
+2 .
+
+Therefore, we have, using the expression of Ci,k and the bound above 
+
+Ci,k = 2 
+
+s
+
+ln(2 k2)
+
+Ki,k 
+
++ 2 ln(2 k2)
+
+Ki,k 
+
+≤ 319 ημ i
+
+
+
+μi − ℓ(¯ a)¯ai + ki
+
+
+
+. (23) The last bound implies in particular that ηC i,k ≤ 319 , hence (1 − ηC i,k )+ = 1 − ηC i,k .26 ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+We have 
+
+ˆμi,k − ˆsi,k = ˆ μi,k 
+
+
+
+1 − (1 − ηC i,k )+
+
+
+
+≤ ηC i,k ˆμi,k 
+
+≤ ηC i,k 
+
+μi
+
+1 − ηC i,k 
+
+≤ 15
+
+
+
+μi − ℓ(¯ a)¯ai + ki
+
+
+
+. (24) where we used the event ¬E i,k in the penultimate inequality (in particular ˆsi,k = ˆ μi,k (1 − ηC i,k )+ ≤ μi), and the bound (23) in the last inequality. Given the hypothesis that ℓ(ak) > ℓ (¯ a) and, ℓ(ak) = ai,k μi, we necessarily have ai,k ≥ ¯ai + ki. Therefore, bound (24) 
+
+5ˆ μi,k − 5 ˆ si,k < μ i − ℓ(¯ a)
+
+ai,k 
+
+.
+
+Observe that in each round ∥ak∥0 = B, therefore if we have ai,k ≥ ¯ai + ki > ¯ai for some i, we necessarily have that there exists j ∈ [n] \ { i} such that aj,k ≤ ¯aj − 1. Therefore, using the fact that ℓ(¯ a) ≥ ¯aj μj , we obtain 
+
+ai,k (μi + 5ˆ si,k − 5ˆ μi,k ) > ℓ (¯ a) ≥ ¯aj μj . (25) Since both ¬E i,k and ¬E j,k hold (because ¬Ei,k implies ¬E k), we have that 
+
+μi + 5ˆ si,k − 5ˆ μi,k = ˆ si,k + μi − ˆμi,k + 4 (ˆ si,k − ˆμi,k )= ˆ si,k + μi − ˆμi,k + 4ˆ μi,k ((1 − ηC i,k )+ − 1) 
+
+≤ ˆsi,k + μi − ˆμi,k − 4ˆ μi,k ηC i,k 
+
+≤ ˆsi,k + μi − ˆui,k ,
+
+To conclude, observe that given ηC i,k ≤ 319 , event ¬E i,k implies that μi ≤ ˆui,k , therefore 
+
+μi + 5ˆ si,k − 5ˆ μi,k ≤ ˆsi,k .
+
+Since ¬E j,k holds, we also have 
+
+μj ≥ ˆsj,k .
+
+Using the two last bounds in (25), we have 
+
+ai,k ˆsi,k > ¯aj ˆsj,k ≥ (aj,k + 1)ˆ sj,k ,
+
+where we used the definition of j, as an arm satisfying ¯aj ≥ 1 + aj,k , in the second inequality. This contradicts the statement of Lemma D.1, which concludes the contradiction argument. Therefore, the event that k is a bad round implies that Ei,k 
+
+holds for at least one i ∈ [n]. We say that a bad round was triggered by arm i, a round where Ni(·) was incremented. Observe that if k ∈ [K] is not a bad round then E [ℓ(ak)] − ℓ(¯ a) = 0 , otherwise if k is a bad round triggered by i ∈ [n] then 
+
+E [ℓ(ak)] − ℓ(¯ a) ≤ Bμ i − ℓ(¯ a). To ease notation we introduce for i ∈ [n]
+
+Hi := 185 η2μ2 
+
+> i
+
+(¯ ai + ki) ln(2 K2)((¯ ai + ki)μi − ℓ(¯ a)) 2 .
+
+27 ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+The expected regret satisfies 
+
+RK =
+
+> K
+
+X
+
+> i=1
+
+E [ℓ(ak) − ℓ(¯ a)] 
+
+≤
+
+> n
+
+X
+
+> i=1
+
+(Bμ i − ℓ(¯ a)) E[Ni(K)] =
+
+> n
+
+X
+
+> i=1
+> K
+
+X
+
+> k=1
+
+(Bμ i − ℓ(¯ a)) E [1(k is a bad round triggered by i)] 
+
+≤ max 
+
+> i∈[n]
+
+{(Bμ i − ℓ(¯ a)) } · 
+
+> K
+
+X
+
+> t=1
+
+P(Ek) + 
+
+> n
+
+X
+
+> i=1
+
+(Bμ i − ℓ(¯ a)) 
+
+> K
+
+X
+
+> k=1
+
+E [1(k is a bad round triggered by i) | ¬E k]
+
+≤ max 
+
+> i∈[n]
+
+{(Bμ i − ℓ(¯ a)) } · 
+
+> K
+
+X
+
+> t=1
+
+P(Ek) + 
+
+> n
+
+X
+
+> i=1
+
+(Bμ i − ℓ(¯ a)) 
+
+> K
+
+X
+
+> k=1
+
+E [1(Ni(k) = 1 + Ni(k − 1) and Ni ≤ Hi) | ¬E k]
+
+≤ max 
+
+> i∈[n]
+
+{(Bμ i − ℓ(¯ a)) } · 
+
+> K
+
+X
+
+> k=1
+
+P(Ek) + 
+
+> n
+
+X
+
+> i=1
+
+(Bμ i − ℓ(¯ a)) Hi
+
+≤ 2n max 
+
+> i∈[n]
+
+{(Bμ i − ℓ(¯ a)) } +
+
+> n
+
+X
+
+> i=1
+
+185 η2μ2 
+
+> i
+
+(¯ ai + ki)( Bμ i − ℓ(¯ a)) ln(2 K2)((¯ ai + ki)μi − ℓ(¯ a)) 2 .
+
+D.3. Proof of Theorem 4.2 
+
+Let us first restate the theorem. 
+
+Theorem 4.2. Suppose Assumption 3.1 holds and let η := max i∈[n] αi/μ i, where αi = ∥Xi − μi∥ψ1 . Then, the total expected computation time after K rounds, using the allocation prescribed by ATA with inputs (B, α ) satisfies 
+
+CK ≤ (1 + 4 η ln( B)) C∗ 
+
+> K
+
++ O(ln K) .
+
+Proof. Let Ek be the expectation with respect to the variables observed up to and including k and Fk the corresponding filtration. Using the tower rule, we have 
+
+> K
+
+X
+
+> k=1
+
+E [C(ak)] = E
+
+" KX
+
+> k=1
+
+Ek−1[C(ak)] 
+
+#
+
+.
+
+Consider round k ∈ [K], let us upper bound Ek−1[C(at)] using Ek−1[ℓ(ak)] . Recall that ak ∈ F k−1, let Yi = Pai,k  
+
+> u=1
+
+X(u) 
+
+> i,k
+
+,since Yi is the sum of ai,k i.i.d samples we have that Ek−1[Yi] = ai,k μi and ∥Yi − ai,k μi∥ψ1 ≤ ai,k ∥Xi − μi∥ψ1 . Thus, using Lemma E.4, we get 
+
+Ek−1 [C(ak)] = Ek−1
+
+"
+
+max  
+
+> i∈supp (ak)
+
+(ai,k 
+
+X
+
+> u=1
+
+X(u)
+
+> i,k
+
+)# 
+
+≤ max   
+
+> i∈supp (ak)
+
+{ai,k μi} + 4 max  
+
+> i∈supp (ak)
+
+{ai,k αi} · ln( B)
+
+≤ max   
+
+> i∈supp (ak)
+
+{ai,k μi} + 4 max  
+
+> i∈supp (ak)
+
+{ai,k ημ i} · ln( B)= (1 + 4 η ln( B)) max {ai,k μi} .
+
+Moreover, using Jensen’s inequality, we have 
+
+max 
+
+> i∈[n]
+
+{a∗ 
+
+> i
+
+μi} ≤ E
+
+"
+
+max 
+
+> i∈[n]
+
+(ak,i 
+
+X
+
+> u=1
+
+X(u)
+
+> i,k
+
+)# 
+
+= E[C(a∗)] .
+
+Using the last two bounds with the result of Theorem 6.1, we get the result. 28 ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+E. Technical Lemmas 
+
+The lemma below gives a concentration bound on sub-exponential variables. Note that this result can be inferred from Proposition 7 in Maurer & Pontil (2021), although applying the last result directly requires assuming the variables are positive, this is not needed in their proof in the one dimensional case. For completeness, we present the full proof below. 
+
+Lemma E.1. Let Y1, . . . , Y n be i.i.d random variables with E [Y1] = 0 and α = ∥Y1∥ψ1 < +∞. Then for any δ ∈ (0 , 1) ,we have with probability at least 1 − δ
+
+1
+
+n
+
+> n
+
+X
+
+> i=1
+
+Yi ≤ 2α
+
+r ln(2 /δ )
+
+n + ln(2 /δ )2n
+
+!
+
+.
+
+Proof. Let v := 2 nα 2. We have using Lemma E.5 that 
+
+> n
+
+X
+
+> i=1
+
+E Y 2
+
+> i
+
+ ≤ 2nα 2 and 
+
+> n
+
+X
+
+> i=1
+
+E (Yi)q
+
+> +
+
+ ≤ q!2 vα q−2 .
+
+Therefore, using Bernstein concentration inequality (Proposition E.2) we obtain that 
+
+P
+
+> n
+
+X
+
+> i=1
+
+Yi ≥ 2α√nt + αt 
+
+!
+
+≤ 2 exp( −t) .
+
+Choosing t = ln(2 /δ ), we obtain the result. 
+
+Proposition E.2 (Theorem 2.10 in Boucheron et al. (2005)) . Let X1, . . . , X n be independent real-valued random variables. Assume there exist positive numbers v and c such that 
+
+> n
+
+X
+
+> i=1
+
+EX2
+
+> i
+
+ ≤ v and 
+
+> n
+
+X
+
+> i=1
+
+E(Xi) q
+
+> +
+
+ ≤ q!2 v c q−2, for all integers q ≥ 3,
+
+where x+ := max {x, 0}. Define the centered sum 
+
+S := 
+
+> n
+
+X
+
+> i=1
+
+ Xi − EXi
+
+.
+
+Then, for every t > 0,
+
+P
+
+
+
+S ≥ √2vt + ct 
+
+
+
+≤ e−t.
+
+Lemma E.3. Let X1, . . . , X n be i.i.d positive random variables with mean μ and ∥X1∥ψ1 < +∞. Denote α := 
+
+∥X1 − μ∥ψ1 . Denote ˆXn = 1
+
+> n
+
+Pni=1 Xi and let δ ∈ (0 , 1) . Define η, C·,· by: 
+
+η := αμ and Cn,δ := 2 
+
+r ln(2 /δ )
+
+n + 2 ln(2 /δ )
+
+n .
+
+Then with probability at least 1 − δ we have 
+
+μ ≥ ˆXn(1 − η · Cn,δ )+ ,
+
+where we use the notation (a)+ = max {0, a }. Moreover, if η C n,δ ≤ 14 , then with probability least 1 − δ
+
+ˆXn(1 − η · Cn,δ )+ ≤ μ ≤ ˆXn
+
+
+
+1 + 43 η · Cn,δ 
+
+
+
+.
+
+Proof. Fix n, δ . We work on the event 
+
+En,δ =
+
+n ˆXn − μ ≤ α · Cn,δ 
+
+o
+
+29 ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+that holds with probability at least 1 − δ if we apply Proposition E.1 to Xi − μ.
+
+Proof of μ ≥ ˆXn(1 − η · Cn,δ )+:
+
+If ηC n,δ ≥ 1, we have (1 − η · Cn,δ )+ = 0 and the result follows from the fact that X is non-negative which gives μ ≥ 0.Suppose now that ηC n,δ < 1. Recall that event En,δ implies that 
+
+ˆXn ≤ μ(1 + ηC n,δ ) .
+
+Therefore, we have ˆXn
+
+1 + ηC n,δ 
+
+≤ μ . 
+
+Using 1 − ηC n,δ ≤ 11+ ηC n,δ with the bound above, we obtain 
+
+ˆXn(1 − ηC n,δ )+ = ˆXn(1 − ηC n,δ ) ≤ ˆXn
+
+1 + η · Cn,δ 
+
+≤ μ . 
+
+Proof of μ ≤  1 + 43 η · Cn,δ 
+
+ . Recall that event En,δ gives 
+
+ˆXn ≥ μ − αC n,δ = μ(1 − ηC n,δ ) .
+
+Suppose that ηC n,δ ≤ 14 . We therefore have 
+
+μ ≤ ˆXn
+
+1 − ηC n,δ 
+
+.
+
+Next, we use the fact that for any x ∈ [0 , 1/4] , we have 
+
+11 − x ≤ 1 + 43 x , 
+
+which gives 
+
+μ ≤ ˆXn
+
+
+
+1 + 43 η · Cn,δ 
+
+
+
+,
+
+when ηC n,δ ≤ 14 .
+
+Lemma E.4. Let X1, . . . , X n be a sequence of independent random variables with finite Orlicz norm ∥Xi∥ψ1 < +∞ and let E [Xi] = μi. Then we have 
+
+E[max  
+
+> i∈[n]
+
+Xi] ≤ max  
+
+> i∈[n]
+
+μi + 4 α ln( n) ,
+
+where α = max i∈[n] ∥Xi − μi∥ψ1 .Proof. If n = 1 the bound is straightforward, suppose that n ≥ 2. Let Yi := Xi − μi, then α = max i∈[n] ∥Yi∥ψ1 . Let 
+
+λ ∈ (0 , 1/α ), we have 
+
+max  
+
+> i∈[n]
+
+Yi = 1
+
+λ ln 
+
+
+
+exp 
+
+
+
+λ max  
+
+> i∈[n]
+
+Yi
+
+ 
+
+≤ 1
+
+λ ln 
+
+> n
+
+X
+
+> i=1
+
+exp ( λY i)
+
+!
+
+.
+
+Taking the expectation and using Lemma E.5, we have 
+
+E
+
+
+
+max  
+
+> i∈[n]
+
+Yi
+
+
+
+≤ 1
+
+λ ln 
+
+> n
+
+X
+
+> i=1
+
+E [exp ( λY i)] 
+
+!
+
+≤ 1
+
+λ ln 
+
+ n
+
+1 − λα 
+
+
+
+.
+
+30 ATA: Adaptive Task Allocation for Efficient Resource Management in Distributed Machine Learning 
+
+We choose λ = 1−1/n α , which gives 
+
+E
+
+
+
+max  
+
+> i∈[n]
+
+Yi
+
+
+
+≤ α
+
+1 − 1
+
+> n
+
+ln( n2)= 2 α nn − 1 ln( n)
+
+≤ 4α ln( n) . (26) Let i∗ ∈ arg max i∈[n] Xi, we have 
+
+max  
+
+> i∈[n]
+
+Xi − max  
+
+> i∈[n]
+
+μi = Xi∗ − max  
+
+> i∈[n]
+
+μi
+
+≤ Xi∗ − μi∗ ≤ max 
+
+> i∈[n]
+
+{Xi − μi} = max  
+
+> i∈[n]
+
+Yi .
+
+Combining the last bound with (26) we obtain 
+
+E
+
+
+
+max  
+
+> i∈[n]
+
+Xi
+
+
+
+≤ max  
+
+> i∈[n]
+
+μi + 4 α ln( n) .
+
+Lemma below is based on a standard argument we give here for completeness. 
+
+Lemma E.5. Let Y be a variable such that α = ∥Y ∥ψ1 < +∞. Then we have for any λ ∈  − 1 
+
+> α
+
+, 1
+
+> α
+
+
+
+E [exp ( λY )] ≤ 11 − | λ| α .
+
+Moreover, we have for any q ≥ 3
+
+E Y 2 ≤ 2α2 and E (Y )q
+
+> +
+
+ ≤ q!2 · (2 α2) · αq−2 .
+
+Proof. Let Z = |Y | /α . First observe that we have 
+
+X
+
+> k≥0
+
+E Zk
+
+k! = E [exp( Z)] = E [exp( |Y | /α )] ≤ 2 ,
+
+so, X
+
+> k≥1
+
+E Zk
+
+k! ≤ 1 .
+
+This implies E
+
+h
+
+|Y |ki
+
+≤ k!αk for all k ≥ 1. Using this bound, we estimate the moment generating function 
+
+E [exp( λY )] ≤ E [exp ( |λ| | Y |)] = X
+
+> k≥0
+
+|λ|k E
+
+h
+
+|Y |ki
+
+k!
+
+≤ 1 + X
+
+> k≥1
+
+|λ|k αk
+
+= 11 − | λ| α .
+
+The remaining bounds follow from E
+
+h
+
+|Y |ki
+
+≤ k!αk.31
