@@ -1,0 +1,105 @@
+{
+  "version": 2,
+  "extractor": "papercropper",
+  "tables": [
+    {
+      "url": "assets/tables/openreview/openreview-neurips-2025-gigtog4dna/table-001.webp",
+      "caption": "",
+      "page": 0,
+      "index": 1,
+      "width": 1109,
+      "height": 217,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-neurips-2025-gigtog4dna/table-002.webp",
+      "caption": "",
+      "page": 0,
+      "index": 2,
+      "width": 1442,
+      "height": 451,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-neurips-2025-gigtog4dna/table-003.webp",
+      "caption": "",
+      "page": 0,
+      "index": 3,
+      "width": 1437,
+      "height": 202,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-neurips-2025-gigtog4dna/table-004.webp",
+      "caption": "",
+      "page": 0,
+      "index": 4,
+      "width": 1443,
+      "height": 258,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-neurips-2025-gigtog4dna/table-005.webp",
+      "caption": "",
+      "page": 0,
+      "index": 5,
+      "width": 1437,
+      "height": 247,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-neurips-2025-gigtog4dna/table-006.webp",
+      "caption": "",
+      "page": 0,
+      "index": 6,
+      "width": 1069,
+      "height": 396,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-neurips-2025-gigtog4dna/table-007.webp",
+      "caption": "",
+      "page": 0,
+      "index": 7,
+      "width": 1030,
+      "height": 179,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-neurips-2025-gigtog4dna/table-008.webp",
+      "caption": "",
+      "page": 0,
+      "index": 8,
+      "width": 1287,
+      "height": 176,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-neurips-2025-gigtog4dna/table-009.webp",
+      "caption": "",
+      "page": 0,
+      "index": 9,
+      "width": 1438,
+      "height": 234,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-neurips-2025-gigtog4dna/table-010.webp",
+      "caption": "",
+      "page": 0,
+      "index": 10,
+      "width": 1075,
+      "height": 136,
+      "label": "Table"
+    },
+    {
+      "url": "assets/tables/openreview/openreview-neurips-2025-gigtog4dna/table-011.webp",
+      "caption": "",
+      "page": 0,
+      "index": 11,
+      "width": 1496,
+      "height": 221,
+      "label": "Table"
+    }
+  ]
+}

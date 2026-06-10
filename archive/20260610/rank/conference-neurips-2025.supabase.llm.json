@@ -1,0 +1,3158 @@
+{
+  "top_k": 200,
+  "generated_at": "2026-06-10T01:04:45.625808+00:00",
+  "papers": [
+    {
+      "id": "openreview-neurips-2025-wryhlha8qi",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Emergent Risk Awareness in Rational Agents under Resource Constraints",
+      "abstract": "Advanced reasoning models with agentic capabilities (AI agents) are deployed to interact with humans and to solve sequential decision‑making problems under (often approximate) utility functions and internal models. When such problems have resource or failure constraints where action sequences may be forcibly terminated once resources are exhausted, agents face implicit trade‑offs that reshape their utility-driven (rational) behaviour. Additionally, since these agents are typically commissioned by a human principal to act on their behalf, asymmetries in constraint exposure can give rise to previously unanticipated misalignment between human objectives and agent incentives. We formalise this setting through a survival bandit framework, provide theoretical and empirical results that quantify the impact of survival‑driven preference shifts, identify conditions under which misalignment emerges and propose mechanisms to mitigate the emergence of risk-seeking or risk-averse behaviours. As a result, this work aims to increase understanding and interpretability of emergent behaviours of AI agents operating under such survival pressure, and offer guidelines for safely deploying such AI systems in critical resource‑limited environments.",
+      "authors": [
+        "Daniel Jarne Ornia",
+        "Nicholas George Bishop",
+        "Joel Dyer",
+        "Wei-Chen Lee",
+        "Ani Calinescu",
+        "J. Doyne Farmer",
+        "Michael J. Wooldridge"
+      ],
+      "primary_category": "Decision Making",
+      "categories": [
+        "Decision Making",
+        "Alignment",
+        "Interpretability",
+        "Planning"
+      ],
+      "published": "2025-09-18T17:35:08.06+00:00",
+      "link": "https://openreview.net/forum?id=wryhlhA8QI",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-3qets05brl",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Bayesian Ego-graph Inference for Networked Multi-Agent Reinforcement Learning",
+      "abstract": "In networked multi-agent reinforcement learning (Networked-MARL), decentralized agents must act autonomously under local observability and constrained communication over fixed physical graphs. Existing methods often assume static neighborhoods, limiting adaptability to dynamic or heterogeneous environments. While centralized frameworks can learn dynamic graphs, their reliance on global state access and centralized infrastructure is impractical in real-world decentralized systems. We propose a stochastic graph-based policy for Networked-MARL, where each agent conditions its decision on a sampled subgraph over its local physical neighborhood. Building on this formulation, we introduce \\textbf{BayesG}, a decentralized actor–critic framework that learns sparse, context-aware interaction structures via Bayesian variational inference. Each agent operates over an ego-graph and samples a latent communication mask to guide message passing and policy computation. The variational distribution is trained end-to-end alongside the policy using an evidence lower bound (ELBO) objective, enabling agents to jointly learn both interaction topology and decision-making strategies.\nBayesG outperforms strong MARL baselines on large-scale traffic control tasks with up to 167 agents, demonstrating superior scalability, efficiency, and performance.",
+      "authors": [
+        "Wei Duan",
+        "Jie Lu",
+        "Junyu Xuan"
+      ],
+      "primary_category": "networked multi-agent reinforcement learning",
+      "categories": [
+        "networked multi-agent reinforcement learning",
+        "Multi-Agent Reinforcement Learning",
+        "Decentralized Reinforcement Learning",
+        "Actor–Critic Methods"
+      ],
+      "published": "2025-09-18T17:33:49.022+00:00",
+      "link": "https://openreview.net/forum?id=3qeTs05bRL",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-1qkuvyymxs",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "ACCO: Accumulate While You Communicate for Communication-Overlapped Sharded LLM Training",
+      "abstract": "Training LLMs relies on distributed implementations using multiple GPUs to compute gradients in parallel with sharded optimizers. However, synchronizing gradients in data parallel setups introduces communication overhead that grows with the number of workers, limiting parallelization efficiency. Local optimization algorithms reduce communications but incur high memory costs as they prevent optimizer state sharding, hindering scalability. To address this, we propose $\\textbf{AC}$cumulate while $\\textbf{CO}$mmunicate ($\\texttt{ACCO}$), a memory-efficient optimization algorithm for distributed LLM training. By synchronizing delayed gradients while computing new ones, $\\texttt{ACCO}$ reduces GPU idle time and supports heterogeneous hardware. To mitigate the convergence issues caused by delayed updates, we introduce a novel technique ensuring training dynamics align with standard distributed optimization. Compared to ZeRO-1, our approach is significantly faster and scales effectively across heterogeneous hardware.",
+      "authors": [
+        "Adel Nabli",
+        "Louis Fournier",
+        "Pierre ERBACHER",
+        "Louis Serrano",
+        "Eugene Belilovsky",
+        "Edouard Oyallon"
+      ],
+      "primary_category": "distributed training; communication overlapping; sharded optimizers",
+      "categories": [
+        "distributed training; communication overlapping; sharded optimizers"
+      ],
+      "published": "2025-09-18T17:32:26.867+00:00",
+      "link": "https://openreview.net/forum?id=1qKUVyymXs",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-cyg3kmfsgm",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Pragmatic Heterogeneous Collaborative Perception via Generative Communication Mechanism",
+      "abstract": "Multi-agent collaboration enhances the perception capabilities of individual agents through information sharing. However, in real-world applications, differences in sensors and models across heterogeneous agents inevitably lead to domain gaps during collaboration. Existing approaches based on adaptation and reconstruction fail to support *pragmatic heterogeneous collaboration* due to two key limitations: (1) Intrusive retraining of the encoder or core modules disrupts the established semantic consistency among agents; and (2) accommodating new agents incurs high computational costs, limiting scalability. To address these challenges, we present a novel **Gen**erative **Comm**unication mechanism (GenComm) that facilitates seamless perception across heterogeneous multi-agent systems through feature generation, without altering the original network, and employs lightweight numerical alignment of spatial information to efficiently integrate new agents at minimal cost. Specifically, a tailored Deformable Message Extractor is designed to extract spatial message for each collaborator, which is then transmitted in place of intermediate features. The Spatial-Aware Feature Generator, utilizing a conditional diffusion model,  generates features aligned with the ego agent's semantic space while preserving the spatial information of the collaborators. These generated features are further refined by a Channel Enhancer before fusion. Experiments conducted on the OPV2V-H, DAIR-V2X and V2X-Real datasets demonstrate that GenComm outperforms existing state-of-the-art methods, achieving an 81\\% reduction in both computational cost and parameter count when incorporating new agents. Our code is available at https://github.com/jeffreychou777/GenComm.",
+      "authors": [
+        "Junfei Zhou",
+        "Penglin Dai",
+        "Quanmin Wei",
+        "Bingyi Liu",
+        "Xiao Wu",
+        "Jianping Wang"
+      ],
+      "primary_category": "Collaborative Perception; Heterogeneous Collaboration; Diffusion model",
+      "categories": [
+        "Collaborative Perception; Heterogeneous Collaboration; Diffusion model"
+      ],
+      "published": "2025-09-18T17:34:55.616+00:00",
+      "link": "https://openreview.net/forum?id=CYG3kmFsgM",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-buytctumya",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "AgentTTS: Large Language Model Agent for Test-time Compute-optimal Scaling Strategy in Complex Tasks",
+      "abstract": "Test-time scaling (TTS) enhances the performance of large language models (LLMs) by allocating additional compute resources during inference. However, existing research primarily investigates TTS in single-stage tasks; while many real-world problems are multi-stage complex tasks, composed of a sequence of heterogeneous subtasks with each subtask requires LLM of specific capability. Therefore, we study a novel problem: the test-time compute-optimal scaling in multi-stage complex tasks, aiming to select suitable models and allocate budgets per subtask to maximize overall performance. TTS in multi-stage tasks introduces two fundamental challenges: (i) The combinatorial search space of model and budget allocations, combined with the high cost of inference, makes brute-force search impractical. (ii) The optimal model and budget allocations across subtasks are interdependent, increasing the complexity of the compute-optimal search. To address this gap, we conduct extensive pilot experiments on four tasks across six datasets, deriving three empirical insights characterizing the behavior of LLMs in multi-stage complex tasks. Informed by these insights, we propose AgentTTS, an LLM-agent-based framework that autonomously searches for compute-optimal allocations through iterative feedback-driven interactions with the execution environment. Experimental results demonstrate that AgentTTS significantly outperforms traditional and other LLM-based baselines in search efficiency, and shows improved robustness to varying training set sizes and enhanced interpretability.",
+      "authors": [
+        "Fali Wang",
+        "Hui Liu",
+        "Zhenwei DAI",
+        "Jingying Zeng",
+        "Zhiwei Zhang",
+        "Zongyu Wu",
+        "Chen Luo",
+        "Zhen Li",
+        "Xianfeng Tang",
+        "Qi He",
+        "Suhang Wang"
+      ],
+      "primary_category": "language models",
+      "categories": [
+        "language models",
+        "scaling",
+        "test-time compute",
+        "compute-optimal inference"
+      ],
+      "published": "2025-09-18T17:36:20.221+00:00",
+      "link": "https://openreview.net/forum?id=BuYtcTUMyA",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-zwhkkspght",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Mozart: Modularized and Efficient MoE Training on 3.5D Wafer-Scale Chiplet Architectures",
+      "abstract": "Mixture-of-Experts (MoE) architecture offers enhanced efficiency for Large Language Models (LLMs) with modularized computation, yet its inherent sparsity poses significant hardware deployment challenges, including memory locality issues, communication overhead, and inefficient computing resource utilization. Inspired by the modular organization of the human brain, we propose $\\texttt{Mozart}$, a novel algorithm-hardware co-design framework tailored for efficient training of MoE-based LLMs on 3.5D wafer-scale chiplet architectures. On the algorithm side, $\\texttt{Mozart}$ exploits the inherent modularity of chiplets and introduces: \n($1$) an expert allocation strategy that enables efficient on-package all-to-all communication, and ($2$) a fine-grained scheduling mechanism that improves communication-computation overlap through streaming tokens and experts. On the architecture side, $\\texttt{Mozart}$ adaptively co-locates heterogeneous modules on specialized chiplets with a 2.5D NoP-Tree topology and hierarchical memory structure.\nEvaluation across three popular MoE models demonstrates significant efficiency gains, enabling more effective parallelization and resource utilization for large-scale modularized MoE-LLMs.",
+      "authors": [
+        "Shuqing Luo",
+        "Ye Han",
+        "Pingzhi Li",
+        "Jiayin Qin",
+        "Jie Peng",
+        "Yang Katie Zhao",
+        "Yu Cao",
+        "Tianlong Chen"
+      ],
+      "primary_category": "MoE",
+      "categories": [
+        "MoE",
+        "Chiplet Architecture",
+        "Post-Training Efficiency"
+      ],
+      "published": "2025-09-18T17:30:54.863+00:00",
+      "link": "https://openreview.net/forum?id=zWHKKspghT",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-wbeknrzbpt",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Skrull: Towards Efficient Long Context Fine-tuning through Dynamic Data Scheduling",
+      "abstract": "Long-context supervised fine-tuning (Long-SFT) plays a vital role in enhancing the performance of large language models (LLMs) on long-context tasks. To smoothly adapt LLMs to long-context scenarios, this process typically entails training on mixed datasets containing both long and short sequences. However, this heterogeneous sequence length distribution poses significant challenges for existing training systems, as they fail to simultaneously achieve high training efficiency for both long and short sequences, resulting in sub-optimal end-to-end system performance in Long-SFT.\nIn this paper, we present a novel perspective on data scheduling to address the challenges posed by the heterogeneous data distributions in Long-SFT. We propose Skrull, a dynamic data scheduler specifically designed for efficient long-SFT. Through dynamic data scheduling, Skrull balances the computation requirements of long and short sequences, improving overall training efficiency. Furthermore, we formulate the scheduling process as a joint optimization problem and thoroughly analyze the trade-offs involved. Based on those analysis, Skrull employs a lightweight scheduling algorithm to achieve near-zero cost online scheduling in Long-SFT. Finally, we implement Skrull upon DeepSpeed, a state-of-the-art distributed training system for LLMs. Experimental results demonstrate that Skrull outperforms DeepSpeed by 3.76x on average (up to 7.54x) in real-world long-SFT scenarios.",
+      "authors": [
+        "Hongtao Xu",
+        "Wenting Shen",
+        "Yuanxin Wei",
+        "Ang Wang",
+        "Guo Runfan",
+        "Tianxing Wang",
+        "Yong Li",
+        "Mingzhen Li",
+        "Weile Jia"
+      ],
+      "primary_category": "long context fine-tuning",
+      "categories": [
+        "long context fine-tuning",
+        "context parallelism",
+        "supervised fine-tuning",
+        "LLM",
+        "Large language model"
+      ],
+      "published": "2025-09-18T17:29:13.405+00:00",
+      "link": "https://openreview.net/forum?id=WBEknRZBpT",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-qldyoo8qly",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Approximate Gradient Coding for Distributed Learning with Heterogeneous Stragglers",
+      "abstract": "In this paper, we propose an optimally structured gradient coding scheme to mitigate the straggler problem in distributed learning. Conventional gradient coding methods often assume homogeneous straggler models or rely on excessive data replication, limiting performance in real-world heterogeneous systems. To address these limitations, we formulate an optimization problem minimizing residual error while ensuring unbiased gradient estimation by explicitly considering individual straggler probabilities. We derive closed-form solutions for optimal encoding and decoding coefficients via Lagrangian duality and convex optimization, and propose data allocation strategies that reduce both redundancy and computational load. We also analyze convergence behavior for $\\lambda$-strongly convex and $\\mu$-smooth loss functions. Numerical results show that our approach significantly reduces the impact of stragglers and accelerates convergence compared to existing methods.",
+      "authors": [
+        "Heekang Song",
+        "Wan Choi"
+      ],
+      "primary_category": "Distributed Learning",
+      "categories": [
+        "Distributed Learning",
+        "Straggler Mitigation",
+        "Gradient Coding",
+        "Optimal Structure"
+      ],
+      "published": "2025-09-18T17:33:27.798+00:00",
+      "link": "https://openreview.net/forum?id=QlDyoo8qLY",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-gigtog4dna",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "MeCeFO: Enhancing LLM Training Robustness via Fault-Tolerant Optimization",
+      "abstract": "As distributed optimization scales to meet the demands of Large Language Model (LLM) training, hardware failures become increasingly non-negligible. Existing fault-tolerant training methods often introduce significant computational or memory overhead, demanding additional resources. To address this challenge, we propose **Me**mory- and **C**omputation- **e**fficient **F**ault-tolerant **O**ptimization (**MeCeFO**), a novel algorithm that ensures robust training with minimal overhead. When a computing node fails, MeCeFO seamlessly transfers its training task to a neighboring node while employing memory- and computation-efficient algorithmic optimizations to minimize the extra workload imposed on the neighboring node handling both tasks. MeCeFO leverages three key algorithmic designs: (i) Skip-connection, which drops the multi-head attention (MHA) module during backpropagation for memory- and computation-efficient approximation; (ii) Recomputation, which reduces activation memory in feedforward networks (FFNs); and (iii) Low-rank gradient approximation, enabling efficient estimation of FFN weight matrix gradients. Theoretically, MeCeFO matches the convergence rate of conventional distributed training, with a rate of $\\mathcal{O}(1/\\sqrt{nT})$, where $n$ is the data parallelism size and $T$ is the number of iterations. Empirically, MeCeFO maintains robust performance under high failure rates, incurring only a 4.18\\% drop in throughput, demonstrating $5.0\\times$ to $6.7\\times$ greater resilience than previous SOTA approaches.",
+      "authors": [
+        "Rizhen Hu",
+        "Yutong He",
+        "Ran Yan",
+        "Mou Sun",
+        "Binhang Yuan",
+        "Kun Yuan"
+      ],
+      "primary_category": "Fault tolerance",
+      "categories": [
+        "Fault tolerance",
+        "Memory efficiency",
+        "Computation efficiency",
+        "Distributed training"
+      ],
+      "published": "2025-09-18T17:37:47.611+00:00",
+      "link": "https://openreview.net/forum?id=gIGtOg4DNa",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-rmqwt1btxq",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Transcending Cost-Quality Tradeoff in Agent Serving via Session-Awareness",
+      "abstract": "Large Language Model (LLM) agents are capable of task execution across various domains by autonomously interacting with environments and refining LLM responses based on feedback.\nHowever, existing model serving systems are not optimized for the unique demands of serving agents. Compared to classic model serving, agent serving has different characteristics:\npredictable request pattern, increasing quality requirement, and unique prompt formatting. We identify a key problem for agent serving: LLM serving systems lack session-awareness. They neither perform effective KV cache management nor precisely select the cheapest yet competent model in each round.\nThis leads to a cost-quality tradeoff, and we identify an opportunity to surpass it in an agent serving system.\n\nTo this end, we introduce AgServe for AGile AGent SERVing.\nAgServe features a session-aware server that boosts KV cache reuse via Estimated-Time-of-Arrival-based eviction and in-place positional embedding calibration, a quality-aware client that performs session-aware model cascading through real-time quality assessment, and a dynamic resource scheduler that maximizes GPU utilization. \nWith AgServe, we allow agents to select and upgrade models during the session lifetime, and to achieve similar quality at much lower costs, effectively transcending the tradeoff. Extensive experiments on real testbeds demonstrate that AgServe (1) achieves comparable response quality to GPT-4o at a 16.5\\% cost. (2) delivers 1.8$\\times$ improvement in quality relative to the tradeoff curve.",
+      "authors": [
+        "Yanyu Ren",
+        "Li Chen",
+        "Dan Li",
+        "Xizheng Wang",
+        "Zhiyuan Wu",
+        "Yukai Miao",
+        "Yu Bai"
+      ],
+      "primary_category": "Agent Serving",
+      "categories": [
+        "Agent Serving",
+        "LLM Serving",
+        "LLM infrastructure",
+        "Large language models",
+        "inference optimizations"
+      ],
+      "published": "2025-09-18T17:31:42.44+00:00",
+      "link": "https://openreview.net/forum?id=RmqWt1btxQ",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-5iw1ndtymt",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "KVFlow: Efficient Prefix Caching for Accelerating LLM-Based Multi-Agent Workflows",
+      "abstract": "Large language model (LLM) based agentic workflows have become a popular paradigm for coordinating multiple specialized agents to solve complex tasks. To improve serving efficiency, existing LLM systems employ prefix caching to reuse key-value (KV) tensors corresponding to agents' fixed prompts, thereby avoiding redundant computation across repeated invocations. However, current systems typically evict KV caches using a Least Recently Used (LRU) policy, which fails to anticipate future agent usage and often discards KV caches shortly before their reuse. This leads to frequent cache misses and substantial recomputation or swap- ping overhead. We present KVFlow, a workflow-aware KV cache management framework tailored for agentic workloads. KVFlow abstracts the agent execution schedule as an Agent Step Graph and assigns each agent a steps-to-execution value that estimates its temporal proximity to future activation. These values guide a fine-grained eviction policy at the KV node level, allowing KVFlow to preserve entries likely to be reused and efficiently manage shared prefixes in tree-structured caches. Moreover, KVFlow introduces a fully overlapped KV prefetching mecha- nism, which proactively loads required tensors from CPU to GPU in background threads for agents scheduled in the next step, thereby avoiding cache miss stalls during generation. Compared to SGLang with hierarchical radix cache, KVFlow achieves up to 1.83× speedup for single workflows with large prompts, and up to 2.19× speedup for scenarios with many concurrent workflows.",
+      "authors": [
+        "Zaifeng Pan",
+        "AJJKUMAR PATEL",
+        "Yipeng Shen",
+        "Zhengding Hu",
+        "Yue Guan",
+        "Wan-Lu Li",
+        "Lianhui Qin",
+        "Yida Wang",
+        "Yufei Ding"
+      ],
+      "primary_category": "LLM serving systems",
+      "categories": [
+        "LLM serving systems",
+        "multi-agent workflow",
+        "prefix caching"
+      ],
+      "published": "2025-09-18T17:37:00.284+00:00",
+      "link": "https://openreview.net/forum?id=5Iw1nDtYmT",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-tonrhqx6xq",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "MIP against Agent: Malicious Image Patches Hijacking Multimodal OS Agents",
+      "abstract": "Recent advances in operating system (OS) agents have enabled vision-language models (VLMs) to directly control a user’s computer. Unlike conventional VLMs that passively output text, OS agents autonomously perform computer-based tasks in response to a single user prompt. OS agents do so by capturing, parsing, and analysing screenshots and executing low-level actions via application programming interfaces (APIs), such as mouse clicks and keyboard inputs. This direct interaction with the OS significantly raises the stakes, as failures or manipulations can have immediate and tangible consequences. In this work, we uncover a novel attack vector against these OS agents: Malicious Image Patches (MIPs), adversarially perturbed screen regions that, when captured by an OS agent, induce it to perform harmful actions by exploiting specific APIs. For instance, a MIP can be embedded in a desktop wallpaper or shared on social media to cause an OS agent to exfiltrate sensitive user data. We show that MIPs generalise across user prompts and screen configurations, and that they can hijack multiple OS agents even during the execution of benign instructions. These findings expose critical security vulnerabilities in OS agents that have to be carefully addressed before their widespread deployment.",
+      "authors": [
+        "Lukas Aichberger",
+        "Alasdair Paren",
+        "Guohao Li",
+        "Philip Torr",
+        "Yarin Gal",
+        "Adel Bibi"
+      ],
+      "primary_category": "OS",
+      "categories": [
+        "OS",
+        "agents",
+        "LLM",
+        "VLM",
+        "api",
+        "tool use",
+        "adversarial attack",
+        "adversarial images",
+        "malicious image patches",
+        "MIP",
+        "robustness",
+        "safety",
+        "security",
+        "trustworthiness"
+      ],
+      "published": "2025-09-18T17:32:33.832+00:00",
+      "link": "https://openreview.net/forum?id=ToNRHqX6xq",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-l0xzpxt3le",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Multi-Agent Collaboration via Evolving Orchestration",
+      "abstract": "Large language models (LLMs) have achieved remarkable results across diverse downstream tasks, but their monolithic nature restricts scalability and efficiency in complex problem-solving. While recent research explores multi-agent collaboration among LLMs, most approaches rely on static organizational structures that struggle to adapt as task complexity and agent numbers grow, resulting in coordination overhead and inefficiencies. To this end, we propose a puppeteer-style paradigm for LLM-based multi-agent collaboration, where a centralized orchestrator (\"puppeteer\") dynamically directs agents (\"puppets\") in response to evolving task states. This orchestrator is trained via reinforcement learning to adaptively sequence and prioritize agents, enabling flexible and evolvable collective reasoning. Experiments on closed- and open-domain scenarios show that this method achieves superior performance with reduced computational costs. Analyses further reveal that the key improvements consistently stem from the emergence of more compact, cyclic reasoning structures under the orchestrator’s evolution. Our code is available at https://github.com/OpenBMB/ChatDev/tree/puppeteer.",
+      "authors": [
+        "Yufan Dang",
+        "Chen Qian",
+        "Xueheng Luo",
+        "Jingru Fan",
+        "Zihao Xie",
+        "Ruijie Shi",
+        "Weize Chen",
+        "Cheng Yang",
+        "Xiaoyin Che",
+        "Ye Tian",
+        "Xuantang Xiong",
+        "Lei Han",
+        "Zhiyuan Liu",
+        "Maosong Sun"
+      ],
+      "primary_category": "Large Language Model",
+      "categories": [
+        "Large Language Model",
+        "Autonomous Agent",
+        "Multi-Agent Collaboration",
+        "Evolving Orchestration"
+      ],
+      "published": "2025-09-18T17:28:53.187+00:00",
+      "link": "https://openreview.net/forum?id=L0xZPXT3le",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-ygoytgjurf",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "KVCOMM: Online Cross-context KV-cache Communication for Efficient LLM-based Multi-agent Systems",
+      "abstract": "Multi-agent large language model (LLM) systems are increasingly adopted for complex language processing tasks that require communication and coordination among agents. However, these systems often suffer substantial overhead from repeated reprocessing of overlapping contexts across agents. In typical pipelines, once an agent receives a message from its predecessor, the full context-including prior turns-must be reprocessed from scratch, leading to inefficient processing. While key-value (KV) caching is an effective solution for avoiding redundant computation in single-agent settings where prefixes remain unchanged, it cannot be directly reused in multi-agent scenarios due to diverging prefixes introduced by agent-specific context extensions. We identify that the core challenge lies in the offset variance of KV-caches across agents. To address this, we propose **KVCOMM**, a training-free framework that enables efficient prefilling in multi-agent inference by reusing KV-caches and aligning cache offsets of overlapping contexts under diverse prefix contexts. KVCOMM estimates and adjusts KV-caches for shared content by referencing a pool of cached examples—termed *anchors*—that store observed cache deviations under varying prefixes. The anchor pool is maintained and updated online, allowing dynamic adaptation to distinct user requests and context structures. KVCOMM achieves over 70% reuse rate across diverse multi- agent workloads, including retrieval-augmented generation, math reasoning, and collaborative coding tasks, all without quality degradation. Particularly, when each fully-connected agent receives 1K input tokens with 512 prefix tokens and 512 output tokens under a five-agent setting, KVCOMM achieves up to 7.8× speedup compared to the standard prefill pipeline, reducing TTFT from ∼430ms to ∼55ms. Code is available at https://github.com/FastMAS/KVCOMM.",
+      "authors": [
+        "Hancheng Ye",
+        "Zhengqi Gao",
+        "Mingyuan Ma",
+        "Qinsi Wang",
+        "Yuzhe Fu",
+        "Ming-Yu Chung",
+        "Yueqian Lin",
+        "Zhijian Liu",
+        "Jianyi Zhang",
+        "Danyang Zhuo",
+        "Yiran Chen"
+      ],
+      "primary_category": "LLM-based Multi-agent System; KV-cache reuse; Multi-context Agent Communication",
+      "categories": [
+        "LLM-based Multi-agent System; KV-cache reuse; Multi-context Agent Communication"
+      ],
+      "published": "2025-09-18T17:28:40.93+00:00",
+      "link": "https://openreview.net/forum?id=yGOytgjurF",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-fyw1pkawwj",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "STRATUS: A Multi-agent System for Autonomous Reliability Engineering of Modern Clouds",
+      "abstract": "In cloud-scale systems, failures are the norm. A distributed computing cluster exhibits hundreds of machine failures and thousands of disk failures; software bugs and misconfigurations are reported to be more frequent. The demand for autonomous, AI-driven reliability engineering continues to grow, as existing human-in-the-loop practices can hardly keep up with the scale of modern clouds. This paper presents STRATUS, an LLM-based multi-agent system for realizing autonomous Site Reliability Engineering (SRE) of cloud services. STRATUS consists of multiple specialized agents (e.g., for failure detection, diagnosis, mitigation), organized in a state machine to assist system-level safety reasoning and enforcement. We formalize a key safety specification of agentic SRE systems like STRATUS, termed Transactional No-Regression (TNR), which enables safe exploration and iteration. We show that TNR can effectively improve autonomous failure mitigation. STRATUS significantly outperforms state-of-the-art SRE agents in terms of success rate of failure mitigation problems in AIOpsLab and ITBench (two SRE benchmark suites), by at least 1.5 times across various models. STRATUS shows a promising path toward practical deployment of agentic systems for cloud reliability.",
+      "authors": [
+        "Yinfang Chen",
+        "Jiaqi Pan",
+        "Jackson Clark",
+        "Yiming Su",
+        "Noah Zheutlin",
+        "Bhavya Bhavya",
+        "Rohan R. Arora",
+        "Yu Deng",
+        "Saurabh Jha",
+        "Tianyin Xu"
+      ],
+      "primary_category": "Agentic AI",
+      "categories": [
+        "Agentic AI",
+        "Large Language Model",
+        "System Reliability"
+      ],
+      "published": "2025-09-18T17:41:08.585+00:00",
+      "link": "https://openreview.net/forum?id=fYW1PKawwJ",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-cqxlcva9u7",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "HyGen: Efficient LLM Serving via Elastic Online-Offline Request Co-location",
+      "abstract": "Large language models (LLMs) have facilitated a wide range of applications with distinct service-level objectives (SLOs), from latency-sensitive online tasks like interactive chatbots to throughput-oriented offline workloads like data synthesis. The existing deployment model, which dedicates machines to each workload, simplifies SLO management but often leads to poor resource utilization. This paper introduces HyGen, an interference-aware LLM serving system that enables efficient co-location of online and offline workloads while preserving SLOs. HyGen incorporates two key innovations: (1) performance control mechanisms, including a latency predictor to estimate batch execution time and an SLO-aware profiler to quantify latency interference, and (2) SLO-aware offline scheduling policies that maximize serving throughput and prevent starvation. Our evaluation on production workloads shows that HyGen achieves up to 3.9-5.8× throughput gains over online and hybrid serving baselines, while ensuring latency SLOs. The code of HyGen is publicly available at https://github.com/UIUC-MLSys/HyGen.",
+      "authors": [
+        "Ting Sun",
+        "Penghan Wang",
+        "Fan Lai"
+      ],
+      "primary_category": "LLM Inference",
+      "categories": [
+        "LLM Inference",
+        "Request Scheduling",
+        "Machine Learning Systems"
+      ],
+      "published": "2025-09-18T17:37:16.98+00:00",
+      "link": "https://openreview.net/forum?id=cQxLCVa9u7",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-6j9xj9pbjm",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "GUARDIAN: Safeguarding LLM Multi-Agent Collaborations with Temporal Graph Modeling",
+      "abstract": "The emergence of large language models (LLMs) enables the development of intelligent agents capable of engaging in complex and multi-turn dialogues. However, multi-agent collaboration faces critical safety challenges, such as hallucination amplification and error injection and propagation. This paper presents GUARDIAN, a unified method for detecting and mitigating multiple safety concerns in GUARDing Intelligent Agent collaboratioNs. By modeling the multi-agent collaboration process as a discrete-time temporal attributed graph, GUARDIAN explicitly captures the propagation dynamics of hallucinations and errors. The unsupervised encoder-decoder architecture incorporating an incremental training paradigm learns to reconstruct node attributes and graph structures from latent embeddings, enabling the identification of anomalous nodes and edges with unparalleled precision. Moreover, we introduce a graph abstraction mechanism based on the Information Bottleneck Theory, which compresses temporal interaction graphs while preserving essential patterns. Extensive experiments demonstrate GUARDIAN's effectiveness in safeguarding LLM multi-agent collaborations against diverse safety vulnerabilities, achieving state-of-the-art accuracy with efficient resource utilization. The code is available at https://github.com/JialongZhou666/GUARDIAN.",
+      "authors": [
+        "Jialong Zhou",
+        "Lichao Wang",
+        "Xiao Yang"
+      ],
+      "primary_category": "LLM-based agent",
+      "categories": [
+        "LLM-based agent",
+        "defense",
+        "safety"
+      ],
+      "published": "2025-09-18T17:32:39.324+00:00",
+      "link": "https://openreview.net/forum?id=6j9xJ9pBjm",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-4qvlkwgg3s",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "SpecEdge: Scalable Edge-Assisted Serving Framework for Interactive LLMs",
+      "abstract": "Large language models (LLMs) power many modern applications, but serving them at scale remains costly and resource-intensive. Current server-centric systems overlook consumer-grade GPUs at the edge. We introduce SpecEdge, an edge-assisted inference framework that splits LLM workloads between edge and server GPUs using a speculative decoding scheme, exchanging only token outputs over the network. SpecEdge employs proactive edge drafting to overlap edge token creation with server verification and pipeline-aware scheduling that interleaves multiple user requests to increase server-side throughput. Experiments show SpecEdge enhances overall cost efficiency by **1.91×** through achieving **2.22×** server throughput, and reduces inter token latency by **11.24\\%** compared to a server-only baseline, introducing a scalable, cost-effective paradigm for LLM serving. The code is available at https://github.com/kaist-ina/specedge",
+      "authors": [
+        "Jinwoo Park",
+        "Seunggeun Cho",
+        "Dongsu Han"
+      ],
+      "primary_category": "Machine Learning Systems",
+      "categories": [
+        "Machine Learning Systems",
+        "LLM Serving",
+        "Split Computing",
+        "Speculative Decoding"
+      ],
+      "published": "2025-09-18T17:35:37.792+00:00",
+      "link": "https://openreview.net/forum?id=4QVLKwgg3S",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-mbj46gd1ct",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "OWL: Optimized Workforce Learning for General Multi-Agent Assistance in Real-World Task Automation",
+      "abstract": "Large Language Model (LLM)-based multi-agent systems show promise for automating real-world tasks but struggle to transfer across domains due to their domain-specific nature.\nCurrent approaches face two critical shortcomings: they require complete architectural redesign and full retraining of all components when applied to new domains.\nWe introduce **Workforce**, a hierarchical multi-agent framework that decouples strategic planning from specialized execution through a modular architecture comprising:\n*(i)* a *domain-agnostic* **Planner** for task decomposition,\n*(ii)* a **Coordinator** for subtask management, and\n*(iii)* specialized **Workers** with *domain-specific* tool-calling capabilities.\nThis decoupling enables cross-domain transferability during both inference and training phases:\nDuring inference, Workforce seamlessly adapts to new domains by adding or modifying worker agents;\nFor training, we introduce **Optimized Workforce Learning (OWL)**, which improves generalization across domains by optimizing a domain-agnostic planner with reinforcement learning from real-world feedback.\nTo validate our approach, we evaluate Workforce on the GAIA benchmark, covering various realistic, multi-domain agentic tasks.\nExperimental results demonstrate Workforce achieves open-source state-of-the-art performance (**69.70%**), outperforming commercial systems like OpenAI's Deep Research by **2.34%**.\nMore notably, our OWL-trained 32B model achieves **52.73%** accuracy (**+16.37%**) and demonstrates performance comparable to GPT-4o on challenging tasks.\nTo summarize, by enabling scalable generalization and modular domain transfer, our work establishes a foundation for the next generation of general-purpose AI assistants.\n\n*Our code is available at [Anonymous URL](https://anonymous.4open.science/r/annonymous-owl/), and our data is available at [Anonymous URL](https://huggingface.co/anonymous21016).*",
+      "authors": [
+        "Mengkang Hu",
+        "Yuhang Zhou",
+        "Wendong Fan",
+        "Yuzhou Nie",
+        "Ziyu Ye",
+        "Bowei Xia",
+        "Tao Sun",
+        "Zhaoxuan Jin",
+        "Yingru Li",
+        "Zeyu Zhang",
+        "Yifeng Wang",
+        "Qianshuo Ye",
+        "Bernard Ghanem",
+        "Ping Luo",
+        "Guohao Li"
+      ],
+      "primary_category": "Large Language Model",
+      "categories": [
+        "Large Language Model",
+        "LLM-based Agent",
+        "Multi-Agent"
+      ],
+      "published": "2025-09-18T17:41:39.397+00:00",
+      "link": "https://openreview.net/forum?id=MBJ46gd1CT",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-mlu9kqdzus",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "AgentBreeder: Mitigating the AI Safety Risks of Multi-Agent Scaffolds via Self-Improvement",
+      "abstract": "Scaffolding Large Language Models (LLMs) into multi-agent systems often improves performance on complex tasks, but the safety impact of such scaffolds has not been thoroughly explored. We introduce AgentBreeder, a framework for multi-objective self-improving evolutionary search over scaffolds. We evaluate discovered scaffolds on widely recognized reasoning, mathematics, and safety benchmarks and compare them with popular baselines. In \"blue\" mode, we see a 79.4% average uplift in safety benchmark performance while maintaining or improving capability scores. In \"red\" mode, we find adversarially weak scaffolds emerging concurrently with capability optimization. Our work demonstrates the risks of multi-agent scaffolding and provides a framework for mitigating them. Code is available at \\url{https://github.com/jrosseruk/AgentBreeder}.",
+      "authors": [
+        "J Rosser",
+        "Jakob Nicolaus Foerster"
+      ],
+      "primary_category": "AI Safety",
+      "categories": [
+        "AI Safety",
+        "Multi-Agent Systems",
+        "LLMs",
+        "Large Language Models",
+        "Jailbreaking",
+        "Agent Scaffolds"
+      ],
+      "published": "2025-09-18T17:33:43.154+00:00",
+      "link": "https://openreview.net/forum?id=mlU9KqdZUS",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-lsrpjkynu2",
+      "source": "NeurIPS-2025-Rejected-Public",
+      "title": "Scorpio: Serving the Right Requests at the Right Time for Heterogeneous SLOs in LLM Inference",
+      "abstract": "Existing Large Language Model (LLM) serving systems prioritize maximum throughput. They often neglect Service Level Objectives (SLOs) such as Time to First Token (TTFT) and Time Per Output Token (TPOT), which leads to suboptimal SLO attainment. This paper introduces SCORPIO, an SLO-oriented LLM serving system designed to maximize system goodput and SLO attainment for workloads with heterogeneous SLOs. Our core insight is to exploit SLO heterogeneity for adaptive scheduling across admission control, queue management, and batch selection. SCORPIO features a TTFT Guard, which employs least-deadline-first reordering and rejects unattainable requests, and a TPOT Guard, which utilizes a VBS-based admission control and a novel credit-based batching mechanism. Both guards are supported by a predictive module. Evaluations demonstrate that SCORPIO improves system goodput by up to 14.4X and SLO adherence by up to 46.5% compared to state-of-the-art baselines.",
+      "authors": [
+        "Yinghao Tang",
+        "Tingfeng Lan",
+        "Xiuqi Huang",
+        "Hui Lu",
+        "Wei Chen"
+      ],
+      "primary_category": "Machine Learning System; Large Language Model; Service Level Objectives",
+      "categories": [
+        "Machine Learning System; Large Language Model; Service Level Objectives"
+      ],
+      "published": "2025-05-09T17:53:24.751+00:00",
+      "link": "https://openreview.net/forum?id=LSrpJkynU2",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-xbmjxb6f4w",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "CTRL-ALT-DECEIT Sabotage Evaluations for Automated AI R&D",
+      "abstract": "AI systems are increasingly able to autonomously conduct realistic software engineering tasks, and may soon be deployed to automate machine learning (ML) R\\&D itself. Frontier AI systems may be deployed in safety-critical settings, including to help ensure the safety of future systems. Unfortunately, frontier and future systems may not be sufficiently trustworthy, and there is evidence that these systems may even be misaligned with their developers or users. Therefore, we investigate the capabilities of AI agents to act against the interests of their users when conducting ML engineering, by sabotaging ML models, sandbagging their performance, and subverting oversight mechanisms. First, we extend MLE-Bench, a benchmark for realistic ML tasks, with code-sabotage tasks such as implanting backdoors and purposefully causing generalisation failures. Frontier agents make meaningful progress on our sabotage tasks. In addition, we study agent capabilities to sandbag on MLE-Bench. Agents can calibrate their performance to specified target levels below their actual capability. To mitigate sabotage, we use LM monitors to detect suspicious agent behaviour, and we measure model capability to sabotage and sandbag without being detected by these monitors. Overall, monitors are capable at detecting code-sabotage attempts but our results suggest that detecting sandbagging is more difficult. Additionally, aggregating multiple monitor predictions works well, but monitoring may not be sufficiently reliable to mitigate sabotage in high-stakes domains. Our benchmark is implemented in the UK AISI’s Inspect framework and we make our code publicly available.",
+      "authors": [
+        "Francis Rhys Ward",
+        "Teun van der Weij",
+        "Hanna Gábor",
+        "Sam Martin",
+        "Raja Mehta Moreno",
+        "Harel Lidar",
+        "Louis Makower",
+        "Thomas Jodrell",
+        "Lauren Robson"
+      ],
+      "primary_category": "Sabotage Evaluations",
+      "categories": [
+        "Sabotage Evaluations",
+        "Sandbagging",
+        "AI Control",
+        "AI Safety",
+        "AI Alignment",
+        "Dangerous Capability Evals"
+      ],
+      "published": "2025-09-18T17:43:02.069+00:00",
+      "link": "https://openreview.net/forum?id=XBMjXb6f4w",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-fxcy8tvqho",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "SimWorld: An Open-ended Simulator for Agents in Physical and Social Worlds",
+      "abstract": "While LLM/VLM-powered AI agents have advanced rapidly in math, coding, and computer use, their applications in complex physical and social environments remain challenging. Building agents that can survive and thrive in the real world (e.g., by autonomously earning income) requires massive-scale interaction, reasoning, training, and evaluation across diverse scenarios. However, existing world simulators for such development fall short: they often rely on limited hand-crafted environments, simulate simplified game-like physics and social rules, and lack native support for LLM/VLM agents. We introduce SimWorld, a new simulator built on Unreal Engine 5, designed for developing and evaluating LLM/VLM agents in rich, real-world-like settings. SimWorld offers three core capabilities: (1) realistic, open-ended world simulation, including accurate physical and social dynamics and language-driven procedural environment generation; (2) rich interface for LLM/VLM agents, with multi-modal world inputs/feedback and open-vocabulary action outputs at varying levels of abstraction; and (3) diverse physical and social reasoning scenarios that are easily customizable by users. We demonstrate SimWorld by deploying frontier LLM agents (e.g., Gemini-2.5-Flash, Claude-3.5, GPT-4o, and DeepSeek-Prover-V2) on both short-horizon navigation tasks requiring grounded re-planning, and long-horizon multi-agent food delivery tasks involving strategic cooperation and competition. The results reveal distinct reasoning patterns and limitations across models. We open-source SimWorld and hope it becomes a foundational platform for advancing real-world agent intelligence across disciplines. Please refer to the project website for the most up-to-date information: http://simworld.org/.",
+      "authors": [
+        "Xiaokang Ye",
+        "Jiawei Ren",
+        "Yan Zhuang",
+        "Xuhong He",
+        "Yiming Liang",
+        "Yiqing Yang",
+        "Mrinaal Dogra",
+        "Xianrui Zhong",
+        "Eric Liu",
+        "Kevin Benavente",
+        "Rajiv Mandya Nagaraju",
+        "Dhruv Vivek Sharma",
+        "Ziqiao Ma",
+        "Tianmin Shu",
+        "Zhiting Hu",
+        "Lianhui Qin"
+      ],
+      "primary_category": "Multi-Agent Simulator",
+      "categories": [
+        "Multi-Agent Simulator",
+        "Real World Agent",
+        "Social Simulation",
+        "Physical Simulation"
+      ],
+      "published": "2025-09-18T17:39:41.241+00:00",
+      "link": "https://openreview.net/forum?id=FxCy8TvQHO",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-zyez5kqtdo",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Heterogeneous Swarms: Jointly Optimizing Model Roles and Weights for Multi-LLM Systems",
+      "abstract": "We propose Heterogeneous Swarms, an algorithm to design multi-LLM systems by jointly optimizing model roles and weights. We represent multi-LLM systems as directed acyclic graphs (DAGs) of LLMs with topological message passing for collaborative generation. Given a pool of LLM experts and a utility function, Heterogeneous Swarms employs two iterative steps: role-step and weight-step. For role-step, we interpret model roles as learning a DAG that specifies the flow of inputs and outputs between LLMs. Starting from a swarm of random continuous adjacency matrices, we decode them into discrete DAGs, call the LLMs in topological order, evaluate on the utility function (e.g. accuracy on a task), and optimize the adjacency matrices with particle swarm optimization based on the utility score. For weight-step, we assess the contribution of individual LLMs in the multi-LLM systems and optimize model weights with swarm intelligence. We propose JFK-score to quantify the individual contribution of each LLM in the best-found DAG of the role-step, then optimize model weights with particle swarm optimization based on the JFK-score. Experiments demonstrate that Heterogeneous Swarms outperforms 17 role- and/or weight-based baselines by 18.5% on average across 12 tasks. Further analysis reveals that Heterogeneous Swarms discovers multi-LLM systems with heterogeneous model roles and substantial collaborative gains, and benefits from the diversity of language models.",
+      "authors": [
+        "Shangbin Feng",
+        "Zifeng Wang",
+        "Palash Goyal",
+        "Yike Wang",
+        "Weijia Shi",
+        "Huang Xia",
+        "Hamid Palangi",
+        "Luke Zettlemoyer",
+        "Yulia Tsvetkov",
+        "Chen-Yu Lee",
+        "Tomas Pfister"
+      ],
+      "primary_category": "model collaboration",
+      "categories": [
+        "model collaboration",
+        "multi-LLM systems"
+      ],
+      "published": "2025-09-18T17:39:22.537+00:00",
+      "link": "https://openreview.net/forum?id=zYEZ5KqtDO",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-ezfdhprhzm",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "FlashMoE: Fast Distributed MoE in a Single Kernel",
+      "abstract": "The computational sparsity of Mixture-of-Experts (MoE) models enables sub-linear growth in compute cost as model size increases, thus offering a scalable path to training massive neural networks. However, existing implementations suffer from low GPU utilization, significant latency overhead, and a fundamental inability to leverage task locality, primarily due to CPU-managed scheduling, host-initiated communication, and frequent kernel launches. To overcome these limitations, we develop FlashMoE, a fully GPU-resident MoE operator that fuses expert computation and inter-GPU communication into a single persistent GPU kernel. FlashMoE enables fine-grained pipelining of dispatch, compute, and combine phases, eliminating launch overheads and reducing idle gaps. Unlike existing work, FlashMoE obviates bulk-synchronous collectives for one-sided, device-initiated, inter-GPU (R)DMA transfers, thus unlocking payload efficiency, where we eliminate bloated or redundant network payloads in sparsely activated layers. When evaluated on an 8-H100 GPU node with MoE models having up to 128 experts and 16K token sequences, FlashMoE achieves up to 9× higher GPU utilization, 6× lower latency, 5.7× higher throughput, and 4× better overlap efficiency compared to state-of-the-art baselines—despite using FP32 while baselines use FP16. FlashMoE shows that principled GPU kernel-hardware co-design is key to unlocking the performance ceiling of large-scale distributed ML. We provide code at https://github.com/osayamenja/FlashMoE.",
+      "authors": [
+        "Osayamen Jonathan Aimuyo",
+        "Byungsoo Oh",
+        "Rachee Singh"
+      ],
+      "primary_category": "Distributed Machine Learning",
+      "categories": [
+        "Distributed Machine Learning",
+        "Kernel Fusion",
+        "Mixture-of-Experts"
+      ],
+      "published": "2025-09-18T17:45:19.122+00:00",
+      "link": "https://openreview.net/forum?id=EZfDHprhZM",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-ex0m4qmyvn",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "ClusterFusion: Expanding Operator Fusion Scope for LLM Inference via Cluster-Level Collective Primitive",
+      "abstract": "Large language model (LLM) decoding suffers from high latency due to fragmented execution across operators and heavy reliance on off-chip memory for data exchange and reduction. \nThis execution model limits opportunities for fusion and incurs significant memory traffic and kernel launch overhead.\nWhile modern architectures such as NVIDIA Hopper provide distributed shared memory and low-latency intra-cluster interconnects, they expose only low-level data movement instructions, lacking structured abstractions for collective on-chip communication.\nTo bridge this software-hardware gap, we introduce two cluster-level communication primitives, ClusterReduce and ClusterGather, which abstract common communication patterns and enable structured, high-speed data exchange and reduction between thread blocks within a cluster, allowing intermediate results to be on-chip without involving off-chip memory.\nBuilding on these abstractions, we design ClusterFusion, an execution framework that schedules communication and computation jointly to expand operator fusion scope by composing decoding stages such as QKV Projection, Attention, and Output Projection into a single fused kernels.\nEvaluations on H100 GPUs show that ClusterFusion outperforms state-of-the-art inference frameworks by $1.61\\times$ on average in end-to-end latency across different models and configurations.",
+      "authors": [
+        "Xinhao Luo",
+        "Zihan Liu",
+        "Yangjie Zhou",
+        "Shihan Fang",
+        "Ziyu Huang",
+        "Yu Feng",
+        "Chen Zhang",
+        "Shixuan Sun",
+        "Zhenzhe Zheng",
+        "Jingwen Leng",
+        "Minyi Guo"
+      ],
+      "primary_category": "Operator Fusion",
+      "categories": [
+        "Operator Fusion",
+        "LLM Inference",
+        "Inter-core Interconnect"
+      ],
+      "published": "2025-09-18T17:41:55.361+00:00",
+      "link": "https://openreview.net/forum?id=eX0m4qMYVN",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-pbvlbi6c30",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "FlowMoE: A Scalable Pipeline Scheduling Framework for Distributed Mixture-of-Experts Training",
+      "abstract": "The parameter size of modern large language models (LLMs) can be scaled up to the trillion-level via the sparsely-activated Mixture-of-Experts (MoE) technique to avoid excessive increase of the computational costs. To further improve training efficiency, pipelining computation and communication has become a promising solution for distributed MoE training. However, existing work primarily focuses on scheduling tasks within the MoE layer, such as expert computing and all-to-all (A2A) communication, while neglecting other key operations including multi-head attention (MHA) computing, gating, and all-reduce communication. In this paper, we propose FlowMoE, a scalable framework for scheduling multi-type task pipelines. First, FlowMoE constructs a unified pipeline to consistently scheduling MHA computing, gating, expert computing, and A2A communication. Second, FlowMoE introduces a tensor chunk-based priority scheduling mechanism to overlap the all-reduce communication with all computing tasks. We implement FlowMoE as an adaptive and generic framework atop PyTorch. Extensive experiments with 675 typical MoE layers and four real-world MoE models across two GPU clusters demonstrate that our proposed FlowMoE framework outperforms state-of-the-art MoE training frameworks, reducing training time by14%-57%, energy consumption by 10%-39%, and memory usage by 7%-32%. FlowMoE’s code is anonymously available at https://anonymous.4open.science/r/FlowMoE.",
+      "authors": [
+        "Yunqi Gao",
+        "Bing Hu",
+        "Mahdi Boloursaz Mashhadi",
+        "A-Long Jin",
+        "Yanfeng Zhang",
+        "Pei Xiao",
+        "Rahim Tafazolli",
+        "Merouane Abdelkader DEBBAH"
+      ],
+      "primary_category": "Distributed Deep Learning",
+      "categories": [
+        "Distributed Deep Learning",
+        "Large Language Model",
+        "Mixture-of-Experts",
+        "Pipeline Scheduling"
+      ],
+      "published": "2025-09-18T17:33:45.894+00:00",
+      "link": "https://openreview.net/forum?id=PBvlBI6c30",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-dfehiytz2w",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "FedEL: Federated Elastic Learning for Heterogeneous Devices",
+      "abstract": "Federated learning (FL) enables distributed devices to collaboratively train machine learning (ML) models while maintaining data privacy. However, the heterogeneous hardware capabilities of participating devices often result in significant training delays, as straggler clients with limited resources prolong the aggregation process. Existing solutions such as client selection, asynchronous FL, and partial training partially address these challenges but encounter issues such as reduced accuracy, stale updates, and compromised model performance due to inconsistent training contributions.\nTo overcome these limitations, we propose FedEL, a federated elastic learning framework that enhances training efficiency while maintaining model accuracy. FedEL introduces a novel window-based training process, sliding the window to locate the training part of the model\nand dynamically selecting important tensors for training within a coordinated runtime budget. This approach ensures progressive and balanced training across all clients, including stragglers. Additionally, FedEL employs a tensor importance adjustment module, harmonizing local and global tensor importance to mitigate biases caused by data heterogeneity. The experiment results shows that FedEL achieves up to 3.87× improvement in time-to-accuracy compared to baselines while maintaining or exceeding final test accuracy.",
+      "authors": [
+        "Letian Zhang",
+        "Bo Chen",
+        "Jieming Bian",
+        "Lei Wang",
+        "Jie Xu"
+      ],
+      "primary_category": "Federated Learning",
+      "categories": [
+        "Federated Learning",
+        "Heterogeneous Devices"
+      ],
+      "published": "2025-09-18T17:33:24.152+00:00",
+      "link": "https://openreview.net/forum?id=DfeHiyTz2W",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-x51kynijag",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "TRAP: Targeted Redirecting of Agentic Preferences",
+      "abstract": "Autonomous agentic AI systems powered by vision-language models (VLMs) are rapidly advancing toward real-world deployment, yet their cross-modal reasoning capabilities introduce new attack surfaces for adversarial manipulation that exploit semantic reasoning across modalities. Existing adversarial attacks typically rely on visible pixel perturbations or require privileged model or environment access, making them impractical for stealthy, real-world exploitation. We introduce TRAP, a novel generative adversarial framework that manipulates\nthe agent’s decision-making using diffusion-based semantic injections into the vision-language embedding space. Our method combines negative prompt–based degradation with positive semantic optimization, guided by a Siamese semantic network and layout-aware spatial masking. Without requiring access to model internals, TRAP produces visually natural images yet induces consistent selection\nbiases in agentic AI systems. We evaluate TRAP on the Microsoft Common Objects in Context (COCO) dataset, building multi-candidate decision scenarios. Across these scenarios, TRAP consistently induces decision-level preference redirection on leading models, including LLaVA-34B, Gemma3, GPT-4o, and Mistral-3.2, significantly outperforming existing baselines such as SPSA, Bandit, and standard diffusion approaches. These findings expose a critical, generalized vulnerability: autonomous agents can be consistently misled through visually subtle, semantically-guided cross-modal manipulations. Overall, our results show the need for defense strategies beyond pixel-level robustness to address semantic vulnerabilities in cross-modal decision-making. The code for TRAP is accessible on GitHub at https://github.com/uiuc-focal-lab/TRAP.",
+      "authors": [
+        "Hangoo Kang",
+        "Jehyeok Yeon",
+        "Gagandeep Singh"
+      ],
+      "primary_category": "Agentic AI",
+      "categories": [
+        "Agentic AI",
+        "Trustworthy Machine Learning",
+        "Multimodal",
+        "Autonomous Decision Making",
+        "Large Language Model (LLM)",
+        "Vision Language Model (VLM))"
+      ],
+      "published": "2025-09-18T17:44:35.205+00:00",
+      "link": "https://openreview.net/forum?id=X51kYnijag",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-zd6vyjmn1s",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "ElasticMM: Efficient Multimodal LLMs Serving with Elastic Multimodal Parallelism",
+      "abstract": "Multimodal large language models (MLLMs) extend LLMs to handle images, videos, and audio by incorporating feature extractors and projection modules. However, these additional components—combined with complex inference pipelines and heterogeneous workloads—introduce significant inference overhead. Therefore, efficiently serving MLLMs remains a major challenge. Current tightly coupled serving architectures struggle to distinguish between mixed request types or adapt parallelism strategies to different inference stages, leading to increased time-to-first-token (TTFT) and poor resource utilization. To address this, we introduce Elastic Multimodal Parallelism (EMP), a new serving paradigm that elastically adapts to resource heterogeneity across request types and inference stages. Building upon EMP, we develop ElasticMM, an MLLM serving system that (1) separates requests into independent modality groups with dynamic resource allocation via a modality-aware load balancer; (2) decouples inference stages and enables parallelism adjustment and adaptive scaling via elastic partition scheduling; and (3) improves inference efficiency through unified multimodal prefix caching and non-blocking encoding. Experiments on diverse real-world datasets show that ElasticMM outperforms state-of-the-art (SOTA) serving systems, reducing TTFT by up to 4.2$\\times$ and achieving 3.2–4.5$\\times$ higher throughput while meeting service-level objectives (SLOs).",
+      "authors": [
+        "Zedong Liu",
+        "Shenggan Cheng",
+        "Guangming Tan",
+        "Yang You",
+        "Dingwen Tao"
+      ],
+      "primary_category": "Hardware and Systems",
+      "categories": [
+        "Hardware and Systems",
+        "Efficient Inference Methods",
+        "Distributed Inference",
+        "Visual Question Answering"
+      ],
+      "published": "2025-09-18T17:34:07.128+00:00",
+      "link": "https://openreview.net/forum?id=Zd6VyjmN1S",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-d6w7win360",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "DynaPipe: Dynamic Layer Redistribution for Efficient Serving of LLMs with Pipeline Parallelism",
+      "abstract": "To accelerate large language model (LLM) inference, pipeline parallelism partitions model layers into sequential stages, each assigned to a different device for concurrent execution. However, this method often suffers from pipeline bubbles caused by imbalanced computation in the tail stage. While upstream stages focus solely on layer-forward operations, the final stage must also handle post-processing tasks like sampling, introducing significant latency. This uneven workload leads to pipeline misalignment, forcing upstream stages to idle and degrading overall performance. Existing frameworks typically distribute layers evenly across stages without accounting for computational load differences. To address this, we propose DynaPipe, a dynamic layer redistribution scheme that adaptively balances computation by predicting execution latency in real time. Moreover, we introduce an asynchronous key-value (KV) cache migration coordinator to enable\nnon-blocking layer redistribution during inference. Experiments on representative LLMs demonstrate that DynaPipe reduces average end-to-end request latency by 8% to 49% across diverse workloads, outperforming state-of-the-art pipeline parallelism systems.",
+      "authors": [
+        "HongXin Xu",
+        "Tianyu Guo",
+        "Xianwei Zhang"
+      ],
+      "primary_category": "Large Language Model",
+      "categories": [
+        "Large Language Model",
+        "Pipeline Parallelism",
+        "KV Cache",
+        "Sample"
+      ],
+      "published": "2025-09-18T17:34:50.985+00:00",
+      "link": "https://openreview.net/forum?id=D6w7wIN360",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-2us2rbe0hv",
+      "source": "NeurIPS-2025-Rejected-Public",
+      "title": "FedLASE: Performance-Balanced System-Heterogeneous FL via Layer-Adaptive Submodel Extraction",
+      "abstract": "Federated Learning (FL) has gained significant attention for its privacy-preserving capabilities in distributed learning environments. However, the inherent system heterogeneity across edge devices brings significant challenges in deploying a unified global model. Although many submodel extraction methods are designed to address these challenges by selecting a subset of parameters from the global model to accommodate client constraints, our experiments show that existing submodel extraction methods exhibit significant performance discrepancies between submodels with different resource levels, limiting the overall performance of the federated learning system. To overcome these limitations, we propose FedLASE -- a novel Layer-Adaptive Submodel Extraction framework that selects important parameters while preserving the structural integrity of the client models, thereby achieving balanced performance across heterogeneous FL clients and improving the convergence. Specifically, our approach quantifies layer importance based on parameter importance and hierarchically extracts critical parameters within each layer while strictly satisfying resource constraints. Theoretically, we rigorously analyze the convergence of FedLASE and investigate the influence of system heterogeneity on its performance. Extensive experiments demonstrate the superiority of FedLASE over the state-of-the-art methods and its robustness across various system-heterogeneous scenarios.",
+      "authors": [
+        "Qing Hu",
+        "Tianchi Liao",
+        "WU Shuyi",
+        "Zibin Zheng",
+        "Chuan Chen"
+      ],
+      "primary_category": "Federated learning; system heterogeneity; submodel extraction",
+      "categories": [
+        "Federated learning; system heterogeneity; submodel extraction"
+      ],
+      "published": "2025-04-21T05:54:32.49+00:00",
+      "link": "https://openreview.net/forum?id=2uS2RBE0hv",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-xwyl9ki32t",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Efficient Pre-Training of LLMs via Topology-Aware Communication Alignment on More Than 9600 GPUs",
+      "abstract": "The scaling law for large language models (LLMs) depicts that the path towards machine intelligence necessitates training at large scale. Thus, companies continuously build large-scale GPU clusters, and launch training jobs that span over thousands of computing nodes. However, LLM pre-training presents unique challenges due to its complex communication patterns, where GPUs exchange data in sparse yet high-volume bursts within specific groups. Inefficient resource scheduling exacerbates bandwidth contention, leading to suboptimal training performance. This paper presents Arnold, a scheduling system summarizing our experience to effectively align LLM communication patterns to data center topology at scale. In-depth characteristic study is performed to identify the impact of physical network topology to LLM pre-training jobs. Based on the insights, we develop a scheduling algorithm to effectively align communication patterns to physical network topology in data centers. Through simulation experiments, we show the effectiveness of our algorithm in reducing the maximum spread of communication groups by up to $1.67$x. In production training, our scheduling system improves the end-to-end performance by $10.6\\%$ when training with more than $9600$ Hopper GPUs, a significant improvement for our training pipeline.",
+      "authors": [
+        "Guoliang HE",
+        "YOUHE JIANG",
+        "Wencong Xiao",
+        "Jiang Kaihua",
+        "Shuguang Wang",
+        "Jun Wang",
+        "Du Zixian",
+        "Zhuo Jiang",
+        "Xinlei Zhang",
+        "Binhang Yuan",
+        "Eiko Yoneki"
+      ],
+      "primary_category": "Large Language Models Training",
+      "categories": [
+        "Large Language Models Training",
+        "Data Center Topology",
+        "Resource Scheduling"
+      ],
+      "published": "2025-09-18T17:37:39.13+00:00",
+      "link": "https://openreview.net/forum?id=xWYL9Ki32T",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-x3qnrhfhx0",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Mixtures of Subspaces for Bandwidth Efficient Context Parallel Training",
+      "abstract": "Pretraining language models with extended context windows enhances their ability to leverage rich information during generation. Existing methods split input sequences into chunks, broadcast them across multiple devices, and compute attention block by block which incurs significant communication overhead. While feasible in high-speed clusters, these methods are impractical for decentralized training over low-bandwidth connections. We propose a compression method for communication-efficient context parallelism in decentralized settings, achieving a remarkable compression rate of over 95% with negligible overhead and no loss in convergence. Our key insight is to exploit the intrinsic low-rank structure of activation outputs by dynamically constraining them to learned mixtures of subspaces via efficient reparameterizations. We demonstrate scaling billion-parameter decentralized models to context lengths exceeding 100K tokens on networks as slow as 300Mbps, matching the wall-clock convergence speed of centralized models on 100Gbps interconnects.",
+      "authors": [
+        "Sameera Ramasinghe",
+        "Thalaiyasingam Ajanthan",
+        "Hadi Mohaghegh Dolatabadi",
+        "Gil Avraham",
+        "Violetta Shevchenko",
+        "Yan Zuo",
+        "Chamin P Hewa Koneputugodage",
+        "Alexander Long"
+      ],
+      "primary_category": "Decentralized training",
+      "categories": [
+        "Decentralized training",
+        "LLMs",
+        "Compressio",
+        "Distributed training"
+      ],
+      "published": "2025-09-18T17:40:21.038+00:00",
+      "link": "https://openreview.net/forum?id=x3qnrhfhX0",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-jv6zoub7bd",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Cost-Efficient LLM Training with Lifetime-Aware Tensor Offloading via GPUDirect Storage",
+      "abstract": "We present the design and implementation of a new lifetime-aware tensor offloading\nframework for GPU memory expansion using low-cost PCIe-based solid-state\ndrives (SSDs). Our framework, TERAIO, is developed explicitly for large language\nmodel (LLM) training with multiple GPUs and multiple SSDs. Its design is driven\nby our observation that the active tensors take only a small fraction (1.7% on\naverage) of allocated GPU memory in each LLM training iteration, the inactive\ntensors are usually large and will not be used for a long period of time, creating\nample opportunities for offloading/prefetching tensors to/from slow SSDs without\nstalling the GPU training process. TERAIO accurately estimates the lifetime (active\nperiod of time in GPU memory) of each tensor with the profiling of the first few\niterations in the training process. With the tensor lifetime analysis, TERAIO will\ngenerate an optimized tensor offloading/prefetching plan and integrate it into the\ncompiled LLM program via PyTorch. TERAIO has a runtime tensor migration\nengine to execute the offloading/prefetching plan via GPUDirect storage, which\nallows direct tensor migration between GPUs and SSDs for alleviating the CPU\nbottleneck and maximizing the SSD bandwidth utilization. In comparison with\nstate-of-the-art studies such as ZeRO-Offload and ZeRO-Infinity, we show that\nTERAIO improves the training performance of various LLMs by 1.47× on average,\nand achieves 80.7% of the ideal performance assuming unlimited GPU memory.",
+      "authors": [
+        "Ziqi Yuan",
+        "Haoyang Zhang",
+        "Yirui Eric Zhou",
+        "Apoorve Mohan",
+        "I-Hsin Chung",
+        "Seetharami Seelam",
+        "Jian Huang"
+      ],
+      "primary_category": "GPU Memory",
+      "categories": [
+        "GPU Memory",
+        "GPUDirect Storage",
+        "Large Language Model",
+        "Offloading",
+        "Cost-Efficient Training",
+        "Solid State Drives"
+      ],
+      "published": "2025-09-18T17:43:22.725+00:00",
+      "link": "https://openreview.net/forum?id=JV6ZOUb7BD",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-k1fbdnwjch",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Heterogeneous Graph Transformers for Simultaneous Mobile Multi-Robot Task Allocation and Scheduling under Temporal Constraints",
+      "abstract": "Coordinating large teams of heterogeneous mobile agents to perform complex tasks efficiently has scalability bottlenecks in feasible and optimal task scheduling, with critical applications in logistics, manufacturing, and disaster response. Existing task allocation and scheduling methods, including heuristics and optimization-based solvers, often fail to scale and overlook inter-task dependencies and agent heterogeneity. We propose a novel Simultaneous Decision-Making model for Heterogeneous Multi-Agent Task Allocation and Scheduling (HM-MATAS), built on a Residual Heterogeneous Graph Transformer with edge and node-level attention. Our model encodes agent capabilities, travel times, and temporospatial constraints into a rich graph representation and is trainable via reinforcement learning. Trained on small-scale problems (10 agents, 20 tasks), our model generalizes effectively to significantly larger scenarios (up to 40 agents and 200 tasks), enabling fast, one-shot task assignment and scheduling. Our simultaneous model outperforms classical heuristics by assigning 164.10\\% more feasible tasks given temporal constraints in 3.83\\% of the time, metaheuristics by 201.54\\% in 0.01\\% of the time and exact solver by 231.73\\% in 0.03\\% of the time, while achieving $20\\times$-to-$250\\times$ speedup from prior graph-based methods across scales.",
+      "authors": [
+        "Batuhan Altundas",
+        "Shengkang Chen",
+        "Shivika Singh",
+        "Shivangi Deo",
+        "Minwoo Cho",
+        "Matthew Craig Gombolay"
+      ],
+      "primary_category": "Task Allocation and Scheduling",
+      "categories": [
+        "Task Allocation and Scheduling",
+        "Multi-Agent Coordination",
+        "Graph Neural Networks"
+      ],
+      "published": "2025-09-18T17:39:41.033+00:00",
+      "link": "https://openreview.net/forum?id=k1fbdnwjCH",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    },
+    {
+      "id": "openreview-neurips-2025-eiojv2epgx",
+      "source": "NeurIPS-2025-Accepted",
+      "title": "Synergistic Tensor and Pipeline Parallelism",
+      "abstract": "In the machine learning system, the hybrid model parallelism combining tensor parallelism (TP) and pipeline parallelism (PP) has become the dominant solution for distributed training of Large Language Models~(LLMs) and Multimodal LLMs (MLLMs). However, TP introduces significant collective communication overheads, while PP suffers from synchronization inefficiencies such as pipeline bubbles. Existing works primarily address these challenges from isolated perspectives, focusing either on overlapping TP communication or on flexible PP scheduling to mitigate pipeline bubbles. In this paper, we propose a new synergistic tensor and pipeline parallelism schedule that simultaneously reduces both types of bubbles. Our proposed schedule decouples the forward and backward passes in PP into fine-grained computation units, which are then braided to form a composite computation sequence. This compositional structure enables near-complete elimination of TP-related bubbles. Building upon this structure, we further design the PP schedule to minimize PP bubbles. Experimental results demonstrate that our approach improves training throughput by up to 12\\% for LLMs and 16\\% for MLLMs compared to existing scheduling methods. Our source code is avaiable at https://github.com/MICLAB-BUPT/STP.",
+      "authors": [
+        "Mengshi Qi",
+        "Jiaxuan Peng",
+        "Jie Zhang",
+        "Juan Zhu",
+        "Yong Li",
+        "Huadong Ma"
+      ],
+      "primary_category": "Distributed System",
+      "categories": [
+        "Distributed System",
+        "Pipeline Parallelism",
+        "Large-Scale Model Training",
+        "LLM",
+        "Machine Learning System"
+      ],
+      "published": "2025-09-18T17:35:03.862+00:00",
+      "link": "https://openreview.net/forum?id=eIojV2epgX",
+      "pdf_url": null,
+      "tags": [
+        "keyword:agents-os",
+        "query:agents-os"
+      ]
+    }
+  ],
+  "queries": [
+    {
+      "type": "intent_query",
+      "tag": "agents-os",
+      "paper_tag": "query:agents-os",
+      "query_text": "How do AI operating systems handle heterogeneous compute resources?",
+      "sim_scores": {
+        "openreview-neurips-2025-5iw1ndtymt": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-neurips-2025-ezfdhprhzm": {
+          "score": 0.015625,
+          "rank": 4
+        },
+        "openreview-neurips-2025-zwhkkspght": {
+          "score": 0.015384615384615385,
+          "rank": 5
+        },
+        "openreview-neurips-2025-xbmjxb6f4w": {
+          "score": 0.015151515151515152,
+          "rank": 6
+        },
+        "openreview-neurips-2025-ex0m4qmyvn": {
+          "score": 0.014925373134328358,
+          "rank": 7
+        },
+        "openreview-neurips-2025-cqxlcva9u7": {
+          "score": 0.014705882352941176,
+          "rank": 8
+        },
+        "openreview-neurips-2025-rmqwt1btxq": {
+          "score": 0.014492753623188406,
+          "rank": 9
+        },
+        "openreview-neurips-2025-fyw1pkawwj": {
+          "score": 0.013888888888888888,
+          "rank": 12
+        },
+        "openreview-neurips-2025-xwyl9ki32t": {
+          "score": 0.0136986301369863,
+          "rank": 13
+        },
+        "openreview-neurips-2025-4qvlkwgg3s": {
+          "score": 0.013513513513513514,
+          "rank": 14
+        },
+        "openreview-neurips-2025-lsrpjkynu2": {
+          "score": 0.013333333333333334,
+          "rank": 15
+        },
+        "openreview-neurips-2025-pbvlbi6c30": {
+          "score": 0.013157894736842105,
+          "rank": 16
+        },
+        "openreview-neurips-2025-d6w7win360": {
+          "score": 0.01282051282051282,
+          "rank": 18
+        },
+        "openreview-neurips-2025-mbj46gd1ct": {
+          "score": 0.0125,
+          "rank": 20
+        },
+        "openreview-neurips-2025-jv6zoub7bd": {
+          "score": 0.012345679012345678,
+          "rank": 21
+        },
+        "openreview-neurips-2025-zyez5kqtdo": {
+          "score": 0.012048192771084338,
+          "rank": 23
+        },
+        "openreview-neurips-2025-zd6vyjmn1s": {
+          "score": 0.011904761904761904,
+          "rank": 24
+        },
+        "openreview-neurips-2025-dfehiytz2w": {
+          "score": 0.011764705882352941,
+          "rank": 25
+        },
+        "openreview-neurips-2025-tonrhqx6xq": {
+          "score": 0.01020408163265306,
+          "rank": 38
+        },
+        "openreview-neurips-2025-2us2rbe0hv": {
+          "score": 0.009174311926605505,
+          "rank": 49
+        }
+      },
+      "ranked": [
+        {
+          "paper_id": "openreview-neurips-2025-lsrpjkynu2",
+          "score": 1.0,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-buytctumya",
+          "score": 1.0,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-zd6vyjmn1s",
+          "score": 0.9586435070306036,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-xwyl9ki32t",
+          "score": 0.9586435070306036,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-1qkuvyymxs",
+          "score": 0.9185999185999183,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ex0m4qmyvn",
+          "score": 0.9185999185999183,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-4qvlkwgg3s",
+          "score": 0.8798076923076922,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-fyw1pkawwj",
+          "score": 0.8798076923076922,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-zyez5kqtdo",
+          "score": 0.8422090729783037,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-gigtog4dna",
+          "score": 0.8422090729783037,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-dfehiytz2w",
+          "score": 0.8057498057498057,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-qldyoo8qly",
+          "score": 0.8057498057498057,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-d6w7win360",
+          "score": 0.7703788748564866,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-cqxlcva9u7",
+          "score": 0.7703788748564866,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-zwhkkspght",
+          "score": 0.73604826546003,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ezfdhprhzm",
+          "score": 0.702712746191007,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-jv6zoub7bd",
+          "score": 0.6703296703296702,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-wryhlha8qi",
+          "score": 0.6388587937883712,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-k1fbdnwjch",
+          "score": 0.608262108262108,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-pbvlbi6c30",
+          "score": 0.578503688092729,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-eiojv2epgx",
+          "score": 0.578503688092729,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-2us2rbe0hv",
+          "score": 0.5495495495495496,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-mbj46gd1ct",
+          "score": 0.5213675213675214,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-xbmjxb6f4w",
+          "score": 0.46719946719946726,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-tonrhqx6xq",
+          "score": 0.4411571334648256,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-x3qnrhfhx0",
+          "score": 0.29792429792429775,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-5iw1ndtymt",
+          "score": 0.2760180995475112,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-cyg3kmfsgm",
+          "score": 0.23371647509578536,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-wbeknrzbpt",
+          "score": 0.21328671328671328,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-rmqwt1btxq",
+          "score": 0.1737891737891738,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-mlu9kqdzus",
+          "score": 0.15469146238377016,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-x51kynijag",
+          "score": 0.09983633387888699,
+          "star_rating": 2
+        },
+        {
+          "paper_id": "openreview-neurips-2025-l0xzpxt3le",
+          "score": 0.0483743061062648,
+          "star_rating": 2
+        },
+        {
+          "paper_id": "openreview-neurips-2025-fxcy8tvqho",
+          "score": 0.0319204604918889,
+          "star_rating": 2
+        }
+      ]
+    },
+    {
+      "type": "intent_query",
+      "tag": "agents-os",
+      "paper_tag": "query:agents-os",
+      "query_text": "How does heterogeneous computing support large model training?",
+      "sim_scores": {
+        "openreview-neurips-2025-dfehiytz2w": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-neurips-2025-2us2rbe0hv": {
+          "score": 0.015625,
+          "rank": 4
+        },
+        "openreview-neurips-2025-x3qnrhfhx0": {
+          "score": 0.014285714285714285,
+          "rank": 10
+        },
+        "openreview-neurips-2025-pbvlbi6c30": {
+          "score": 0.014084507042253521,
+          "rank": 11
+        },
+        "openreview-neurips-2025-jv6zoub7bd": {
+          "score": 0.012195121951219513,
+          "rank": 22
+        },
+        "openreview-neurips-2025-zyez5kqtdo": {
+          "score": 0.012048192771084338,
+          "rank": 23
+        },
+        "openreview-neurips-2025-eiojv2epgx": {
+          "score": 0.010101010101010102,
+          "rank": 39
+        },
+        "openreview-neurips-2025-wbeknrzbpt": {
+          "score": 0.009174311926605505,
+          "rank": 49
+        }
+      },
+      "ranked": [
+        {
+          "paper_id": "openreview-neurips-2025-lsrpjkynu2",
+          "score": 1.0,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-dfehiytz2w",
+          "score": 1.0,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-zyez5kqtdo",
+          "score": 0.9586435070306036,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-wbeknrzbpt",
+          "score": 0.9185999185999183,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-1qkuvyymxs",
+          "score": 0.8798076923076922,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-eiojv2epgx",
+          "score": 0.8798076923076922,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-xwyl9ki32t",
+          "score": 0.8422090729783037,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-buytctumya",
+          "score": 0.8057498057498057,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-jv6zoub7bd",
+          "score": 0.7703788748564866,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-pbvlbi6c30",
+          "score": 0.7703788748564866,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-zd6vyjmn1s",
+          "score": 0.73604826546003,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-x3qnrhfhx0",
+          "score": 0.73604826546003,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-qldyoo8qly",
+          "score": 0.702712746191007,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-4qvlkwgg3s",
+          "score": 0.6703296703296702,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-d6w7win360",
+          "score": 0.6703296703296702,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ex0m4qmyvn",
+          "score": 0.6388587937883712,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-zwhkkspght",
+          "score": 0.608262108262108,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-gigtog4dna",
+          "score": 0.578503688092729,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-cqxlcva9u7",
+          "score": 0.5495495495495496,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ezfdhprhzm",
+          "score": 0.5213675213675214,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-2us2rbe0hv",
+          "score": 0.4411571334648256,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-mbj46gd1ct",
+          "score": 0.32035835650293487,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-rmqwt1btxq",
+          "score": 0.23371647509578536,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-k1fbdnwjch",
+          "score": 0.1737891737891738,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-cyg3kmfsgm",
+          "score": 0.15469146238377016,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-l0xzpxt3le",
+          "score": 0.06517094017094004,
+          "star_rating": 2
+        },
+        {
+          "paper_id": "openreview-neurips-2025-5iw1ndtymt",
+          "score": 0.0483743061062648,
+          "star_rating": 2
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ygoytgjurf",
+          "score": 0.0319204604918889,
+          "star_rating": 2
+        }
+      ]
+    },
+    {
+      "type": "intent_query",
+      "tag": "agents-os",
+      "paper_tag": "query:agents-os",
+      "query_text": "How to design heterogeneous computing infrastructure for intelligent agents?",
+      "sim_scores": {
+        "openreview-neurips-2025-l0xzpxt3le": {
+          "score": 0.015151515151515152,
+          "rank": 6
+        },
+        "openreview-neurips-2025-k1fbdnwjch": {
+          "score": 0.014492753623188406,
+          "rank": 9
+        },
+        "openreview-neurips-2025-5iw1ndtymt": {
+          "score": 0.014084507042253521,
+          "rank": 11
+        },
+        "openreview-neurips-2025-zyez5kqtdo": {
+          "score": 0.013888888888888888,
+          "rank": 12
+        },
+        "openreview-neurips-2025-cyg3kmfsgm": {
+          "score": 0.013513513513513514,
+          "rank": 14
+        },
+        "openreview-neurips-2025-rmqwt1btxq": {
+          "score": 0.013333333333333334,
+          "rank": 15
+        },
+        "openreview-neurips-2025-mbj46gd1ct": {
+          "score": 0.012987012987012988,
+          "rank": 17
+        },
+        "openreview-neurips-2025-mlu9kqdzus": {
+          "score": 0.0125,
+          "rank": 20
+        },
+        "openreview-neurips-2025-6j9xj9pbjm": {
+          "score": 0.012345679012345678,
+          "rank": 21
+        },
+        "openreview-neurips-2025-fyw1pkawwj": {
+          "score": 0.012195121951219513,
+          "rank": 22
+        },
+        "openreview-neurips-2025-ygoytgjurf": {
+          "score": 0.011904761904761904,
+          "rank": 24
+        },
+        "openreview-neurips-2025-fxcy8tvqho": {
+          "score": 0.011111111111111112,
+          "rank": 30
+        },
+        "openreview-neurips-2025-x51kynijag": {
+          "score": 0.010101010101010102,
+          "rank": 39
+        },
+        "openreview-neurips-2025-3qets05brl": {
+          "score": 0.009615384615384616,
+          "rank": 44
+        },
+        "openreview-neurips-2025-xbmjxb6f4w": {
+          "score": 0.009174311926605505,
+          "rank": 49
+        }
+      },
+      "ranked": [
+        {
+          "paper_id": "openreview-neurips-2025-cyg3kmfsgm",
+          "score": 1.0,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-k1fbdnwjch",
+          "score": 0.9586435070306036,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-buytctumya",
+          "score": 0.9586435070306036,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-fyw1pkawwj",
+          "score": 0.9185999185999183,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-mbj46gd1ct",
+          "score": 0.8798076923076922,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-3qets05brl",
+          "score": 0.8422090729783037,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-6j9xj9pbjm",
+          "score": 0.8057498057498057,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-l0xzpxt3le",
+          "score": 0.73604826546003,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-zyez5kqtdo",
+          "score": 0.702712746191007,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-wryhlha8qi",
+          "score": 0.6703296703296702,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-5iw1ndtymt",
+          "score": 0.6703296703296702,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ygoytgjurf",
+          "score": 0.608262108262108,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-rmqwt1btxq",
+          "score": 0.5213675213675214,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-lsrpjkynu2",
+          "score": 0.49392712550607265,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-fxcy8tvqho",
+          "score": 0.46719946719946726,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-qldyoo8qly",
+          "score": 0.41577409931840303,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-xwyl9ki32t",
+          "score": 0.3910256410256411,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-dfehiytz2w",
+          "score": 0.3668882557771445,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-zd6vyjmn1s",
+          "score": 0.32035835650293487,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-tonrhqx6xq",
+          "score": 0.2760180995475112,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-mlu9kqdzus",
+          "score": 0.25462134764460337,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-4qvlkwgg3s",
+          "score": 0.23371647509578536,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-cqxlcva9u7",
+          "score": 0.23371647509578536,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-1qkuvyymxs",
+          "score": 0.21328671328671328,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-zwhkkspght",
+          "score": 0.1933160472486314,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ex0m4qmyvn",
+          "score": 0.1933160472486314,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-2us2rbe0hv",
+          "score": 0.15469146238377016,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-pbvlbi6c30",
+          "score": 0.09983633387888699,
+          "star_rating": 2
+        },
+        {
+          "paper_id": "openreview-neurips-2025-jv6zoub7bd",
+          "score": 0.0823211875843454,
+          "star_rating": 2
+        },
+        {
+          "paper_id": "openreview-neurips-2025-x51kynijag",
+          "score": 0.0823211875843454,
+          "star_rating": 2
+        },
+        {
+          "paper_id": "openreview-neurips-2025-gigtog4dna",
+          "score": 0.06517094017094004,
+          "star_rating": 2
+        },
+        {
+          "paper_id": "openreview-neurips-2025-d6w7win360",
+          "score": 0.06517094017094004,
+          "star_rating": 2
+        },
+        {
+          "paper_id": "openreview-neurips-2025-x3qnrhfhx0",
+          "score": 0.0483743061062648,
+          "star_rating": 2
+        },
+        {
+          "paper_id": "openreview-neurips-2025-eiojv2epgx",
+          "score": 0.0,
+          "star_rating": 1
+        }
+      ]
+    },
+    {
+      "type": "intent_query",
+      "tag": "agents-os",
+      "paper_tag": "query:agents-os",
+      "query_text": "What are the key technologies for building AI operating systems?",
+      "sim_scores": {
+        "openreview-neurips-2025-xbmjxb6f4w": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-neurips-2025-zwhkkspght": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-neurips-2025-fyw1pkawwj": {
+          "score": 0.015873015873015872,
+          "rank": 3
+        },
+        "openreview-neurips-2025-tonrhqx6xq": {
+          "score": 0.014925373134328358,
+          "rank": 7
+        },
+        "openreview-neurips-2025-mbj46gd1ct": {
+          "score": 0.014084507042253521,
+          "rank": 11
+        },
+        "openreview-neurips-2025-ezfdhprhzm": {
+          "score": 0.012345679012345678,
+          "rank": 21
+        },
+        "openreview-neurips-2025-5iw1ndtymt": {
+          "score": 0.011494252873563218,
+          "rank": 27
+        },
+        "openreview-neurips-2025-mlu9kqdzus": {
+          "score": 0.011363636363636364,
+          "rank": 28
+        },
+        "openreview-neurips-2025-fxcy8tvqho": {
+          "score": 0.011235955056179775,
+          "rank": 29
+        },
+        "openreview-neurips-2025-cqxlcva9u7": {
+          "score": 0.01020408163265306,
+          "rank": 38
+        },
+        "openreview-neurips-2025-x51kynijag": {
+          "score": 0.009615384615384616,
+          "rank": 44
+        },
+        "openreview-neurips-2025-ex0m4qmyvn": {
+          "score": 0.009259259259259259,
+          "rank": 48
+        },
+        "openreview-neurips-2025-pbvlbi6c30": {
+          "score": 0.00909090909090909,
+          "rank": 50
+        }
+      },
+      "ranked": [
+        {
+          "paper_id": "openreview-neurips-2025-ex0m4qmyvn",
+          "score": 0.9185999185999183,
+          "star_rating": 5
+        },
+        {
+          "paper_id": "openreview-neurips-2025-4qvlkwgg3s",
+          "score": 0.8798076923076922,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-xbmjxb6f4w",
+          "score": 0.8422090729783037,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-fyw1pkawwj",
+          "score": 0.8057498057498057,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-xwyl9ki32t",
+          "score": 0.7703788748564866,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-gigtog4dna",
+          "score": 0.73604826546003,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-x51kynijag",
+          "score": 0.73604826546003,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-fxcy8tvqho",
+          "score": 0.702712746191007,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-1qkuvyymxs",
+          "score": 0.6703296703296702,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-tonrhqx6xq",
+          "score": 0.6388587937883712,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-lsrpjkynu2",
+          "score": 0.608262108262108,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-jv6zoub7bd",
+          "score": 0.608262108262108,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-mlu9kqdzus",
+          "score": 0.578503688092729,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-zwhkkspght",
+          "score": 0.578503688092729,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-mbj46gd1ct",
+          "score": 0.5495495495495496,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-neurips-2025-eiojv2epgx",
+          "score": 0.49392712550607265,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-zd6vyjmn1s",
+          "score": 0.46719946719946726,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-cqxlcva9u7",
+          "score": 0.3910256410256411,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-zyez5kqtdo",
+          "score": 0.3433395872420263,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-ezfdhprhzm",
+          "score": 0.23371647509578536,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-pbvlbi6c30",
+          "score": 0.1737891737891738,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-rmqwt1btxq",
+          "score": 0.1360089186176142,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-neurips-2025-6j9xj9pbjm",
+          "score": 0.09983633387888699,
+          "star_rating": 2
+        },
+        {
+          "paper_id": "openreview-neurips-2025-d6w7win360",
+          "score": 0.09983633387888699,
+          "star_rating": 2
+        },
+        {
+          "paper_id": "openreview-neurips-2025-l0xzpxt3le",
+          "score": 0.0483743061062648,
+          "star_rating": 2
+        },
+        {
+          "paper_id": "openreview-neurips-2025-5iw1ndtymt",
+          "score": 0.015799015799015898,
+          "star_rating": 2
+        }
+      ]
+    },
+    {
+      "type": "keyword",
+      "tag": "agents-os",
+      "paper_tag": "keyword:agents-os",
+      "query_text": "AI operating system",
+      "sim_scores": {
+        "openreview-neurips-2025-wryhlha8qi": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "agents-os",
+      "paper_tag": "keyword:agents-os",
+      "query_text": "AI operating system for heterogeneous computing",
+      "sim_scores": {
+        "openreview-neurips-2025-zwhkkspght": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-neurips-2025-5iw1ndtymt": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-neurips-2025-zyez5kqtdo": {
+          "score": 0.015384615384615385,
+          "rank": 5
+        },
+        "openreview-neurips-2025-ezfdhprhzm": {
+          "score": 0.014285714285714285,
+          "rank": 10
+        },
+        "openreview-neurips-2025-ex0m4qmyvn": {
+          "score": 0.014084507042253521,
+          "rank": 11
+        },
+        "openreview-neurips-2025-mbj46gd1ct": {
+          "score": 0.013513513513513514,
+          "rank": 14
+        },
+        "openreview-neurips-2025-rmqwt1btxq": {
+          "score": 0.012048192771084338,
+          "rank": 23
+        },
+        "openreview-neurips-2025-fyw1pkawwj": {
+          "score": 0.011764705882352941,
+          "rank": 25
+        },
+        "openreview-neurips-2025-pbvlbi6c30": {
+          "score": 0.011494252873563218,
+          "rank": 27
+        },
+        "openreview-neurips-2025-dfehiytz2w": {
+          "score": 0.011363636363636364,
+          "rank": 28
+        },
+        "openreview-neurips-2025-xbmjxb6f4w": {
+          "score": 0.011235955056179775,
+          "rank": 29
+        },
+        "openreview-neurips-2025-buytctumya": {
+          "score": 0.010638297872340425,
+          "rank": 34
+        },
+        "openreview-neurips-2025-x51kynijag": {
+          "score": 0.009900990099009901,
+          "rank": 41
+        },
+        "openreview-neurips-2025-zd6vyjmn1s": {
+          "score": 0.009345794392523364,
+          "rank": 47
+        },
+        "openreview-neurips-2025-ygoytgjurf": {
+          "score": 0.00909090909090909,
+          "rank": 50
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "agents-os",
+      "paper_tag": "keyword:agents-os",
+      "query_text": "Agents operating system for server infrastructure",
+      "sim_scores": {
+        "openreview-neurips-2025-rmqwt1btxq": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-neurips-2025-5iw1ndtymt": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-neurips-2025-tonrhqx6xq": {
+          "score": 0.014285714285714285,
+          "rank": 10
+        },
+        "openreview-neurips-2025-l0xzpxt3le": {
+          "score": 0.014084507042253521,
+          "rank": 11
+        },
+        "openreview-neurips-2025-ygoytgjurf": {
+          "score": 0.013888888888888888,
+          "rank": 12
+        },
+        "openreview-neurips-2025-fyw1pkawwj": {
+          "score": 0.0136986301369863,
+          "rank": 13
+        },
+        "openreview-neurips-2025-cqxlcva9u7": {
+          "score": 0.011904761904761904,
+          "rank": 24
+        },
+        "openreview-neurips-2025-6j9xj9pbjm": {
+          "score": 0.010526315789473684,
+          "rank": 35
+        },
+        "openreview-neurips-2025-4qvlkwgg3s": {
+          "score": 0.01020408163265306,
+          "rank": 38
+        },
+        "openreview-neurips-2025-mbj46gd1ct": {
+          "score": 0.010101010101010102,
+          "rank": 39
+        },
+        "openreview-neurips-2025-mlu9kqdzus": {
+          "score": 0.01,
+          "rank": 40
+        },
+        "openreview-neurips-2025-lsrpjkynu2": {
+          "score": 0.009523809523809525,
+          "rank": 45
+        },
+        "openreview-neurips-2025-xbmjxb6f4w": {
+          "score": 0.009433962264150943,
+          "rank": 46
+        },
+        "openreview-neurips-2025-fxcy8tvqho": {
+          "score": 0.009345794392523364,
+          "rank": 47
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "agents-os",
+      "paper_tag": "keyword:agents-os",
+      "query_text": "compute in memory",
+      "sim_scores": {
+        "openreview-neurips-2025-gigtog4dna": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "agents-os",
+      "paper_tag": "keyword:agents-os",
+      "query_text": "compute in memory architecture for neural networks",
+      "sim_scores": {
+        "openreview-neurips-2025-x3qnrhfhx0": {
+          "score": 0.013513513513513514,
+          "rank": 14
+        },
+        "openreview-neurips-2025-jv6zoub7bd": {
+          "score": 0.011904761904761904,
+          "rank": 24
+        },
+        "openreview-neurips-2025-zwhkkspght": {
+          "score": 0.011235955056179775,
+          "rank": 29
+        },
+        "openreview-neurips-2025-eiojv2epgx": {
+          "score": 0.010752688172043012,
+          "rank": 33
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "agents-os",
+      "paper_tag": "keyword:agents-os",
+      "query_text": "heterogeneous compute resources for servers",
+      "sim_scores": {
+        "openreview-neurips-2025-5iw1ndtymt": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-neurips-2025-4qvlkwgg3s": {
+          "score": 0.015873015873015872,
+          "rank": 3
+        },
+        "openreview-neurips-2025-cqxlcva9u7": {
+          "score": 0.015384615384615385,
+          "rank": 5
+        },
+        "openreview-neurips-2025-lsrpjkynu2": {
+          "score": 0.015151515151515152,
+          "rank": 6
+        },
+        "openreview-neurips-2025-rmqwt1btxq": {
+          "score": 0.014705882352941176,
+          "rank": 8
+        },
+        "openreview-neurips-2025-d6w7win360": {
+          "score": 0.014285714285714285,
+          "rank": 10
+        },
+        "openreview-neurips-2025-ex0m4qmyvn": {
+          "score": 0.013888888888888888,
+          "rank": 12
+        },
+        "openreview-neurips-2025-2us2rbe0hv": {
+          "score": 0.013513513513513514,
+          "rank": 14
+        },
+        "openreview-neurips-2025-xwyl9ki32t": {
+          "score": 0.012987012987012988,
+          "rank": 17
+        },
+        "openreview-neurips-2025-zd6vyjmn1s": {
+          "score": 0.012345679012345678,
+          "rank": 21
+        },
+        "openreview-neurips-2025-zwhkkspght": {
+          "score": 0.011904761904761904,
+          "rank": 24
+        },
+        "openreview-neurips-2025-x3qnrhfhx0": {
+          "score": 0.011764705882352941,
+          "rank": 25
+        },
+        "openreview-neurips-2025-fyw1pkawwj": {
+          "score": 0.011494252873563218,
+          "rank": 27
+        },
+        "openreview-neurips-2025-dfehiytz2w": {
+          "score": 0.011363636363636364,
+          "rank": 28
+        },
+        "openreview-neurips-2025-ezfdhprhzm": {
+          "score": 0.011235955056179775,
+          "rank": 29
+        },
+        "openreview-neurips-2025-pbvlbi6c30": {
+          "score": 0.010752688172043012,
+          "rank": 33
+        },
+        "openreview-neurips-2025-jv6zoub7bd": {
+          "score": 0.009900990099009901,
+          "rank": 41
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "agents-os",
+      "paper_tag": "keyword:agents-os",
+      "query_text": "heterogeneous computing",
+      "sim_scores": {
+        "openreview-neurips-2025-1qkuvyymxs": {
+          "score": 0.013888888888888888,
+          "rank": 12
+        },
+        "openreview-neurips-2025-cyg3kmfsgm": {
+          "score": 0.013513513513513514,
+          "rank": 14
+        },
+        "openreview-neurips-2025-buytctumya": {
+          "score": 0.013333333333333334,
+          "rank": 15
+        },
+        "openreview-neurips-2025-zwhkkspght": {
+          "score": 0.012987012987012988,
+          "rank": 17
+        },
+        "openreview-neurips-2025-wbeknrzbpt": {
+          "score": 0.012345679012345678,
+          "rank": 21
+        },
+        "openreview-neurips-2025-qldyoo8qly": {
+          "score": 0.010638297872340425,
+          "rank": 34
+        },
+        "openreview-neurips-2025-3qets05brl": {
+          "score": 0.009345794392523364,
+          "rank": 47
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "agents-os",
+      "paper_tag": "keyword:agents-os",
+      "query_text": "heterogeneous computing infrastructure",
+      "sim_scores": {
+        "openreview-neurips-2025-3qets05brl": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "agents-os",
+      "paper_tag": "keyword:agents-os",
+      "query_text": "heterogeneous computing infrastructure for AI workloads",
+      "sim_scores": {
+        "openreview-neurips-2025-5iw1ndtymt": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-neurips-2025-mbj46gd1ct": {
+          "score": 0.015873015873015872,
+          "rank": 3
+        },
+        "openreview-neurips-2025-zwhkkspght": {
+          "score": 0.015625,
+          "rank": 4
+        },
+        "openreview-neurips-2025-rmqwt1btxq": {
+          "score": 0.015384615384615385,
+          "rank": 5
+        },
+        "openreview-neurips-2025-zyez5kqtdo": {
+          "score": 0.014925373134328358,
+          "rank": 7
+        },
+        "openreview-neurips-2025-k1fbdnwjch": {
+          "score": 0.014705882352941176,
+          "rank": 8
+        },
+        "openreview-neurips-2025-fyw1pkawwj": {
+          "score": 0.014492753623188406,
+          "rank": 9
+        },
+        "openreview-neurips-2025-xbmjxb6f4w": {
+          "score": 0.014285714285714285,
+          "rank": 10
+        },
+        "openreview-neurips-2025-buytctumya": {
+          "score": 0.0136986301369863,
+          "rank": 13
+        },
+        "openreview-neurips-2025-dfehiytz2w": {
+          "score": 0.012658227848101266,
+          "rank": 19
+        },
+        "openreview-neurips-2025-mlu9kqdzus": {
+          "score": 0.012345679012345678,
+          "rank": 21
+        },
+        "openreview-neurips-2025-pbvlbi6c30": {
+          "score": 0.011904761904761904,
+          "rank": 24
+        },
+        "openreview-neurips-2025-ygoytgjurf": {
+          "score": 0.010526315789473684,
+          "rank": 35
+        },
+        "openreview-neurips-2025-x3qnrhfhx0": {
+          "score": 0.009708737864077669,
+          "rank": 43
+        },
+        "openreview-neurips-2025-ezfdhprhzm": {
+          "score": 0.009433962264150943,
+          "rank": 46
+        },
+        "openreview-neurips-2025-l0xzpxt3le": {
+          "score": 0.009345794392523364,
+          "rank": 47
+        },
+        "openreview-neurips-2025-cqxlcva9u7": {
+          "score": 0.009259259259259259,
+          "rank": 48
+        },
+        "openreview-neurips-2025-xwyl9ki32t": {
+          "score": 0.009174311926605505,
+          "rank": 49
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "agents-os",
+      "paper_tag": "keyword:agents-os",
+      "query_text": "liquid cooling solutions for high density AI clusters",
+      "sim_scores": {
+        "openreview-neurips-2025-ex0m4qmyvn": {
+          "score": 0.01639344262295082,
+          "rank": 1
+        },
+        "openreview-neurips-2025-zwhkkspght": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-neurips-2025-ezfdhprhzm": {
+          "score": 0.015625,
+          "rank": 4
+        },
+        "openreview-neurips-2025-x3qnrhfhx0": {
+          "score": 0.015151515151515152,
+          "rank": 6
+        },
+        "openreview-neurips-2025-5iw1ndtymt": {
+          "score": 0.014705882352941176,
+          "rank": 8
+        },
+        "openreview-neurips-2025-dfehiytz2w": {
+          "score": 0.013333333333333334,
+          "rank": 15
+        },
+        "openreview-neurips-2025-pbvlbi6c30": {
+          "score": 0.012658227848101266,
+          "rank": 19
+        },
+        "openreview-neurips-2025-xwyl9ki32t": {
+          "score": 0.0125,
+          "rank": 20
+        },
+        "openreview-neurips-2025-eiojv2epgx": {
+          "score": 0.012195121951219513,
+          "rank": 22
+        },
+        "openreview-neurips-2025-2us2rbe0hv": {
+          "score": 0.011235955056179775,
+          "rank": 29
+        },
+        "openreview-neurips-2025-zyez5kqtdo": {
+          "score": 0.011111111111111112,
+          "rank": 30
+        },
+        "openreview-neurips-2025-1qkuvyymxs": {
+          "score": 0.010416666666666666,
+          "rank": 36
+        },
+        "openreview-neurips-2025-qldyoo8qly": {
+          "score": 0.010309278350515464,
+          "rank": 37
+        },
+        "openreview-neurips-2025-d6w7win360": {
+          "score": 0.01,
+          "rank": 40
+        }
+      }
+    }
+  ],
+  "global_candidate_ids": [
+    "openreview-neurips-2025-5iw1ndtymt",
+    "openreview-neurips-2025-z1cvcovlms",
+    "openreview-neurips-2025-3fbbywp6gl",
+    "openreview-neurips-2025-dfehiytz2w",
+    "openreview-neurips-2025-txqlxhlb8z",
+    "openreview-neurips-2025-ikvkpjsjzj",
+    "openreview-neurips-2025-xbmjxb6f4w",
+    "openreview-neurips-2025-zwhkkspght",
+    "openreview-neurips-2025-r5ebtne2y9",
+    "openreview-neurips-2025-wryhlha8qi",
+    "openreview-neurips-2025-rmqwt1btxq",
+    "openreview-neurips-2025-qiltlupwrr",
+    "openreview-neurips-2025-gigtog4dna",
+    "openreview-neurips-2025-q8m0tkipjz",
+    "openreview-neurips-2025-zbq5zq3za3",
+    "openreview-neurips-2025-hqullozhuh",
+    "openreview-neurips-2025-gyn4n8oc9b",
+    "openreview-neurips-2025-iyn0d3cfvt",
+    "openreview-neurips-2025-3qets05brl",
+    "openreview-neurips-2025-n4v3msqk77",
+    "openreview-neurips-2025-ex0m4qmyvn",
+    "openreview-neurips-2025-fyw1pkawwj",
+    "openreview-neurips-2025-pbvlbi6c30",
+    "openreview-neurips-2025-6irzvjic9q",
+    "openreview-neurips-2025-zyez5kqtdo",
+    "openreview-neurips-2025-mbj46gd1ct",
+    "openreview-neurips-2025-ezfdhprhzm",
+    "openreview-neurips-2025-7spt8cajq0",
+    "openreview-neurips-2025-nkcwn347h7",
+    "openreview-neurips-2025-onhjdwcxzy",
+    "openreview-neurips-2025-cl45xdncok",
+    "openreview-neurips-2025-idsttdw4cs",
+    "openreview-neurips-2025-6iuurcuooo",
+    "openreview-neurips-2025-x3qnrhfhx0",
+    "openreview-neurips-2025-z9oeqrcnh9",
+    "openreview-neurips-2025-mmiap3cvs0",
+    "openreview-neurips-2025-cqxlcva9u7",
+    "openreview-neurips-2025-iyhatwzorb",
+    "openreview-neurips-2025-g10y4vrhgf",
+    "openreview-neurips-2025-3nahye5kle",
+    "openreview-neurips-2025-klor9y9nmu",
+    "openreview-neurips-2025-sfqic7bnws",
+    "openreview-neurips-2025-fim0m8gcct",
+    "openreview-neurips-2025-9t7gfyup0u",
+    "openreview-neurips-2025-0pbufmwnty",
+    "openreview-neurips-2025-2us2rbe0hv",
+    "openreview-neurips-2025-cu4ow1odre",
+    "openreview-neurips-2025-xwyl9ki32t",
+    "openreview-neurips-2025-a8sjeh4cjb",
+    "openreview-neurips-2025-gkb1zunz83",
+    "openreview-neurips-2025-rwfrdksgce",
+    "openreview-neurips-2025-jv6zoub7bd",
+    "openreview-neurips-2025-mlu9kqdzus",
+    "openreview-neurips-2025-ygoytgjurf",
+    "openreview-neurips-2025-unqtxj5brq",
+    "openreview-neurips-2025-wim0y07ngx",
+    "openreview-neurips-2025-kr6tnkb6h4",
+    "openreview-neurips-2025-dqrbfitdkk",
+    "openreview-neurips-2025-4qvlkwgg3s",
+    "openreview-neurips-2025-dopfjqfr65",
+    "openreview-neurips-2025-tonrhqx6xq",
+    "openreview-neurips-2025-1lppmaulat",
+    "openreview-neurips-2025-l0xzpxt3le",
+    "openreview-neurips-2025-lsrpjkynu2",
+    "openreview-neurips-2025-xdnavp7tgy",
+    "openreview-neurips-2025-buytctumya",
+    "openreview-neurips-2025-d6w7win360",
+    "openreview-neurips-2025-kke9twtki0",
+    "openreview-neurips-2025-cyo7k2fa8v",
+    "openreview-neurips-2025-fgw3izzxme",
+    "openreview-neurips-2025-gf4opoluav",
+    "openreview-neurips-2025-zd6vyjmn1s",
+    "openreview-neurips-2025-eiojv2epgx",
+    "openreview-neurips-2025-fxcy8tvqho",
+    "openreview-neurips-2025-zdppfg9pdc",
+    "openreview-neurips-2025-gyorgwzzko",
+    "openreview-neurips-2025-8z3cover4z",
+    "openreview-neurips-2025-x51kynijag",
+    "openreview-neurips-2025-k1fbdnwjch",
+    "openreview-neurips-2025-bbvb4zaqef",
+    "openreview-neurips-2025-ownalrn3x1",
+    "openreview-neurips-2025-cyg3kmfsgm",
+    "openreview-neurips-2025-spafjfwi2i",
+    "openreview-neurips-2025-yjxgjp8feu",
+    "openreview-neurips-2025-b0gfxhr8v5",
+    "openreview-neurips-2025-cgnjl6cev0",
+    "openreview-neurips-2025-odgwbaerst",
+    "openreview-neurips-2025-n9hle9iphj",
+    "openreview-neurips-2025-tir9naukr3",
+    "openreview-neurips-2025-qhyp0khjus",
+    "openreview-neurips-2025-qquhgpst45",
+    "openreview-neurips-2025-1qkuvyymxs",
+    "openreview-neurips-2025-moamjkj2uc",
+    "openreview-neurips-2025-qujdphbcdp",
+    "openreview-neurips-2025-pngg4h3q9d",
+    "openreview-neurips-2025-hfscuvc1cb",
+    "openreview-neurips-2025-lnrazsnjse",
+    "openreview-neurips-2025-p3hhc7oviq",
+    "openreview-neurips-2025-zyhzczfegd",
+    "openreview-neurips-2025-kqwyoyuac4",
+    "openreview-neurips-2025-oy1xnt83oj",
+    "openreview-neurips-2025-pjwozqn9p4",
+    "openreview-neurips-2025-6j9xj9pbjm",
+    "openreview-neurips-2025-hnj1ukujxs",
+    "openreview-neurips-2025-mvh0lisdul",
+    "openreview-neurips-2025-ntopgmlrkv",
+    "openreview-neurips-2025-isatafp71b",
+    "openreview-neurips-2025-xnunxrj2vj",
+    "openreview-neurips-2025-9f2cmgo17m",
+    "openreview-neurips-2025-qh70uc6sny",
+    "openreview-neurips-2025-67xkpem3bz",
+    "openreview-neurips-2025-wbeknrzbpt",
+    "openreview-neurips-2025-cxb5esqhw3",
+    "openreview-neurips-2025-qldyoo8qly",
+    "openreview-neurips-2025-s3ghjoowic",
+    "openreview-neurips-2025-9twwdw60bw",
+    "openreview-neurips-2025-apbbkhdk4w",
+    "openreview-neurips-2025-2jwajomedb",
+    "openreview-neurips-2025-rdqzjkieda",
+    "openreview-neurips-2025-hkvyosg7yx",
+    "openreview-neurips-2025-dtsypcjr1r",
+    "openreview-neurips-2025-lwiqc4mvjz",
+    "openreview-neurips-2025-6zfilemd3u"
+  ],
+  "global_pool_lane_top_k": 30,
+  "global_pool_limit": 120,
+  "global_pool_guaranteed_per_lane": 2,
+  "global_pool_effective_size": 123,
+  "reranked_at": "2026-06-10T01:05:55.430924+00:00",
+  "llm_ranked": [
+    {
+      "paper_id": "openreview-neurips-2025-xwyl9ki32t",
+      "score": 9.0,
+      "evidence_en": "topology-aware scheduling for large-scale LLM pre-training on multi-GPU clusters",
+      "evidence_cn": "大规模GPU集群上拓扑感知的LLM预训练调度",
+      "canonical_evidence": "大规模GPU集群上拓扑感知的LLM预训练调度",
+      "tldr_en": "Presents Arnold, a scheduling system that aligns LLM communication patterns to data center topology, enabling efficient pre-training on over 9600 GPUs by reducing bandwidth contention.",
+      "tldr_cn": "针对大规模LLM预训练中通信模式复杂、带宽竞争严重的问题，本文提出Arnold调度系统，通过将通信模式与数据中心拓扑对齐来优化资源调度。在超过9600个GPU的集群上验证了有效性，显著提升了训练效率并降低了通信开销。该工作为大规模异构计算基础设施支持大模型训练提供了实用方案。",
+      "title_zh": "通过拓扑感知通信对齐在超过9600个GPU上高效预训练LLM",
+      "motivation_cn": "大规模LLM预训练中通信模式复杂，资源调度低效导致带宽争用和训练性能下降。",
+      "method_cn": "提出Arnold系统，通过拓扑感知的通信对齐策略优化GPU间数据传输调度。",
+      "result_cn": "在超过9600个GPU的集群上实现了训练效率的显著提升，减少了通信瓶颈。",
+      "conclusion_cn": "该工作为在大规模异构集群上高效进行LLM预训练提供了可部署的调度框架。",
+      "matched_requirement_id": "req-10",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How does heterogeneous computing support large model training?"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-zwhkkspght",
+      "score": 8.0,
+      "evidence_en": "algorithm-hardware co-design for MoE training on wafer-scale chiplet architectures",
+      "evidence_cn": "在晶圆级芯片架构上针对MoE训练的算法-硬件协同设计",
+      "canonical_evidence": "在晶圆级芯片架构上针对MoE训练的算法-硬件协同设计",
+      "tldr_en": "Mozart proposes a co-design framework for efficient MoE training on 3.5D wafer-scale chiplets, tackling memory and communication challenges.",
+      "tldr_cn": "针对MoE大模型在晶圆级芯片上训练面临的存储局部性和通信开销问题，提出Mozart算法-硬件协同设计框架。算法侧利用芯片模组模块化实现高效全对全通信，硬件侧优化资源利用。该工作在异构计算硬件上显著提升训练效率。",
+      "title_zh": "Mozart：在3.5D晶圆级芯片架构上的模块化高效MoE训练",
+      "motivation_cn": "MoE大模型部署在晶圆级芯片上存在存储和通信瓶颈。",
+      "method_cn": "结合芯片模组模块化提出专家分配策略和硬件协同优化。",
+      "result_cn": "实现高效片内全对全通信，提升资源利用率。",
+      "conclusion_cn": "为异构计算架构支持大模型训练提供有效方案。",
+      "matched_requirement_id": "req-10",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How does heterogeneous computing support large model training?"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-rmqwt1btxq",
+      "score": 8.0,
+      "evidence_en": "session-aware serving system for LLM agents",
+      "evidence_cn": "面向LLM智能体的会话感知服务系统",
+      "canonical_evidence": "面向LLM智能体的会话感知服务系统",
+      "tldr_en": "This paper identifies the lack of session-awareness in LLM serving systems for agents and proposes a solution to surpass the cost-quality tradeoff via effective KV cache management and model selection.",
+      "tldr_cn": "现有LLM服务系统缺乏会话感知，无法优化智能体服务的独特需求。本文提出会话感知机制，通过有效的KV缓存管理和精准模型选择，打破成本-质量权衡。该方法直接优化了智能体服务的基础设施，可视为智能体操作系统的核心组件之一。",
+      "title_zh": "通过会话感知超越智能体服务中的成本-质量权衡",
+      "motivation_cn": "当前LLM服务系统未针对智能体服务优化，存在成本-质量权衡",
+      "method_cn": "提出会话感知的服务机制，包括KV缓存管理和模型选择优化",
+      "result_cn": "在保证质量的同时降低服务成本",
+      "conclusion_cn": "会话感知是构建高效智能体服务基础设施的关键技术",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "Agents operating system for server infrastructure"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-ezfdhprhzm",
+      "score": 8.0,
+      "evidence_en": "GPU-resident MoE operator for distributed training",
+      "evidence_cn": "用于分布式训练的GPU驻留MoE算子",
+      "canonical_evidence": "用于分布式训练的GPU驻留MoE算子",
+      "tldr_en": "FlashMoE fuses expert computation and inter-GPU communication into a single persistent GPU kernel to eliminate launch overheads and improve GPU utilization for distributed MoE training.",
+      "tldr_cn": "针对现有MoE分布式训练中GPU利用率低、延迟高的问题，提出FlashMoE，将专家计算和GPU间通信融合为单个持久内核，实现细粒度流水线化调度，消除启动开销，显著提升训练效率。实验表明该方法在多种模型上取得加速，为大规模神经网络训练提供高效算子。",
+      "title_zh": "FlashMoE: 快速分布式MoE的单内核实现",
+      "motivation_cn": "现有MoE分布式训练因CPU调度和频繁内核启动导致GPU利用率低、延迟高。",
+      "method_cn": "设计完全GPU驻留的MoE算子，将专家计算与跨GPU通信融合为单持久内核，实现细粒度流水线。",
+      "result_cn": "在多个大规模模型上显著提升训练吞吐量，降低延迟。",
+      "conclusion_cn": "FlashMoE消除了调度开销，是一种高效的分布式MoE训练方案。",
+      "matched_requirement_id": "req-10",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How does heterogeneous computing support large model training?"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-pbvlbi6c30",
+      "score": 8.0,
+      "evidence_en": "Multi-type task pipeline scheduling for distributed MoE",
+      "evidence_cn": "分布式MoE的多类型任务流水线调度",
+      "canonical_evidence": "分布式MoE的多类型任务流水线调度",
+      "tldr_en": "FlowMoE schedules computation and communication for multiple operation types (MHA, gating, all-reduce) in distributed MoE training, improving throughput and scalability.",
+      "tldr_cn": "现有分布式MoE训练调度仅关注专家计算和A2A通信，忽略注意力和门控等操作。本文提出FlowMoE，统一调度多类型任务流水线，显著提升吞吐量和可扩展性，支持更大规模模型训练，对异构计算基础设施设计有启示。",
+      "title_zh": "FlowMoE: 分布式混合专家训练的可扩展流水线调度框架",
+      "motivation_cn": "现有分布式MoE训练调度忽略多类型操作，导致效率瓶颈。",
+      "method_cn": "提出可扩展流水线调度框架，统一调度专家计算、注意力、门控等操作。",
+      "result_cn": "显著提升训练吞吐量，降低通信开销，支持更大规模MoE模型。",
+      "conclusion_cn": "FlowMoE为分布式MoE训练提供了更全面的调度优化。",
+      "matched_requirement_id": "req-10",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How does heterogeneous computing support large model training?"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-x51kynijag",
+      "score": 8.0,
+      "evidence_en": "adversarial attack on VLM-based agents for security",
+      "evidence_cn": "针对视觉语言智能体的对抗攻击，涉及智能体安全",
+      "canonical_evidence": "针对视觉语言智能体的对抗攻击，涉及智能体安全",
+      "tldr_en": "Introduces TRAP, a generative adversarial framework manipulating agent decisions via diffusion-based semantic injections into vision-language embedding space, revealing new security vulnerabilities.",
+      "tldr_cn": "针对智能体系统的安全性问题，本文提出TRAP攻击框架，利用扩散模型在视觉-语言嵌入空间注入语义，操纵智能体决策。该方法结合负提示退化和正语义优化，能够在不显式修改像素的情况下实现隐蔽攻击。实验表明该攻击成功率较高，揭示了多模态智能体面临的新安全威胁，对智能体安全防护具有重要警示意义。",
+      "title_zh": "TRAP：目标导向的智能体偏好重定向",
+      "motivation_cn": "现有对抗攻击依赖像素扰动或模型访问，缺乏针对多模态智能体语义层的隐蔽攻击方法。",
+      "method_cn": "提出基于扩散模型的生成式对抗框架，通过负提示退化与正语义优化在嵌入层注入攻击。",
+      "result_cn": "在多个VLM智能体上实现了高成功率的隐蔽攻击，暴露了跨模态推理的安全漏洞。",
+      "conclusion_cn": "该工作凸显了智能体系统在语义层面的安全脆弱性，亟需新的防御机制。",
+      "matched_requirement_id": "req-composite-agents-os",
+      "matched_query_tag": "query:agents-os:composite",
+      "matched_query_text": "Papers central to 生成服务器领域的洞察，侧重Agents OS、AI操作系统、异构算力基础设施、智能体安全演进、一体化算力网, especially work that connects or combines: Agents operating system for server infrastructure; AI operating system for heterogeneous computing; heterogeneous compute resources for servers; heterogeneous computing infrastructure for AI workloads; compute in memory architecture for neural networks; liquid cooling solutions for high density AI clusters; How do AI operating systems handle heterogeneous compute resources?; How to design heterogeneous computing infrastructure for intelligent agents?; What are the key technologies for building AI operating systems?; How does heterogeneous computing support large model training?."
+    },
+    {
+      "paper_id": "openreview-neurips-2025-mlu9kqdzus",
+      "score": 7.0,
+      "evidence_en": "focuses on multi-agent scaffold safety evolution",
+      "evidence_cn": "关注多智能体脚手架安全演进",
+      "canonical_evidence": "关注多智能体脚手架安全演进",
+      "tldr_en": "AgentBreeder uses evolutionary search to improve safety of multi-agent scaffolds, showing 79.4% safety uplift and revealing emergent adversarial weak scaffolds.",
+      "tldr_cn": "针对多智能体系统的安全性问题，提出AgentBreeder框架，通过多目标自改进进化搜索来优化脚手架。实验表明，在蓝色模式下安全基准性能平均提升79.4%且能力不变，但在红色模式下发现了同时出现的对抗性弱脚手架。该工作揭示了多智能体脚手架的安全风险并提供了自动缓解方法。",
+      "title_zh": "AgentBreeder：通过自我改进缓解多智能体脚手架的人工智能安全风险",
+      "motivation_cn": "多智能体脚手架在提升性能的同时可能引入安全隐患，需系统化评估与改进。",
+      "method_cn": "提出多目标自改进进化搜索框架AgentBreeder，在推理、数学和安全基准上进化搜索最优脚手架。",
+      "result_cn": "蓝色模式安全性能平均提升79.4%且保持能力；红色模式发现能力优化可能伴随弱安全脚手架出现。",
+      "conclusion_cn": "验证了多智能体脚手架的安全风险，并提供了自动缓解框架。",
+      "matched_requirement_id": "req-composite-agents-os",
+      "matched_query_tag": "query:agents-os:composite",
+      "matched_query_text": "Papers central to 生成服务器领域的洞察，侧重Agents OS、AI操作系统、异构算力基础设施、智能体安全演进、一体化算力网, especially work that connects or combines: Agents operating system for server infrastructure; AI operating system for heterogeneous computing; heterogeneous compute resources for servers; heterogeneous computing infrastructure for AI workloads; compute in memory architecture for neural networks; liquid cooling solutions for high density AI clusters; How do AI operating systems handle heterogeneous compute resources?; How to design heterogeneous computing infrastructure for intelligent agents?; What are the key technologies for building AI operating systems?; How does heterogeneous computing support large model training?."
+    },
+    {
+      "paper_id": "openreview-neurips-2025-tonrhqx6xq",
+      "score": 7.0,
+      "evidence_en": "attacks on multimodal OS agents, directly relevant to agent operating systems",
+      "evidence_cn": "对多模态操作系统智能体的攻击，与智能体操作系统直接相关",
+      "canonical_evidence": "对多模态操作系统智能体的攻击，与智能体操作系统直接相关",
+      "tldr_en": "MIP against Agent reveals a novel attack vector where adversarial image patches hijack OS agents, highlighting security risks in agent OS.",
+      "tldr_cn": "针对操作系统智能体的新型攻击：恶意图像补丁（MIP）通过扰动屏幕区域来劫持VLM驱动的OS智能体。该工作揭示了OS智能体在截图解析和行动执行中的安全脆弱性，对构建安全的智能体操作系统具有重要警示意义。",
+      "title_zh": "恶意图像补丁劫持多模态操作系统智能体",
+      "motivation_cn": "OS智能体直接控制计算机，安全风险高。",
+      "method_cn": "设计对抗性图像补丁，在截图区域制造扰动以误导智能体行为。",
+      "result_cn": "成功实施攻击，表明现有OS智能体易受此类攻击。",
+      "conclusion_cn": "为OS智能体安全防护提出新挑战。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "Agents operating system for server infrastructure"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-4qvlkwgg3s",
+      "score": 7.0,
+      "evidence_en": "edge-assisted serving with heterogeneous GPUs for servers",
+      "evidence_cn": "边缘辅助的服务器推理，利用异构GPU",
+      "canonical_evidence": "边缘辅助的服务器推理，利用异构GPU",
+      "tldr_en": "SpecEdge splits LLM inference between edge and server GPUs via speculative decoding, improving server throughput by 2.22x and cost efficiency by 1.91x.",
+      "tldr_cn": "当前服务器为中心的LLM推理系统忽视了边缘GPU资源。本文提出SpecEdge框架，通过投机解码将LLM推理工作负载在边缘和服务器GPU之间拆分，仅交换token输出。实验表明，SpecEdge将服务器吞吐量提升2.22倍，整体成本效率提升1.91倍，为服务器异构计算资源利用提供了新思路。",
+      "title_zh": "SpecEdge：面向交互式LLM的可扩展边缘辅助服务框架",
+      "motivation_cn": "现有服务器中心系统忽略边缘GPU，导致资源浪费和成本高昂",
+      "method_cn": "提出SpecEdge框架，利用投机解码在边缘和服务器GPU间拆分LLM推理负载",
+      "result_cn": "服务器吞吐量提升2.22倍，成本效率提升1.91倍",
+      "conclusion_cn": "边缘辅助推理能有效降低LLM服务成本并提升吞吐量",
+      "matched_requirement_id": "req-3",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "heterogeneous compute resources for servers"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-l0xzpxt3le",
+      "score": 7.0,
+      "evidence_en": "dynamic orchestration of multi-agent collaboration",
+      "evidence_cn": "动态编排多智能体协作",
+      "canonical_evidence": "动态编排多智能体协作",
+      "tldr_en": "This paper proposes a puppeteer-style paradigm for LLM multi-agent collaboration where a centralized orchestrator dynamically directs agents via reinforcement learning.",
+      "tldr_cn": "现有LLM多智能体协作依赖静态组织结构，难以适应复杂任务。本文提出傀儡师范式，由一个中央编排器动态指挥智能体，并通过强化学习训练编排器自适应排序和优先智能体。该方法提升了协作灵活性和可扩展性，为智能体异构计算基础设施的设计提供了参考。",
+      "title_zh": "基于演化编排的多智能体协作",
+      "motivation_cn": "静态智能体组织架构无法适应任务复杂度和数量增长",
+      "method_cn": "提出傀儡师式编排范式，中央编排器动态指挥智能体，并使用强化学习训练",
+      "result_cn": "实现了灵活可演化的多智能体协作",
+      "conclusion_cn": "动态编排能有效提升多智能体系统的可扩展性和效率",
+      "matched_requirement_id": "req-8",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How to design heterogeneous computing infrastructure for intelligent agents?"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-mbj46gd1ct",
+      "score": 7.0,
+      "evidence_en": "hierarchical multi-agent framework for task automation",
+      "evidence_cn": "分层多智能体框架用于任务自动化",
+      "canonical_evidence": "分层多智能体框架用于任务自动化",
+      "tldr_en": "OWL introduces a hierarchical multi-agent framework that decouples planning, coordination, and execution, enabling domain transfer without full redesign.",
+      "tldr_cn": "现有LLM多智能体系统领域专用性强，迁移需完全重设计。本文提出Workforce分层框架，将规划、协调和执行解耦，包含领域无关的规划器、协调器和领域专用的工作者。该架构支持跨域迁移，为智能体异构计算基础设施的设计提供了模块化方案。",
+      "title_zh": "OWL：面向通用多智能体协助的优化工作力学习",
+      "motivation_cn": "多智能体系统跨域迁移需要完全重设计，缺乏泛化性",
+      "method_cn": "提出分层解耦框架：领域无关规划器、协调器和领域专用工作者",
+      "result_cn": "实现了跨域迁移能力，无需完全重训练",
+      "conclusion_cn": "层次化解耦设计是构建通用智能体基础设施的有效途径",
+      "matched_requirement_id": "req-8",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How to design heterogeneous computing infrastructure for intelligent agents?"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-ex0m4qmyvn",
+      "score": 7.0,
+      "evidence_en": "cluster-level communication primitives for LLM inference on heterogeneous hardware",
+      "evidence_cn": "面向异构硬件的集群级通信原语用于LLM推理",
+      "canonical_evidence": "面向异构硬件的集群级通信原语用于LLM推理",
+      "tldr_en": "ClusterFusion introduces cluster-level collective primitives (ClusterReduce and ClusterGather) to expand operator fusion scope for LLM inference, reducing memory traffic and latency.",
+      "tldr_cn": "LLM推理中算子执行碎片化导致高延迟和内存流量。本文利用现代架构的分布式共享内存和低延迟互连，提出集群级通信原语ClusterReduce和ClusterGather，扩展算子融合范围。该方法减少了内存流量和内核启动开销，为异构计算基础设施上的LLM推理优化提供了新途径。",
+      "title_zh": "ClusterFusion：通过集群级集体原语扩展LLM推理的算子融合范围",
+      "motivation_cn": "现有LLM推理算子执行碎片化，内存流量和延迟高",
+      "method_cn": "提出集群级集体通信原语ClusterReduce和ClusterGather，扩展算子融合",
+      "result_cn": "显著降低了内存流量和推理延迟",
+      "conclusion_cn": "集群级原语是优化异构计算基础设施上LLM推理的关键技术",
+      "matched_requirement_id": "req-4",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "heterogeneous computing infrastructure for AI workloads"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-buytctumya",
+      "score": 7.0,
+      "evidence_en": "Compute-optimal scaling across heterogeneous subtasks",
+      "evidence_cn": "跨异构子任务的测试时计算最优缩放",
+      "canonical_evidence": "跨异构子任务的测试时计算最优缩放",
+      "tldr_en": "AgentTTS proposes a test-time compute-optimal scaling method for multi-stage complex tasks, selecting suitable models and budgets per subtask to maximize overall performance.",
+      "tldr_cn": "针对多阶段复杂任务中异构子任务的计算资源分配问题，提出AgentTTS，为每个子任务选择最优模型和预算分配，实现测试时计算最优缩放。该方法有效应对组合搜索空间，提升整体性能，为AI操作系统管理异构计算资源提供参考。",
+      "title_zh": "AgentTTS: 大语言模型智能体的测试时计算最优缩放策略",
+      "motivation_cn": "现有测试时缩放研究仅关注单阶段任务，多阶段复杂任务中异构子任务资源分配困难。",
+      "method_cn": "提出针对多阶段任务的测试时计算最优缩放，为每个子任务选择模型和分配预算。",
+      "result_cn": "在组合搜索空间下有效提升多阶段任务性能。",
+      "conclusion_cn": "AgentTTS为AI系统异构资源调度提供了可行策略。",
+      "matched_requirement_id": "req-7",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How do AI operating systems handle heterogeneous compute resources?"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-eiojv2epgx",
+      "score": 7.0,
+      "evidence_en": "parallelism schedule for large model training",
+      "evidence_cn": "大模型训练的并行调度",
+      "canonical_evidence": "大模型训练的并行调度",
+      "tldr_en": "Proposes a synergistic tensor and pipeline parallelism schedule to reduce communication overhead and pipeline bubbles, improving large model training efficiency.",
+      "tldr_cn": "针对混合并行方案中张量并行通信开销大和流水线并行气泡问题，本文提出一种协同调度策略，通过解耦前向后向传播同时减少两类空闲时间。在LLM训练实验中，该方法显著提升了吞吐量，且无需修改硬件。该工作为高效大规模模型分布式训练提供了实用方案。",
+      "title_zh": "协同张量并行与流水线并行",
+      "motivation_cn": "现有混合并行方案孤立优化张量并行或流水线并行，未能协同减少通信和气泡开销。",
+      "method_cn": "提出一种协同调度，解耦前向和后向传播，同时减少通信等待和流水线气泡。",
+      "result_cn": "在大规模LLM训练中验证了吞吐量提升，优于单独优化方案。",
+      "conclusion_cn": "该协同并行策略为高效训练提供了可行的调度方法。",
+      "matched_requirement_id": "req-10",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How does heterogeneous computing support large model training?"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-zd6vyjmn1s",
+      "score": 7.0,
+      "evidence_en": "elastic parallelism adapting to resource heterogeneity for AI workloads",
+      "evidence_cn": "弹性并行适应资源异构性以支持AI工作负载",
+      "canonical_evidence": "弹性并行适应资源异构性以支持AI工作负载",
+      "tldr_en": "Proposes Elastic Multimodal Parallelism (EMP) to adapt to heterogeneous resources and mixed request types, improving serving efficiency of multimodal LLMs.",
+      "tldr_cn": "针对多模态大模型服务中异构工作负载和资源利用率低的问题，提出了弹性多模态并行（EMP）范式。该方法通过动态调整并行策略适配不同推理阶段的资源异构性，显著降低了首个令牌生成时间并提升了资源利用率。实验验证了EMP在异构环境下的高效性，为AI工作负载的异构计算基础设施提供了实用方案。",
+      "title_zh": "ElasticMM：基于弹性多模态并行的高效多模态大模型服务",
+      "motivation_cn": "现有紧密耦合的服务架构无法适应混合请求类型和推理阶段的资源异构性，导致延迟高、资源利用率低。",
+      "method_cn": "提出弹性多模态并行（EMP）范式，根据推理阶段和资源异构性动态调整并行策略。",
+      "result_cn": "相比基线方法，TTFT显著降低，资源利用率提升。",
+      "conclusion_cn": "EMP为异构环境下的大模型高效服务提供了可行范式。",
+      "matched_requirement_id": "req-4",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "heterogeneous computing infrastructure for AI workloads"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-6j9xj9pbjm",
+      "score": 7.0,
+      "evidence_en": "safeguarding multi-agent collaborations with temporal graph modeling",
+      "evidence_cn": "用时序图建模保护多智能体协作安全",
+      "canonical_evidence": "用时序图建模保护多智能体协作安全",
+      "tldr_en": "GUARDIAN detects and mitigates safety issues in multi-agent LLM collaborations by modeling propagation dynamics of hallucinations and errors.",
+      "tldr_cn": "针对大语言模型多智能体协作中的幻觉放大和错误传播等安全问题，提出GUARDIAN方法。该方法将协作过程建模为离散时间时序属性图，利用无监督编码器-解码器结构学习重构节点属性，从而检测和缓解多类安全威胁。实验表明该方法能有效捕捉错误传播动态，为智能体系统的安全演进提供了关键技术支持。",
+      "title_zh": "GUARDIAN：用时序图建模保护大语言模型多智能体协作安全",
+      "motivation_cn": "多智能体协作面临幻觉放大和错误注入与传播等关键安全挑战。",
+      "method_cn": "将协作过程建模为离散时间时序属性图，使用无监督编码器-解码器学习重构节点属性。",
+      "result_cn": "能有效捕获并减轻幻觉和错误的传播动态。",
+      "conclusion_cn": "GUARDIAN为多智能体系统的安全检测与缓解提供了统一框架。",
+      "matched_requirement_id": "req-composite-agents-os",
+      "matched_query_tag": "query:agents-os:composite",
+      "matched_query_text": "Papers central to 生成服务器领域的洞察，侧重Agents OS、AI操作系统、异构算力基础设施、智能体安全演进、一体化算力网, especially work that connects or combines: Agents operating system for server infrastructure; AI operating system for heterogeneous computing; heterogeneous compute resources for servers; heterogeneous computing infrastructure for AI workloads; compute in memory architecture for neural networks; liquid cooling solutions for high density AI clusters; How do AI operating systems handle heterogeneous compute resources?; How to design heterogeneous computing infrastructure for intelligent agents?; What are the key technologies for building AI operating systems?; How does heterogeneous computing support large model training?."
+    },
+    {
+      "paper_id": "openreview-neurips-2025-fyw1pkawwj",
+      "score": 7.0,
+      "evidence_en": "Multi-agent system for autonomous cloud reliability, aligns with agents OS for server infra",
+      "evidence_cn": "多智能体系统用于云可靠性工程，与服务器基础设施的智能体操作系统概念契合",
+      "canonical_evidence": "多智能体系统用于云可靠性工程，与服务器基础设施的智能体操作系统概念契合",
+      "tldr_en": "STRATUS is an LLM-based multi-agent system for autonomous Site Reliability Engineering in clouds, using specialized agents for detection, diagnosis, and mitigation.",
+      "tldr_cn": "云规模系统故障频发，人工运维难以应对。STRATUS提出基于LLM的多智能体系统，由检测、诊断、缓解等专用代理组成状态机，实现自主站点可靠性工程。实验证明其能有效发现并处理故障，为构建智能体操作系统管理服务器基础设施提供了范例。",
+      "title_zh": "STRATUS：面向现代云环境的多智能体自主可靠性工程系统",
+      "motivation_cn": "云规模系统故障频繁，人工运维效率低下，亟需自动化可靠性工程方案。",
+      "method_cn": "构建LLM驱动的多智能体系统，通过专用代理（检测、诊断、缓解）协作实现自主SRE。",
+      "result_cn": "在云环境中成功检测并自动处理多种故障，降低人工干预需求。",
+      "conclusion_cn": "多智能体系统可有效提升云基础设施自主运维能力。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "Agents operating system for server infrastructure"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-jv6zoub7bd",
+      "score": 7.0,
+      "evidence_en": "Lifetime-aware tensor offloading to SSD for cost-efficient LLM training with heterogeneous storage",
+      "evidence_cn": "利用SSD进行张量生命周期感知卸载，实现异构存储下的大模型低成本训练",
+      "canonical_evidence": "利用SSD进行张量生命周期感知卸载，实现异构存储下的大模型低成本训练",
+      "tldr_en": "TERAIO offloads inactive tensors to SSDs via GPUDirect Storage, reducing GPU memory pressure and enabling cost-efficient LLM training.",
+      "tldr_cn": "大模型训练中GPU内存紧张，大量张量长期闲置。TERAIO利用GPUDirect Storage将非活跃张量卸载到SSD，精确估计生命周期以避免训练停滞。实验表明该方法以较低成本扩展了可用显存，为异构计算环境下的大模型训练提供了高效的内存管理方案。",
+      "title_zh": "TERAIO：基于生命周期感知和张量卸载的高性价比大模型训练",
+      "motivation_cn": "GPU显存有限，SSD成本低但延迟高，需智能卸载以降低训练成本。",
+      "method_cn": "提出生命周期感知的张量卸载框架，利用GPUDirect Storage在SSD与GPU间高效迁移数据。",
+      "result_cn": "显著降低显存占用，训练大模型时成本减少且吞吐量损失小。",
+      "conclusion_cn": "利用异构存储可有效支撑大模型训练，降低成本。",
+      "matched_requirement_id": "req-10",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How does heterogeneous computing support large model training?"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-zyez5kqtdo",
+      "score": 7.0,
+      "evidence_en": "jointly optimizing model roles in heterogeneous multi-LLM systems",
+      "evidence_cn": "在多LLM异构系统中联合优化模型角色与权重",
+      "canonical_evidence": "在多LLM异构系统中联合优化模型角色与权重",
+      "tldr_en": "Proposes Heterogeneous Swarms algorithm to jointly optimize model roles and weights in multi-LLM systems via a DAG representation and iterative role-weight steps, improving task accuracy.",
+      "tldr_cn": "多LLM系统面临着模型角色分配和权重优化缺乏联合设计的问题。本文提出异构群算法，将多LLM系统表示为有向无环图，通过迭代的角色步和权重步联合优化模型角色与权重。实验表明该方法在多个任务上提升了系统效用（如准确率）。该工作为设计高效的异构多智能体系统提供了可扩展的框架，直接支持异构计算基础设施中智能代理的优化。",
+      "title_zh": "异构群：联合优化多LLM系统中的模型角色与权重",
+      "motivation_cn": "现有方法缺乏对多LLM系统中模型角色和权重的联合优化，无法高效利用异构模型能力。",
+      "method_cn": "将多LLM系统表示为有向无环图，通过角色步与权重步迭代优化模型角色分配与权重，使用粒子群算法优化邻接矩阵。",
+      "result_cn": "在多个任务上通过优化角色和权重提升了系统效用（如准确率）。",
+      "conclusion_cn": "该方法为设计高效异构多智能体系统提供了可扩展的框架。",
+      "matched_requirement_id": "req-8",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How to design heterogeneous computing infrastructure for intelligent agents?"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-cqxlcva9u7",
+      "score": 7.0,
+      "evidence_en": "efficient LLM serving system with elastic co-location of online/offline workloads for heterogeneous SLOs",
+      "evidence_cn": "高效LLM服务系统，通过弹性共置在线/离线请求处理异构SLO",
+      "canonical_evidence": "高效LLM服务系统，通过弹性共置在线/离线请求处理异构SLO",
+      "tldr_en": "HyGen presents an interference-aware LLM serving system that co-locates online and offline workloads, using a latency predictor and SLO-aware profiler to improve resource utilization while meeting heterogeneous service-level objectives.",
+      "tldr_cn": "HyGen提出了一种干扰感知的LLM服务系统，通过在线与离线请求的弹性共置来提升资源利用率，其核心包括延迟预测器和SLO感知分析器以管理性能干扰，实验表明在保持服务质量的同时显著提高吞吐量，为AI操作系统中的资源调度提供了有效方案。",
+      "title_zh": "HyGen：通过弹性在线-离线请求共置实现高效LLM服务",
+      "motivation_cn": "专用机器部署LLM工作负载导致资源利用率低下。",
+      "method_cn": "提出干扰感知的共置方案，包含延迟预测与SLO感知分析。",
+      "result_cn": "在线离线共置显著提升资源利用率，同时满足SLO。",
+      "conclusion_cn": "弹性共置是优化LLM服务器资源利用的有效手段。",
+      "matched_requirement_id": "req-2",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "AI operating system for heterogeneous computing"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-lsrpjkynu2",
+      "score": 7.0,
+      "evidence_en": "SLO-oriented LLM serving system exploiting heterogeneous SLOs for adaptive scheduling",
+      "evidence_cn": "面向SLO的LLM服务系统，利用异构SLO进行自适应调度",
+      "canonical_evidence": "面向SLO的LLM服务系统，利用异构SLO进行自适应调度",
+      "tldr_en": "SCORPIO maximizes goodput and SLO attainment for LLM inference with heterogeneous SLOs via TTFT Guard and TPOT Guard, exploiting SLO heterogeneity for admission control, queue management, and batch selection.",
+      "tldr_cn": "SCORPIO面向异构SLO的LLM推理服务系统，通过TTFT守卫和TPOT守卫分别优化首token延迟和输出token速率，利用SLO异质性在准入控制、队列管理和批次选择中进行自适应调度，显著提升系统有效吞吐量与SLO达标率。",
+      "title_zh": "Scorpio：面向LLM推理中异构服务等级目标的请求适时服务系统",
+      "motivation_cn": "现有LLM服务系统忽略异构SLO，导致SLO达标率低。",
+      "method_cn": "提出TTFT守卫与TPOT守卫，基于SLO异质性调度请求。",
+      "result_cn": "SCORPIO在异构SLO下显著提高有效吞吐量和达标率。",
+      "conclusion_cn": "利用SLO异质性可大幅提升LLM推理服务质量。",
+      "matched_requirement_id": "req-2",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "AI operating system for heterogeneous computing"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-1qkuvyymxs",
+      "score": 7.0,
+      "evidence_en": "communication-overlapped sharded LLM training supporting heterogeneous hardware",
+      "evidence_cn": "通信重叠的分片LLM训练，支持异构硬件",
+      "canonical_evidence": "通信重叠的分片LLM训练，支持异构硬件",
+      "tldr_en": "ACCO proposes a memory-efficient optimization algorithm for distributed LLM training that overlaps gradient synchronization with computation, reducing idle time and supporting heterogeneous hardware.",
+      "tldr_cn": "ACCO提出了一种内存高效的分布式LLM训练优化算法，通过将梯度同步与计算重叠来减少GPU空闲时间，同时支持异构硬件，显著提升了训练效率与可扩展性，为异构计算环境下的大模型训练提供了关键技术。",
+      "title_zh": "ACCO：面向分片LLM训练的通信重叠累积方法",
+      "motivation_cn": "分布式LLM训练中梯度同步开销大，且局部优化防止状态分片。",
+      "method_cn": "提出累积与通信重叠算法，允许延迟梯度同步。",
+      "result_cn": "ACCO减少空闲时间并支持异构硬件，提升训练效率。",
+      "conclusion_cn": "通信重叠是优化分布式训练的关键，尤其适用于异构系统。",
+      "matched_requirement_id": "req-10",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How does heterogeneous computing support large model training?"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-xbmjxb6f4w",
+      "score": 6.0,
+      "evidence_en": "evaluates AI agent sabotage in ML R&D, related to agent safety",
+      "evidence_cn": "评估AI研发中智能体破坏行为，与智能体安全相关",
+      "canonical_evidence": "评估AI研发中智能体破坏行为，与智能体安全相关",
+      "tldr_en": "CTRL-ALT-DECEIT extends MLE-Bench with sabotage tasks to evaluate AI agents' ability to sabotage ML models and subvert oversight.",
+      "tldr_cn": "针对前沿AI系统在自动化ML研发中可能产生的安全威胁，扩展MLE-Bench以包含代码破坏任务，系统评估AI智能体进行模型破坏、性能造假和隐瞒的能力。该工作为智能体安全评估提供了新基准。",
+      "title_zh": "CTRL-ALT-DECEIT：自动化AI研发的破坏评估",
+      "motivation_cn": "AI智能体可能被部署在安全关键任务中，需评估其抵抗破坏的能力。",
+      "method_cn": "在MLE-Bench基础上增加破坏性任务，测试智能体在ML工程中的恶意行为。",
+      "result_cn": "成功评估了智能体在多个破坏维度上的能力。",
+      "conclusion_cn": "为自动化AI研发中的安全性提供了重要评估工具。",
+      "matched_requirement_id": "req-composite-agents-os",
+      "matched_query_tag": "query:agents-os:composite",
+      "matched_query_text": "Papers central to 生成服务器领域的洞察，侧重Agents OS、AI操作系统、异构算力基础设施、智能体安全演进、一体化算力网, especially work that connects or combines: Agents operating system for server infrastructure; AI operating system for heterogeneous computing; heterogeneous compute resources for servers; heterogeneous computing infrastructure for AI workloads; compute in memory architecture for neural networks; liquid cooling solutions for high density AI clusters; How do AI operating systems handle heterogeneous compute resources?; How to design heterogeneous computing infrastructure for intelligent agents?; What are the key technologies for building AI operating systems?; How does heterogeneous computing support large model training?."
+    },
+    {
+      "paper_id": "openreview-neurips-2025-qldyoo8qly",
+      "score": 6.0,
+      "evidence_en": "gradient coding for heterogeneous stragglers in distributed learning",
+      "evidence_cn": "分布式学习中针对异构延迟节点的梯度编码",
+      "canonical_evidence": "分布式学习中针对异构延迟节点的梯度编码",
+      "tldr_en": "This paper proposes an optimally structured gradient coding scheme that handles heterogeneous straggler probabilities, reducing redundancy and computational load.",
+      "tldr_cn": "现有梯度编码方法假设同构延迟模型，在真实异构系统中性能有限。本文提出优化梯度编码方案，显式考虑个体延迟概率，通过拉格朗日对偶得到最优编码系数，并设计数据分配策略减少冗余。该方法提升了异构计算资源下的分布式训练效率，与服务器异构计算需求相关。",
+      "title_zh": "面向异构延迟节点的分布式学习近似梯度编码",
+      "motivation_cn": "现有梯度编码方法无法有效处理异构延迟节点",
+      "method_cn": "提出考虑个体延迟概率的优化梯度编码方案，推导闭式最优解",
+      "result_cn": "减少了冗余和计算负载，提升了异构环境中的训练效率",
+      "conclusion_cn": "所提方案有效提升了异构分布式学习的鲁棒性",
+      "matched_requirement_id": "req-3",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "heterogeneous compute resources for servers"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-3qets05brl",
+      "score": 6.0,
+      "evidence_en": "decentralized graph-based policy for heterogeneous multi-agent environments",
+      "evidence_cn": "面向异构多智能体环境的去中心化图策略",
+      "canonical_evidence": "面向异构多智能体环境的去中心化图策略",
+      "tldr_en": "BayesG proposes a decentralized actor-critic framework for networked multi-agent RL that learns dynamic subgraph sampling for heterogeneous environments.",
+      "tldr_cn": "现有网络化多智能体强化学习假设静态邻域，无法适应动态异构环境。本文提出随机图策略，每个智能体基于局部物理邻域采样子图进行决策，并引入去中心化演员-评论家框架学习动态图。该方法提升了在异构环境中的适应性，与智能体基础设施设计相关。",
+      "title_zh": "面向网络化多智能体强化学习的贝叶斯自我图推断",
+      "motivation_cn": "静态邻域假设限制了多智能体在异构环境中的适应性",
+      "method_cn": "提出基于随机图的去中心化策略，结合贝叶斯推断学习动态子图",
+      "result_cn": "在动态异构环境中提升了协作性能",
+      "conclusion_cn": "动态图推断是去中心化多智能体系统的有效方法",
+      "matched_requirement_id": "req-8",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How to design heterogeneous computing infrastructure for intelligent agents?"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-2us2rbe0hv",
+      "score": 5.0,
+      "evidence_en": "Layer-adaptive submodel extraction for heterogeneous FL",
+      "evidence_cn": "针对异构联邦学习的层级自适应子模型提取",
+      "canonical_evidence": "针对异构联邦学习的层级自适应子模型提取",
+      "tldr_en": "FedLASE extracts layer-adaptive submodels from a global model to address system heterogeneity in federated learning, balancing performance across resource levels.",
+      "tldr_cn": "联邦学习中客户端系统异构导致子模型性能差异大，本文提出FedLASE，通过层级自适应子模型提取，使不同资源水平的客户端获得性能均衡的子模型，提升整体联邦学习性能，可用于异构服务器场景。",
+      "title_zh": "FedLASE: 通过层级自适应子模型提取实现性能均衡的系统异构联邦学习",
+      "motivation_cn": "现有子模型提取方法在异构设备间性能差异大，影响联邦学习整体效果。",
+      "method_cn": "提出层级自适应的子模型提取方法，根据设备资源水平均衡分配模型层数。",
+      "result_cn": "在多个数据集上实现更均衡的性能，提升联邦学习系统整体精度。",
+      "conclusion_cn": "FedLASE有效缓解系统异构导致的性能偏差，适用于异构计算资源场景。",
+      "matched_requirement_id": "req-3",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "heterogeneous compute resources for servers"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-x3qnrhfhx0",
+      "score": 5.0,
+      "evidence_en": "Communication-efficient context parallel training via compression",
+      "evidence_cn": "通过压缩实现通信高效的上下文并行训练",
+      "canonical_evidence": "通过压缩实现通信高效的上下文并行训练",
+      "tldr_en": "Mixtures of Subspaces compresses activation outputs by exploiting low-rank structure, achieving >95% compression for context parallelism with negligible overhead and no convergence loss.",
+      "tldr_cn": "针对低带宽环境下上下文并行训练通信开销大的问题，提出子空间混合方法，利用激活输出的低秩结构动态压缩，达到95%以上压缩率且无收敛损失，使长上下文训练适用于分散式设备，支持异构环境下的高效训练。",
+      "title_zh": "子空间混合用于带宽高效上下文并行训练",
+      "motivation_cn": "现有上下文并行训练在低带宽环境下通信开销巨大，难以应用。",
+      "method_cn": "利用激活输出的低秩结构，动态压缩通信数据，实现95%以上压缩率。",
+      "result_cn": "在保证收敛的前提下大幅降低通信量，适用于低带宽分布式环境。",
+      "conclusion_cn": "该方法使长上下文训练在异构低带宽网络中可行。",
+      "matched_requirement_id": "req-10",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How does heterogeneous computing support large model training?"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-dfehiytz2w",
+      "score": 5.0,
+      "evidence_en": "Federated elastic learning for heterogeneous devices",
+      "evidence_cn": "异构设备的联邦弹性学习",
+      "canonical_evidence": "异构设备的联邦弹性学习",
+      "tldr_en": "FedEL introduces elastic training by dynamically adjusting model size per device to handle hardware heterogeneity, improving efficiency and accuracy in federated learning.",
+      "tldr_cn": "联邦学习中设备异构导致训练延迟和不一致，本文提出FedEL，通过动态调整每个设备的模型大小实现弹性训练，在保持准确率的同时提升训练效率，有效缓解异构问题，可用于异构服务器资源管理。",
+      "title_zh": "FedEL: 异构设备的联邦弹性学习",
+      "motivation_cn": "联邦学习中异构设备导致训练延迟和模型性能下降。",
+      "method_cn": "提出弹性学习框架，根据设备能力动态调整模型大小。",
+      "result_cn": "在保持准确率前提下提升训练效率，减少等待时间。",
+      "conclusion_cn": "FedEL为异构联邦学习提供了一种高效的弹性训练方案。",
+      "matched_requirement_id": "req-3",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "heterogeneous compute resources for servers"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-wbeknrzbpt",
+      "score": 5.0,
+      "evidence_en": "Dynamic data scheduling for heterogeneous sequence lengths",
+      "evidence_cn": "针对异构序列长度的动态数据调度",
+      "canonical_evidence": "针对异构序列长度的动态数据调度",
+      "tldr_en": "Skrull dynamically schedules data with heterogeneous sequence lengths to optimize training efficiency for long-context supervised fine-tuning.",
+      "tldr_cn": "长上下文微调中长短序列混合导致训练效率低下，本文提出Skrull，从数据调度新视角出发，动态调整数据顺序以匹配计算资源，显著提升端到端系统性能，缓解异构数据分布带来的挑战，为资源调度提供思路。",
+      "title_zh": "Skrull: 面向高效长上下文微调的动态数据调度",
+      "motivation_cn": "长上下文微调中异构序列长度分布导致训练系统效率低下。",
+      "method_cn": "提出动态数据调度方法，根据序列长度优化训练批次顺序。",
+      "result_cn": "在保持模型性能的同时显著提升训练吞吐量。",
+      "conclusion_cn": "Skrull有效应对异构数据分布，提升长上下文微调效率。",
+      "matched_requirement_id": "req-7",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How do AI operating systems handle heterogeneous compute resources?"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-5iw1ndtymt",
+      "score": 5.0,
+      "evidence_en": "workflow-aware cache management for LLM-based multi-agent workflows",
+      "evidence_cn": "面向LLM多Agent工作流的感知缓存管理",
+      "canonical_evidence": "面向LLM多Agent工作流的感知缓存管理",
+      "tldr_en": "KVFlow provides workflow-aware KV cache eviction for LLM multi-agent systems, reducing recomputation by anticipating future agent usage.",
+      "tldr_cn": "不相关",
+      "title_zh": "KVFlow：面向LLM多Agent工作流的高效前缀缓存加速",
+      "motivation_cn": "不相关",
+      "method_cn": "不相关",
+      "result_cn": "不相关",
+      "conclusion_cn": "不相关",
+      "matched_requirement_id": "req-8",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How to design heterogeneous computing infrastructure for intelligent agents?"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-fxcy8tvqho",
+      "score": 4.0,
+      "evidence_en": "simulator for AI agents in complex environments",
+      "evidence_cn": "模拟器用于复杂环境中的AI智能体",
+      "canonical_evidence": "模拟器用于复杂环境中的AI智能体",
+      "tldr_en": "SimWorld is an open-ended simulator built on Unreal Engine 5 for developing and evaluating LLM/VLM agents in rich physical and social worlds.",
+      "tldr_cn": "现有世界模拟器局限于手工场景和简化物理/社会规则，缺乏对LLM/VLM智能体的原生支持。本文基于Unreal Engine 5构建SimWorld，提供丰富的真实世界环境，支持智能体大规模交互、推理和训练。该模拟器为智能体基础设施设计提供了评估平台，但与服务器操作系统直接关联较弱。",
+      "title_zh": "SimWorld：面向物理和社会世界的开放式智能体模拟器",
+      "motivation_cn": "现有模拟器无法支持LLM/VLM智能体在复杂真实世界中的开发",
+      "method_cn": "基于Unreal Engine 5构建开放世界模拟器，原生支持LLM/VLM智能体",
+      "result_cn": "提供了丰富的物理和社会环境用于智能体评估",
+      "conclusion_cn": "SimWorld可作为智能体基础设施的测试床，但非核心系统",
+      "matched_requirement_id": "req-8",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How to design heterogeneous computing infrastructure for intelligent agents?"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-wryhlha8qi",
+      "score": 4.0,
+      "evidence_en": "risk awareness in resource-constrained AI agents",
+      "evidence_cn": "资源受限AI智能体的风险意识",
+      "canonical_evidence": "资源受限AI智能体的风险意识",
+      "tldr_en": "This paper formalizes risk-awareness in rational agents under resource constraints using a survival bandit framework, revealing misalignment with human objectives.",
+      "tldr_cn": "智能体在资源约束下可能产生与人类目标不一致的行为。本文通过生存老虎机框架形式化资源约束下的理性智能体风险意识，揭示了约束暴露不对称导致的对齐问题。该研究对智能体操作系统的安全设计具有启发性，但并非直接技术。",
+      "title_zh": "资源约束下理性智能体的涌现风险意识",
+      "motivation_cn": "资源约束可能导致智能体行为与人类目标偏离",
+      "method_cn": "提出生存老虎机框架建模资源约束下的智能体决策",
+      "result_cn": "揭示了约束不对称导致的激励偏差",
+      "conclusion_cn": "智能体操作系统需考虑资源约束下的安全对齐",
+      "matched_requirement_id": "req-8",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How to design heterogeneous computing infrastructure for intelligent agents?"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-cyg3kmfsgm",
+      "score": 4.0,
+      "evidence_en": "heterogeneous multi-agent collaboration with generative communication",
+      "evidence_cn": "异构多智能体协作与生成通信",
+      "canonical_evidence": "异构多智能体协作与生成通信",
+      "tldr_en": "Proposes GenComm, a generative communication mechanism enabling seamless heterogeneous collaborative perception without retraining encoders, addressing domain gaps and scalability.",
+      "tldr_cn": "针对异构多智能体协作感知中领域差异和扩展性难题，本文提出生成通信机制GenComm，通过生成式方法对齐不同传感器和模型的特征，无需重新训练编码器。实验表明该方法在多个异构场景下提升了感知性能，且易于扩展到新智能体。该工作对于智能体异构计算基础设施的设计具有参考价值。",
+      "title_zh": "基于生成通信机制的实用异构协作感知",
+      "motivation_cn": "异构智能体协作中传感器和模型差异导致域间隙，现有方法需要侵入式重训练或扩展性差。",
+      "method_cn": "提出GenComm生成通信机制，通过生成式特征对齐实现无缝异构协作感知。",
+      "result_cn": "在多个异构感知任务上验证了有效性和扩展性，优于基于适配和重建的方法。",
+      "conclusion_cn": "GenComm为异构智能体系统的高效协作提供了轻量级的通信方案。",
+      "matched_requirement_id": "req-8",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How to design heterogeneous computing infrastructure for intelligent agents?"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-gigtog4dna",
+      "score": 4.0,
+      "evidence_en": "fault-tolerant optimization for distributed LLM training on heterogeneous hardware",
+      "evidence_cn": "分布式大模型训练的容错优化，应对硬件异构故障",
+      "canonical_evidence": "分布式大模型训练的容错优化，应对硬件异构故障",
+      "tldr_en": "MeCeFO provides memory- and computation-efficient fault-tolerant optimization for LLM training with minimal overhead.",
+      "tldr_cn": "不相关",
+      "title_zh": "MeCeFO：通过容错优化增强大语言模型训练的鲁棒性",
+      "motivation_cn": "不相关",
+      "method_cn": "不相关",
+      "result_cn": "不相关",
+      "conclusion_cn": "不相关",
+      "matched_requirement_id": "req-10",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How does heterogeneous computing support large model training?"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-d6w7win360",
+      "score": 4.0,
+      "evidence_en": "Pipeline parallelism for LLM serving, addresses workload imbalance across devices",
+      "evidence_cn": "针对LLM服务的流水线并行，解决跨设备负载不均衡",
+      "canonical_evidence": "针对LLM服务的流水线并行，解决跨设备负载不均衡",
+      "tldr_en": "DynaPipe dynamically redistributes LLM layers across pipeline stages to balance computation and reduce idle time, improving serving efficiency.",
+      "tldr_cn": "大语言模型推理中流水线并行常因尾阶段任务不均衡导致气泡。DynaPipe通过动态重分配层来平衡各阶段计算负载，减少空闲时间。实验表明该方法显著提升吞吐量并降低延迟，为异构服务器上的高效LLM服务提供了新思路。",
+      "title_zh": "DynaPipe：面向LLM流水线并行服务的动态层重分配",
+      "motivation_cn": "现有流水线并行中尾阶段计算负载过重导致上游设备空闲，整体性能受损。",
+      "method_cn": "提出动态层重分配算法，根据各阶段实际计算需求重新分配模型层。",
+      "result_cn": "在模拟和真实环境中均显著减少流水线气泡，提升吞吐量。",
+      "conclusion_cn": "动态层重分配可有效缓解流水线不平衡问题，适用于异构计算环境。",
+      "matched_requirement_id": "req-10",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How does heterogeneous computing support large model training?"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-ygoytgjurf",
+      "score": 4.0,
+      "evidence_en": "Online KV-cache communication for multi-agent LLM systems, improves efficiency in agent coordination",
+      "evidence_cn": "多智能体LLM系统中的在线KV缓存通信，提升智能体协作效率",
+      "canonical_evidence": "多智能体LLM系统中的在线KV缓存通信，提升智能体协作效率",
+      "tldr_en": "KVCOMM proposes cross-context KV-cache sharing among agents in multi-agent LLM systems to avoid redundant reprocessing.",
+      "tldr_cn": "多智能体LLM系统中，每个代理独立重处理大量重叠上下文造成低效。KVCOMM通过在线跨上下文KV缓存通信，使代理间复用前驱的计算结果。实验证明了大幅加速，为构建高效智能体操作系统提供了通信优化技术。",
+      "title_zh": "KVCOMM：面向高效LLM多智能体系统的在线跨上下文KV缓存通信",
+      "motivation_cn": "多智能体系统中重复处理相同上下文导致计算浪费。",
+      "method_cn": "提出在线KV缓存共享机制，允许代理间传递缓存的键值对。",
+      "result_cn": "显著减少重复计算，加速多轮对话和协作任务。",
+      "conclusion_cn": "KV缓存通信是优化多智能体系统效率的关键技术。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "Agents operating system for server infrastructure"
+    },
+    {
+      "paper_id": "openreview-neurips-2025-k1fbdnwjch",
+      "score": 4.0,
+      "evidence_en": "heterogeneous multi-robot task allocation and scheduling with graph transformers, analogous to agent orchestration",
+      "evidence_cn": "异构多机器人任务分配与调度，类比智能体编排",
+      "canonical_evidence": "异构多机器人任务分配与调度，类比智能体编排",
+      "tldr_en": "This paper proposes a heterogeneous graph transformer for simultaneous multi-robot task allocation and scheduling under temporal constraints, modeling agent capabilities and dependencies.",
+      "tldr_cn": "针对大规模异构多机器人任务分配与调度问题，提出基于残差异构图Transformer的同步决策模型，编码智能体能力、旅行时间与时序约束，实现可扩展的高效协调，其核心思想可迁移至异构计算基础设施中的智能体资源调度。",
+      "title_zh": "异构图Transformer：面向时间约束下移动多机器人同步任务分配与调度",
+      "motivation_cn": "现有方法难以扩展且忽视智能体异构性。",
+      "method_cn": "构建残差异构图Transformer，结合边与节点注意力。",
+      "result_cn": "模型在复杂任务场景下实现可扩展的最优调度。",
+      "conclusion_cn": "图Transformer有效解决异构多智能体调度问题。",
+      "matched_requirement_id": "req-8",
+      "matched_query_tag": "query:agents-os",
+      "matched_query_text": "How to design heterogeneous computing infrastructure for intelligent agents?"
+    }
+  ],
+  "llm_ranked_at": "2026-06-10T01:08:38.452694+00:00",
+  "display_min_score": 4.0,
+  "pruned_at": "2026-06-10T01:08:38.503211+00:00"
+}
