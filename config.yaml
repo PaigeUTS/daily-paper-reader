@@ -164,6 +164,47 @@ subscriptions:
             updated_at: '2026-06-09T03:21:10.256802+00:00'
       updated_at: '2026-06-09T03:02:35.657Z'
       paused: true
+    - tag: cdn-ai-edge
+      description: 请帮我查找AI时代下的CDN相关论文，关注AI边缘网络演进和KV Cache缓存，或者其他关于CDN的热点方向
+      enabled: true
+      paper_sources:
+        - arxiv
+      keywords:
+        - keyword: content delivery network
+          keyword_cn: 内容分发网络
+          query: content delivery network AI integration
+        - keyword: edge computing
+          keyword_cn: 边缘计算
+          query: edge computing for AI inference
+        - keyword: KV cache
+          keyword_cn: KV缓存
+          query: KV cache optimization in edge networks
+        - keyword: AI inference
+          keyword_cn: AI推理
+          query: AI inference at CDN edge nodes
+        - keyword: edge AI
+          keyword_cn: 边缘AI
+          query: edge AI network evolution
+        - keyword: caching strategy
+          keyword_cn: 缓存策略
+          query: caching strategy for large language models
+      intent_queries:
+        - query: How is AI transforming CDN edge network architecture?
+          query_cn: AI如何重塑CDN边缘网络架构？
+          enabled: true
+          source: manual
+          note: ''
+        - query: What are the latest KV cache techniques for edge caching in AI applications?
+          query_cn: AI应用中的边缘缓存最新KV缓存技术有哪些？
+          enabled: true
+          source: manual
+          note: ''
+        - query: What are emerging trends in CDN for AI workloads?
+          query_cn: 适用于AI工作负载的CDN新兴趋势是什么？
+          enabled: true
+          source: manual
+          note: ''
+      updated_at: '2026-06-24T01:26:17.780Z'
 source_backends:
   arxiv:
     papers_table: arxiv_papers
