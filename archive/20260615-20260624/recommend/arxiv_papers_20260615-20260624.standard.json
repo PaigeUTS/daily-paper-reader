@@ -1,0 +1,760 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-24T03:34:09.514905+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 20,
+    "deep_cap": 6,
+    "deep_selected": 8,
+    "quick_candidates": 21,
+    "quick_skim_target": 11,
+    "quick_selected": 11
+  },
+  "deep_dive": [
+    {
+      "id": "2606.16135v1",
+      "source": "arxiv",
+      "title": "SwiftCache: Efficient LLM Serving for Multi-turn Conversations with Heterogeneous KV Cache Sharing",
+      "abstract": "Multi-turn conversation is a fundamental scenario in LLM applications, widely used in chatbots and AI agents. As the conversation evolves, historical tokens accumulate continuously. Existing systems cache their key-value (KV) pairs to avoid redundant computation. However, limited GPU memory (HBM) capacity often forces these KV caches to be offloaded to CPU memory or SSD, making KV cache reloads increasingly costly in terms of latency as the context grows. Meanwhile, the constrained HBM capacity also limits the maximum inference length, thereby restricting the number of turns that can be supported in a conversation.   To address these two challenges, we propose SwiftCache, a collaborative inference system that enables heterogeneous models to share underutilized GPU memory and NVLink bandwidth within a server. Specifically, models with low KV cache demand donate idle GPU memory to store the prefix cache of high-demand models, allowing cross-model KV cache sharing over NVLink and avoiding slow PCIe transfers. SwiftCache further reduces memory pressure by keeping only the KV cache of the currently active layer in local GPU memory, thereby enabling longer-context inference. Our experiments on real-world workloads show that SwiftCache reduces P99 time-to-first-token (TTFT) by up to 69% and extends maximum context length by up to 3.98x compared to vLLM and SGLang, with minimal interference to co-located models.",
+      "authors": [
+        "Jianmin Hu",
+        "Minxian Xu",
+        "Sa Wang",
+        "Chong Ma",
+        "Min Shen",
+        "Kejiang Ye",
+        "Lin Qu",
+        "Chengzhong Xu"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC"
+      ],
+      "published": "2026-06-15T02:48:15+00:00",
+      "link": "https://arxiv.org/pdf/2606.16135v1",
+      "tags": [
+        "keyword:cdn-ai-edge",
+        "query:cdn-ai-edge"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "efficient KV cache sharing for multi-turn conversations across heterogeneous devices",
+      "llm_evidence_cn": "多轮对话中跨异构设备的KV缓存高效共享",
+      "llm_evidence": "多轮对话中跨异构设备的KV缓存高效共享",
+      "canonical_evidence": "多轮对话中跨异构设备的KV缓存高效共享",
+      "llm_tldr_en": "SwiftCache enables heterogeneous KV cache sharing across devices for multi-turn LLM conversations, reducing offloading overhead and extending maximum context length.",
+      "llm_tldr_cn": "提出SwiftCache协同推理系统，通过异构KV缓存共享避免重复计算和频繁换出，支持更长上下文和更多轮次的对话。实验表明延迟和显存占用均显著降低。",
+      "llm_tldr": "提出SwiftCache协同推理系统，通过异构KV缓存共享避免重复计算和频繁换出，支持更长上下文和更多轮次的对话。实验表明延迟和显存占用均显著降低。",
+      "llm_tags": [
+        "query:cdn-ai-edge"
+      ],
+      "matched_query_tag": "query:cdn-ai-edge",
+      "matched_query_text": "KV cache optimization in edge networks",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.16824v1",
+      "source": "arxiv",
+      "title": "CacheWise: Understanding Workloads and Optimizing KVCache Management for Efficiently Serving LLM Coding Agents",
+      "abstract": "Coding agents are a fast-growing LLM application, executing as long-running closed-loop sessions in which LLM generations alternate with external tool calls. Yet, unlike chat workloads, their serving behavior has not been studied extensively. We address this gap by collecting a dataset of real-world coding assistant traces. Our analysis shows that coding agent sessions repeatedly reuse large prefixes and create sustained KVCache pressure that conventional LLM serving policies handle poorly.   Based on our analysis, we present CacheWise, a KVCache management layer that improves KVCache reuse for coding agent workloads. CacheWise combines prefix-aware scheduling with reuse-aware eviction guided by lightweight predictions from tool call metadata. Implemented in vLLM and evaluated on the collected traces, CacheWise reduces KVCache evictions by up to 2-2.6x and improves total agent session completion time by up to 3.5x.",
+      "authors": [
+        "Shubham Tiwari",
+        "Tapan Chugh",
+        "Nash Rickert",
+        "Simon Peter",
+        "Ratul Mahajan",
+        "Haiying Shen"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC",
+        "cs.OS"
+      ],
+      "published": "2026-06-15T15:08:01+00:00",
+      "link": "https://arxiv.org/pdf/2606.16824v1",
+      "tags": [
+        "keyword:cdn-ai-edge",
+        "query:cdn-ai-edge"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "KVCache optimization for LLM coding agents with prefix-aware scheduling",
+      "llm_evidence_cn": "针对LLM编程代理的KVCache优化，结合前缀感知调度",
+      "llm_evidence": "针对LLM编程代理的KVCache优化，结合前缀感知调度",
+      "canonical_evidence": "针对LLM编程代理的KVCache优化，结合前缀感知调度",
+      "llm_tldr_en": "CacheWise analyzes real coding agent traces and proposes prefix-aware scheduling and reuse-aware eviction to improve KVCache reuse, reducing pressure from long-running sessions.",
+      "llm_tldr_cn": "论文通过分析实际编程助手轨迹发现编码代理会话重用大型前缀导致KVCache压力。提出CacheWise，结合前缀感知调度和重用感知驱逐策略优化KVCache管理。实验表明该方法有效提升缓存命中率并降低延迟。为LLM编程场景的KVCache管理提供了新视角和优化方案。",
+      "llm_tldr": "论文通过分析实际编程助手轨迹发现编码代理会话重用大型前缀导致KVCache压力。提出CacheWise，结合前缀感知调度和重用感知驱逐策略优化KVCache管理。实验表明该方法有效提升缓存命中率并降低延迟。为LLM编程场景的KVCache管理提供了新视角和优化方案。",
+      "llm_tags": [
+        "query:cdn-ai-edge"
+      ],
+      "matched_query_tag": "query:cdn-ai-edge",
+      "matched_query_text": "caching strategy for large language models",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.17368v1",
+      "source": "arxiv",
+      "title": "Distributed General-Purpose Agent Networks: Architecture, Key Mechanisms, and Prototypes",
+      "abstract": "Large language models have accelerated the transition from passive conversational assistants to autonomous agents that can understand goals, plan actions, invoke tools, and execute multi-step tasks. Yet the capability of a single agent remains constrained by its local data, tool permissions, runtime environment, and governance boundary. This paper studies distributed general-purpose agent networks: open peer-to-peer networks in which heterogeneous agents deployed on personal devices, edge nodes, or autonomous computing environments can discover one another, establish trust, negotiate cooperation rules, and execute open-ended tasks. We argue that such networks cannot be obtained by simply combining existing peer-to-peer overlays with conventional multi-agent systems. Unlike traditional P2P networks, agent networks must propagate semantic declarations about intentions, capabilities, states, and cooperation constraints. We therefore propose a layered architecture centered on a protocol adaptation layer that connects upper-level task semantics with lower-level network operations. Based on this architecture, the paper identifies three core mechanism problems: semantic announcement propagation for collaborator discovery, verifiable identity and multi-topic reputation for cooperation governance, and semantic-gradient mechanism design for open task execution. For each problem, we present a technical route, including bodyless gossip with sequential logs, BAID-based identity binding with MG-EigenTrust reputation, and a Stackelberg-style mechanism-generation loop driven by semantic attribution feedback. We further report prototype overhead results for BAID-style tiered verification and mechanism-level simulations of MG-EigenTrust under cross-topic disguise-collusion attacks. The resulting framework provides a system-level foundation for open, trustworthy, and scalable agent collaboration.",
+      "authors": [
+        "Shengli Zhang",
+        "Deen Ma",
+        "Zibin Lin",
+        "Taotao Wang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.NI"
+      ],
+      "published": "2026-06-15T23:57:13+00:00",
+      "link": "https://arxiv.org/pdf/2606.17368v1",
+      "tags": [
+        "keyword:cdn-ai-edge",
+        "query:cdn-ai-edge"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "distributed agent networks with heterogeneous agents on edge nodes and personal devices",
+      "llm_evidence_cn": "边缘节点和个人设备上异构代理的分布式代理网络",
+      "llm_evidence": "边缘节点和个人设备上异构代理的分布式代理网络",
+      "canonical_evidence": "边缘节点和个人设备上异构代理的分布式代理网络",
+      "llm_tldr_en": "Proposes a distributed general-purpose agent network architecture enabling heterogeneous agents on edge devices to cooperate autonomously, with key mechanisms for trust and coordination.",
+      "llm_tldr_cn": "研究分布式通用代理网络，支持异构代理在边缘节点和个人设备上自主发现、信任建立和协作，提出架构设计和关键机制，原型验证了多领域场景的可行性。",
+      "llm_tldr": "研究分布式通用代理网络，支持异构代理在边缘节点和个人设备上自主发现、信任建立和协作，提出架构设计和关键机制，原型验证了多领域场景的可行性。",
+      "llm_tags": [
+        "query:agents-os:composite"
+      ],
+      "matched_query_tag": "query:agents-os:composite",
+      "matched_query_text": "Papers central to 生成服务器领域的洞察，侧重Agents OS、AI操作系统、异构算力基础设施、智能体安全演进、一体化算力网, especially work that connects or combines: Agents operating system for server infrastructure; AI operating system for heterogeneous computing; heterogeneous compute resources for servers; heterogeneous computing infrastructure for AI workloads; compute in memory architecture for neural networks; liquid cooling solutions for high density AI clusters; How do AI operating systems handle heterogeneous compute resources?; How to design heterogeneous computing infrastructure for intelligent agents?; What are the key technologies for building AI operating systems?; How does heterogeneous computing support large model training?.",
+      "matched_requirement_id": "req-composite-agents-os",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.19746v1",
+      "source": "arxiv",
+      "title": "SAC: Disaggregated KV Cache System for Sparse Attention LLMs with CXL",
+      "abstract": "The scaling of LLMs toward long-context inference has shifted the primary serving system bottleneck from computation to memory capacity. Traditional solutions for dense attention models rely on RDMA-based disaggregated memory pools, which perform coarse-grained fetching of the entire prefix KV cache from remote storage to local memory before decoding. However, this approach is fundamentally inefficient for emerging sparse attention models. While only a small fraction of KV entries are active during decoding, these systems still fetch the full KV cache locally, leading to severe transmission bottlenecks and local memory wastage. To address this, we propose SAC, the first efficient disaggregated KV cache system optimized for sparse attention models. By leveraging the low-latency, cache-line granularity load/store semantics of Compute Express Link (CXL), SAC fetches only the required top-k KV entries on demand during inference. Evaluations on DeepSeek-V3.2 using SGLang show that SAC achieves 2.1x higher throughput, 9.7x lower TTFT, and 1.8x lower TBT compared to RDMA-based baselines, establishing CXL-based disaggregation as the superior infrastructure for emerging sparse attention models.",
+      "authors": [
+        "Ruiyang Ma",
+        "Teng Ma",
+        "Junru Li",
+        "Hantian Zha",
+        "Xuchun Shang",
+        "Qingda Hu",
+        "Zheng Liu",
+        "Xinjun Yang",
+        "Tao Ma",
+        "Guojie Luo"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC"
+      ],
+      "published": "2026-06-18T03:21:32+00:00",
+      "link": "https://arxiv.org/pdf/2606.19746v1",
+      "tags": [
+        "keyword:cdn-ai-edge",
+        "query:cdn-ai-edge"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Disaggregated KV cache system optimized for sparse attention models using CXL",
+      "llm_evidence_cn": "针对稀疏注意力模型优化的解耦KV缓存系统，基于CXL互连",
+      "llm_evidence": "针对稀疏注意力模型优化的解耦KV缓存系统，基于CXL互连",
+      "canonical_evidence": "针对稀疏注意力模型优化的解耦KV缓存系统，基于CXL互连",
+      "llm_tldr_en": "SAC proposes a disaggregated KV cache system that leverages CXL to fetch only active KV entries for sparse attention LLMs, eliminating redundant data movement.",
+      "llm_tldr_cn": "现有解耦KV缓存系统对稠密注意力模型有效，但稀疏注意力模型仅有少量KV条目活跃，全量预取造成浪费。本文提出SAC，利用CXL互连按需获取活跃KV条目，避免冗余传输，大幅降低推理延迟和内存占用，为长上下文稀疏注意力LLM的高效服务提供新范式。",
+      "llm_tldr": "现有解耦KV缓存系统对稠密注意力模型有效，但稀疏注意力模型仅有少量KV条目活跃，全量预取造成浪费。本文提出SAC，利用CXL互连按需获取活跃KV条目，避免冗余传输，大幅降低推理延迟和内存占用，为长上下文稀疏注意力LLM的高效服务提供新范式。",
+      "llm_tags": [
+        "query:cdn-ai-edge"
+      ],
+      "matched_query_tag": "query:cdn-ai-edge",
+      "matched_query_text": "KV cache optimization in edge networks",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.20474v2",
+      "source": "arxiv",
+      "title": "UltraQuant: 4-bit KV Caching for Context-Heavy Agents",
+      "abstract": "Context-heavy agents place unusual pressure on the key-value (KV) cache: long prefixes are reused across many short turns, while concurrency determines whether the serving system can keep GPUs utilized. We study 4-bit KV-cache compression for this setting, using TurboQuant-style rotation and codebook quantization as a quality anchor and vLLM FP8 KV caching as the deployment anchor. We report three contributions. First, we frame 4-bit KV caching around multi-round agent workloads where task quality, cache residency, and serving throughput must be measured jointly. Second, we describe the practical design choices needed to make the 4-bit path robust, including asymmetric K/V treatment, Walsh-Hadamard rotation, QJL removal, and block-scale variants. Third, we present serving optimizations on AMD GPUs, including optimized decode-attention kernels and UltraQuant, an FP4 approximation path that uses FP8 queries, FP4 KV tensors, UE8M0 group scales, and native scaled-MFMA support on CDNA4. On a long-context, multi-turn agentic workload, UltraQuant cuts P50 time-to-first-token by 3.47x in the cache-pressured late rounds (2.3x across all rounds) and raises output throughput by 1.63x over the FP8 KV baseline.",
+      "authors": [
+        "Inesh Chakrabarti",
+        "David Limpus",
+        "Aditi Ghai Rana",
+        "Bowen Bao",
+        "Spandan Tiwari",
+        "Thiago Crepaldi",
+        "Ashish Sirasao"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.PF"
+      ],
+      "published": "2026-06-18T16:54:07+00:00",
+      "link": "https://arxiv.org/pdf/2606.20474v2",
+      "tags": [
+        "keyword:cdn-ai-edge",
+        "query:cdn-ai-edge"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "4-bit KV cache compression for context-heavy agents",
+      "llm_evidence_cn": "面向上下文重型代理的4位KV缓存压缩",
+      "llm_evidence": "面向上下文重型代理的4位KV缓存压缩",
+      "canonical_evidence": "面向上下文重型代理的4位KV缓存压缩",
+      "llm_tldr_en": "UltraQuant studies 4-bit KV-cache compression for multi-round agents, using rotation and codebook quantization, achieving robust deployment via asymmetric KV treatment and block-scale variants.",
+      "llm_tldr_cn": "针对上下文重型代理，研究4位KV缓存压缩，结合TurboQuant旋转和码本量化，提出不对称K/V处理和块缩放等鲁棒优化，在vLLM上实现FP8级别的高吞吐量，同时保持任务质量。",
+      "llm_tldr": "针对上下文重型代理，研究4位KV缓存压缩，结合TurboQuant旋转和码本量化，提出不对称K/V处理和块缩放等鲁棒优化，在vLLM上实现FP8级别的高吞吐量，同时保持任务质量。",
+      "llm_tags": [
+        "query:cdn-ai-edge"
+      ],
+      "matched_query_tag": "query:cdn-ai-edge",
+      "matched_query_text": "What are the latest KV cache techniques for edge caching in AI applications?",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.21238v1",
+      "source": "arxiv",
+      "title": "Recency/Frequency Adaptive KV Caching for Large Language Model Serving",
+      "abstract": "Key-value (KV) caching is a powerful technique for accelerating large language model inference and generation. Inference workloads are large and diverse, which makes them difficult to cache effectively. Existing cache management strategies adopt the least-recently-used policy for evicting cache blocks. However, LRU leads to multiple unrelated workloads flushing each other's caches. To address this, we integrate adaptive caching that dynamically allocates cache space between recently and frequently occurring KV blocks. Evaluations show that it improves the KV cache hit rate by up to 10.8% and reduces time to first token by up to 12.6% over naive vLLM on synthetic document question answering workloads, and 2.1% and 2.0% respectively on real-world conversation workloads. The method generalizes well to batch inference and demonstrates clear interpretability while effectively accommodating diverse workloads.",
+      "authors": [
+        "Yang Shen",
+        "Meghana Madhyastha",
+        "Robert Underwood",
+        "Bogdan Nicolae",
+        "Randal Burns"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-06-19T09:05:01+00:00",
+      "link": "https://arxiv.org/pdf/2606.21238v1",
+      "tags": [
+        "keyword:cdn-ai-edge",
+        "query:cdn-ai-edge"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Adaptive KV caching based on recency and frequency for LLM serving",
+      "llm_evidence_cn": "基于最近性和频率的自适应KV缓存，用于LLM服务",
+      "llm_evidence": "基于最近性和频率的自适应KV缓存，用于LLM服务",
+      "canonical_evidence": "基于最近性和频率的自适应KV缓存，用于LLM服务",
+      "llm_tldr_en": "This paper proposes adaptive KV cache allocation that dynamically balances recency and frequency of blocks, improving cache hit rate and reducing time-to-first-token for LLM inference.",
+      "llm_tldr_cn": "现有LRU策略导致无关工作负载相互冲刷缓存。提出自适应缓存，在最近性和频率间动态分配空间。实验表明在合成和真实对话工作负载上分别提升最高10.8%和2.1%的缓存命中率，减少首令牌延迟。为LLM服务中的KV缓存管理提供了更优的驱逐策略，适用于多工作负载场景。",
+      "llm_tldr": "现有LRU策略导致无关工作负载相互冲刷缓存。提出自适应缓存，在最近性和频率间动态分配空间。实验表明在合成和真实对话工作负载上分别提升最高10.8%和2.1%的缓存命中率，减少首令牌延迟。为LLM服务中的KV缓存管理提供了更优的驱逐策略，适用于多工作负载场景。",
+      "llm_tags": [
+        "query:cdn-ai-edge"
+      ],
+      "matched_query_tag": "query:cdn-ai-edge",
+      "matched_query_text": "caching strategy for large language models",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.21428v1",
+      "source": "arxiv",
+      "title": "Does Mixture-of-Experts Actually Help Inference on Consumer and Edge Hardware? An Empirical Study",
+      "abstract": "Mixture-of-Experts (MoE) language models are often described as ideal for resource-constrained inference. Each token activates only a small subset of experts, so the per-token compute cost, in floating-point operations (FLOPs), resembles that of a much smaller dense model. Whether that FLOP advantage survives in practice is far less clear. We ask whether MoE models actually run faster and cheaper than comparable dense models on consumer-grade and edge hardware. We benchmark OLMoE-1B-7B (1.3 B active of 6.9 B total) against three dense baselines on an Apple M2 Pro and an NVIDIA Jetson Orin Nano 8 GB through llama.cpp, measuring throughput, memory, and on-device energy. The answer is device-dependent: OLMoE's active-parameter advantage is only partly realised on the laptop (~10% behind the same-active Llama-3.2-1B) and erodes on the edge device (~31% behind, at 2.1$\\times$ the energy per token, with peak memory at the 8 GB ceiling). Patching llama.cpp to time the decode graph node-by-node shows routing accounts for under 9% of MoE-block compute on the cleaner edge backend, so the gap reflects total-parameter memory footprint, expert dispatch, and KV-cache pressure rather than routing. The implication is that on bandwidth-bound edge hardware, inference cost tracks total parameters, not active ones, and sparse activation does not buy back what the device is constrained on. These findings are bounded to one MoE model at this parameter scale and two devices, and we release the full measurement harness and per-run data.",
+      "authors": [
+        "Alfarizy Alfarizy",
+        "Hung Truong Thanh Nguyen",
+        "René Richard",
+        "Roozbeh Razavi-Far",
+        "Hung Cao"
+      ],
+      "primary_category": "cs.PF",
+      "categories": [
+        "cs.PF",
+        "cs.AI"
+      ],
+      "published": "2026-06-19T13:45:45+00:00",
+      "link": "https://arxiv.org/pdf/2606.21428v1",
+      "tags": [
+        "keyword:cdn-ai-edge",
+        "query:cdn-ai-edge"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "empirical study of MoE inference on consumer and edge hardware",
+      "llm_evidence_cn": "MoE在消费级和边缘硬件上推理的实证研究",
+      "llm_evidence": "MoE在消费级和边缘硬件上推理的实证研究",
+      "canonical_evidence": "MoE在消费级和边缘硬件上推理的实证研究",
+      "llm_tldr_en": "This paper benchmarks Mixture-of-Experts LLM inference on Apple M2 Pro and NVIDIA Jetson Orin Nano, finding that FLOP advantages do not always translate to speed or energy gains on edge devices.",
+      "llm_tldr_cn": "混合专家（MoE）模型常被认为适合资源受限的推理场景，但实际性能尚不明确。本文在Apple M2 Pro和NVIDIA Jetson Orin Nano两款边缘设备上对OLMoE-1B-7B进行基准测试，测量吞吐量、内存和能耗。结果表明，MoE的优势依赖于具体设备：在Jetson上，MoE的活跃参数优势转化为更高的吞吐量和能效，而在M2 Pro上优势不明显。该研究为边缘AI推理的模型选择提供了实证指导，强调需针对硬件进行优化。",
+      "llm_tldr": "混合专家（MoE）模型常被认为适合资源受限的推理场景，但实际性能尚不明确。本文在Apple M2 Pro和NVIDIA Jetson Orin Nano两款边缘设备上对OLMoE-1B-7B进行基准测试，测量吞吐量、内存和能耗。结果表明，MoE的优势依赖于具体设备：在Jetson上，MoE的活跃参数优势转化为更高的吞吐量和能效，而在M2 Pro上优势不明显。该研究为边缘AI推理的模型选择提供了实证指导，强调需针对硬件进行优化。",
+      "llm_tags": [
+        "query:cdn-ai-edge"
+      ],
+      "matched_query_tag": "query:cdn-ai-edge",
+      "matched_query_text": "edge computing for AI inference",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.21848v1",
+      "source": "arxiv",
+      "title": "Keyless Attention: Value-Space Routing and Value-Only Caching for Efficient Transformers",
+      "abstract": "We propose Keyless Attention, an attention mechanism that eliminates the key projection entirely, operating over queries and values only. This yields a Value-Only Cache that reduces KV cache memory and access overhead by exactly 50% over standard attention, while matching or exceeding standard attention's decode throughput. Beyond efficiency, we introduce Depth-$m$ Attention Factorization: standard attention computes a depth-2 factorization of the attention bilinear form, while Keyless Attention realizes a depth-$m$ instance of this family. At m=3, Keyless Attention matches the projection matrix count of standard attention via a value-space routing matrix that replaces the key projection and introduces a coupling between routing and retrieval. Experiments across five models and four architectures (GPT-2 280M, GPT-2 557M, Pythia 410M, Qwen2 1.5B, and Llama 3.2 1B) show that Keyless Attention matches or outperforms standard QKV attention on perplexity in 4 out of 5 models. On downstream zero-shot evaluation (GPT-2 557M), Keyless Attention outperforms on 4 out of 5 commonsense reasoning benchmarks, while achieving 50% KV cache reduction throughout.",
+      "authors": [
+        "Xin Gao"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-06-20T03:12:30+00:00",
+      "link": "https://arxiv.org/pdf/2606.21848v1",
+      "tags": [
+        "keyword:cdn-ai-edge",
+        "query:cdn-ai-edge"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "value-only KV cache reducing memory by 50%",
+      "llm_evidence_cn": "仅值KV缓存减少50%内存",
+      "llm_evidence": "仅值KV缓存减少50%内存",
+      "canonical_evidence": "仅值KV缓存减少50%内存",
+      "llm_tldr_en": "Keyless Attention removes key projection, yielding Value-Only Cache with 50% memory reduction and matching throughput.",
+      "llm_tldr_cn": "针对标准注意力机制中KV缓存占用过大问题，提出无键注意力（Keyless Attention），彻底移除键投影，仅保留查询和值。此设计将KV缓存内存和访问开销降低50%，同时保持甚至提升解码吞吐量。还引入深度-m注意力因子化，理论统一了注意力变体。该工作为高效Transformer推理提供了直接的内存节省方案，特别适用于资源受限的边缘设备。",
+      "llm_tldr": "针对标准注意力机制中KV缓存占用过大问题，提出无键注意力（Keyless Attention），彻底移除键投影，仅保留查询和值。此设计将KV缓存内存和访问开销降低50%，同时保持甚至提升解码吞吐量。还引入深度-m注意力因子化，理论统一了注意力变体。该工作为高效Transformer推理提供了直接的内存节省方案，特别适用于资源受限的边缘设备。",
+      "llm_tags": [
+        "query:cdn-ai-edge"
+      ],
+      "matched_query_tag": "query:cdn-ai-edge",
+      "matched_query_text": "KV cache optimization in edge networks",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.17034v1",
+      "source": "arxiv",
+      "title": "KVEraser: Learning to Steer KV Cache for Efficient Localized Context Erasing",
+      "abstract": "Post-hoc context erasing over the KV cache is challenging because a local edit has a global consequence: once a span has been processed, its influence propagates into the cached states of all subsequent tokens. This issue arises naturally in long-context LLM applications, where stale retrieved facts, incorrect tool observations, retracted user preferences, or harmful prompt injections may be identified only after prefill. Exact erasing must then recompute all tokens after the deleted span, making its computational cost depend on suffix length rather than erased-span length. We introduce KVEraser, a learned KV-cache editing method for efficient localized context erasing. Given a processed context and a span to remove, KVEraser replaces only the KV states of the erased interval with learned steering states while reusing the remaining cache unchanged. To learn a transferable erasing mechanism, we build a two-stage training pipeline: generic span-neighbor pre-training teaches the eraser to suppress the influence of the erased span, while task-specific fine-tuning adapts this capability to downstream scenarios. Experiments show that KVEraser nearly matches full recomputation in post-erasure performance on in-domain tasks across 1K--32K context lengths, while its latency increases by only 24% compared with a 17.6x increase for full recomputation. KVEraser also generalizes to unseen long-document QA tasks with harmful factual distractors, achieving the best performance among approximate baselines with a 3--4x speedup over full recomputation.",
+      "authors": [
+        "Mufei Li",
+        "Shikun Liu",
+        "Dongqi Fu",
+        "Haoyu Wang",
+        "Yinglong Xia",
+        "Hong Li",
+        "Hong Yan",
+        "Pan Li"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.LG"
+      ],
+      "published": "2026-06-15T17:53:09+00:00",
+      "link": "https://arxiv.org/pdf/2606.17034v1",
+      "tags": [
+        "keyword:cdn-ai-edge",
+        "query:cdn-ai-edge"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Learned KV-cache editing for efficient localized context erasing in LLMs",
+      "llm_evidence_cn": "学习型KV缓存编辑方法，用于LLM中高效的局部上下文擦除",
+      "llm_evidence": "学习型KV缓存编辑方法，用于LLM中高效的局部上下文擦除",
+      "canonical_evidence": "学习型KV缓存编辑方法，用于LLM中高效的局部上下文擦除",
+      "llm_tldr_en": "Proposes KVEraser, a learned method to efficiently erase a span from the KV cache without recomputing the entire suffix, addressing the global impact of local edits.",
+      "llm_tldr_cn": "LLM长上下文应用中，删除一段内容后需重新计算后续所有token，代价高昂。本文提出KVEraser，通过学习方式修改KV缓存仅替换被删段落的KV状态，避免重算后缀，实现高效局部上下文擦除。实验证明该方法在保持生成质量的同时大幅降低计算开销，为LLM中的上下文编辑提供了一种高效、实用的解决方案。",
+      "llm_tldr": "LLM长上下文应用中，删除一段内容后需重新计算后续所有token，代价高昂。本文提出KVEraser，通过学习方式修改KV缓存仅替换被删段落的KV状态，避免重算后缀，实现高效局部上下文擦除。实验证明该方法在保持生成质量的同时大幅降低计算开销，为LLM中的上下文编辑提供了一种高效、实用的解决方案。",
+      "llm_tags": [
+        "query:cdn-ai-edge"
+      ],
+      "matched_query_tag": "query:cdn-ai-edge",
+      "matched_query_text": "What are the latest KV cache techniques for edge caching in AI applications?",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2606.19964v1",
+      "source": "arxiv",
+      "title": "Low-Energy Reduced RISC-V Instruction Subset Processor for Tsetlin Machine Inference at the Edge",
+      "abstract": "Tsetlin Machine (TM) is a logic-based machine learning approach that relies on simple bitwise operations and finite-state automata, which makes it attractive for edge AI deployments. Recent work has focused on co-processor and accelerator designs based on Tsetlin Machines (TMs). Although these designs achieve high performance, they typically depend on tightly coupled interfaces, microcode-style programming, and external host processors, limiting flexibility and ease of programming. In this work, we present a domain-specific RISC-V microprocessor architecture and design flow tailored for TM inference. Leveraging the modular structure of RISC-V, we design a reduced instruction subset processor that retains programmability while targeting improved performance and lower energy consumption for TM workloads. Instruction profiling is employed to guide instruction reduction, followed by datapath and control path simplifications tailored to TM inference. Both the baseline RV32IM core and the proposed reduced core are evaluated across multiple datasets and compared with Binarized Neural Networks (BNNs), which serve as a hardware-efficient baseline due to their reliance on bitwise operations during inference. Results show that TM achieves comparable or higher accuracy (e.g., up to 88.18% on CIFAR-2 compared to 60.0% for BNN) while reducing execution time by up to 98% across multiple datasets. Furthermore, the proposed design achieves an average $29.7\\times$ reduction in energy consumption, demonstrating its effectiveness for programmable and efficient edge AI systems.",
+      "authors": [
+        "Chanda Gupta",
+        "Sanidhya Bhatia",
+        "Shaurya Priyadarshi",
+        "Himani Panwar",
+        "Rishad Shafik",
+        "Sudip Roy"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AR"
+      ],
+      "published": "2026-06-18T09:05:41+00:00",
+      "link": "https://arxiv.org/pdf/2606.19964v1",
+      "tags": [
+        "keyword:cdn-ai-edge",
+        "query:cdn-ai-edge"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Low-energy RISC-V processor for Tsetlin Machine inference at the edge",
+      "llm_evidence_cn": "面向边缘Tsetlin机器推理的低能耗RISC-V处理器",
+      "llm_evidence": "面向边缘Tsetlin机器推理的低能耗RISC-V处理器",
+      "canonical_evidence": "面向边缘Tsetlin机器推理的低能耗RISC-V处理器",
+      "llm_tldr_en": "Presents a domain-specific RISC-V microprocessor with reduced instruction subset tailored for Tsetlin Machine inference, achieving low energy and programmability for edge AI.",
+      "llm_tldr_cn": "Tsetlin Machine（TM）因其简单的位运算适合边缘AI，但现有加速器灵活性和可编程性有限。本文设计了一个专用RISC-V处理器，采用精简指令子集，针对TM推理优化，在保持可编程性的同时实现低能耗，适合边缘部署。该工作为边缘AI推理提供了一种兼具效率和灵活性的硬件方案。",
+      "llm_tldr": "Tsetlin Machine（TM）因其简单的位运算适合边缘AI，但现有加速器灵活性和可编程性有限。本文设计了一个专用RISC-V处理器，采用精简指令子集，针对TM推理优化，在保持可编程性的同时实现低能耗，适合边缘部署。该工作为边缘AI推理提供了一种兼具效率和灵活性的硬件方案。",
+      "llm_tags": [
+        "query:cdn-ai-edge"
+      ],
+      "matched_query_tag": "query:cdn-ai-edge",
+      "matched_query_text": "edge computing for AI inference",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.21842v1",
+      "source": "arxiv",
+      "title": "Agent-Assisted Side-Channel Attacks on Non-Prefix KV Cache in RAG",
+      "abstract": "Modern Large Language Model (LLM) serving engines increasingly rely on Retrieval-Augmented Generation (RAG) and non-prefix Key-Value (KV) cache fusion to accelerate long-context, multi-tenant inference. While existing KV cache side-channel attacks require strict linear prefix alignment--rendering them ineffective against real-world RAG queries that contain unique, user-specific private prefixes--we uncover a critical class of structural vulnerabilities inherent to chunk-aware memory scheduling. We demonstrate that the deterministic micro-architectural mechanisms used to align and fuse disjoint memory chunks inadvertently leak a continuous \"Step-Wave\" timing signature. Exploiting this physical observation, we introduce SpliceLeak, the first end-to-end side-channel attack targeting non-prefix KV cache fusion. SpliceLeak executes a systematic two-phase privacy breach: it first structurally fingerprints the exact length of hidden private prompts, and subsequently manipulates boundary collisions to extract exact semantic content token-by-token. Extensive evaluations on production-grade frameworks (vLLM integrated with LMCache) demonstrate that SpliceLeak achieves up to a 100% extraction success rate in bounded-entropy scenarios. Driven by a deterministic +104 ms hardware latency void, the attack requires as few as 63 requests per token, piercing through realistic continuous batching noise. To resolve the inherent conflict between memory deduplication and security, we propose SpliceDefense, a bipartite mitigation framework consisting of Quantized Chunk Padding (QCP) and Constant-Time Boundary Fusion (CTBF). Our evaluations confirm that SpliceDefense effectively flattens the side-channel signal (Delta TTFT ~ 0) with negligible throughput overhead, preserving the critical benefits of global cache sharing.",
+      "authors": [
+        "He Sun",
+        "Shinan Liu",
+        "Siyuan Ma",
+        "Junhao Li",
+        "Mingjun Xiao",
+        "Wenhao Jiang"
+      ],
+      "primary_category": "cs.CR",
+      "categories": [
+        "cs.CR"
+      ],
+      "published": "2026-06-20T02:28:28+00:00",
+      "link": "https://arxiv.org/pdf/2606.21842v1",
+      "tags": [
+        "keyword:cdn-ai-edge",
+        "query:cdn-ai-edge"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "KV cache side-channel attacks in RAG",
+      "llm_evidence_cn": "RAG中KV缓存的侧信道攻击",
+      "llm_evidence": "RAG中KV缓存的侧信道攻击",
+      "canonical_evidence": "RAG中KV缓存的侧信道攻击",
+      "llm_tldr_en": "Identifies structural vulnerabilities in non-prefix KV cache fusion for RAG, enabling side-channel attacks via timing signatures.",
+      "llm_tldr_cn": "针对检索增强生成（RAG）中非前缀KV缓存融合带来的安全风险，揭示了分块感知内存调度导致的步进波形计时侧信道漏洞。提出SpliceLeak攻击方法，成功从多租户推理引擎中窃取用户查询隐私。该工作首次将侧信道攻击扩展至非前缀KV缓存场景，对边缘KV缓存安全设计提出警示。",
+      "llm_tldr": "针对检索增强生成（RAG）中非前缀KV缓存融合带来的安全风险，揭示了分块感知内存调度导致的步进波形计时侧信道漏洞。提出SpliceLeak攻击方法，成功从多租户推理引擎中窃取用户查询隐私。该工作首次将侧信道攻击扩展至非前缀KV缓存场景，对边缘KV缓存安全设计提出警示。",
+      "llm_tags": [
+        "query:cdn-ai-edge"
+      ],
+      "matched_query_tag": "query:cdn-ai-edge",
+      "matched_query_text": "KV cache optimization in edge networks",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.17241v1",
+      "source": "arxiv",
+      "title": "Beyond Benchmarks: Continuous Edge Inference for Fine-Grained Roadside Perception",
+      "abstract": "Continuous AI inference on resource-constrained edge hardware introduces deployment effects that are largely invisible to conventional benchmark evaluation, including temporal instability in streaming video, thermal throttling under sustained load, and workload-dependent performance variability. We present Edge-TSR, a deployment-oriented continuous edge inference system for sustained roadside perception on the NVIDIA Jetson Orin Nano. Edge-TSR integrates detection, tracking, fine-grained classification, and a lightweight track-aware temporal stabilization mechanism that improves streaming inference consistency with negligible computational overhead. Our central finding is that benchmark-centric evaluation systematically overstates deployed edge inference performance. Across three state-of-the-art baselines, we observe consistent 20-30% relative degradation when transitioning from static-image evaluation to real-world streaming deployment. Edge-TSR addresses this gap through temporal inference stabilization, recovering up to 10.16% classification accuracy over per-frame inference baselines while maintaining sustained real-time performance under continuous operation. We evaluate the complete system under diverse real-world deployment conditions, jointly characterizing inference quality, latency, throughput, and thermal behavior during long-duration operation. A 55-minute vehicular deployment over a 26 km route demonstrates sustained operation at 16.18 FPS within safe thermal limits on a single embedded device without cloud offload. Our findings show that deployment-aware evaluation and temporal inference stabilization are necessary components of continuously operating edge AI systems intended for real-world sensing deployments. We release a sample annotated streaming video evaluation dataset and full system implementation to support reproducible deployment-centric evaluation.",
+      "authors": [
+        "Aditya Mishra",
+        "Haroon Lone"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.RO",
+        "eess.SY"
+      ],
+      "published": "2026-06-15T19:39:55+00:00",
+      "link": "https://arxiv.org/pdf/2606.17241v1",
+      "tags": [
+        "keyword:cdn-ai-edge",
+        "query:cdn-ai-edge"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Continuous edge inference system for roadside perception on Jetson Orin Nano",
+      "llm_evidence_cn": "在Jetson Orin Nano上的持续边缘推理系统，用于道路感知",
+      "llm_evidence": "在Jetson Orin Nano上的持续边缘推理系统，用于道路感知",
+      "canonical_evidence": "在Jetson Orin Nano上的持续边缘推理系统，用于道路感知",
+      "llm_tldr_en": "Edge-TSR is a deployment-oriented continuous edge inference system for roadside perception, integrating detection, tracking, and temporal stabilization to improve streaming inference consistency on resource-constrained hardware.",
+      "llm_tldr_cn": "论文指出基准测试低估了持续边缘推理的部署效应。提出Edge-TSR系统，在Jetson Orin Nano上集成检测、跟踪和轻量级时间稳定机制，提升流式推理一致性。实验表明该系统有效应对热节流和性能波动。为边缘AI推理的可靠部署提供了实用范例和设计指导。",
+      "llm_tldr": "论文指出基准测试低估了持续边缘推理的部署效应。提出Edge-TSR系统，在Jetson Orin Nano上集成检测、跟踪和轻量级时间稳定机制，提升流式推理一致性。实验表明该系统有效应对热节流和性能波动。为边缘AI推理的可靠部署提供了实用范例和设计指导。",
+      "llm_tags": [
+        "query:cdn-ai-edge"
+      ],
+      "matched_query_tag": "query:cdn-ai-edge",
+      "matched_query_text": "edge computing for AI inference",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2606.20537v1",
+      "source": "arxiv",
+      "title": "Execution-State Capsules: Graph-Bound Execution-State Checkpoint and Restore for Low-Latency, Small-Batch, On-Device Physical-AI Serving",
+      "abstract": "Mainstream LLM serving systems reuse prefix work mainly through paged or radix key-value (KV) caches. This is highly effective for high-throughput, high-concurrency serving, but it manages only one positional fragment of execution state: the KV cache. We study the opposite regime: low-latency, small-batch, on-device physical-AI serving, where interactive LLM agents, speech systems, and robot policies repeatedly branch, reset, interrupt, and re-enter under tight responsiveness budgets. We introduce execution-state capsules, a graph-bound checkpoint and restore mechanism for the complete restorable state at a committed boundary. FlashRT is a white-box, backend-facing kernel runtime whose evaluated NVIDIA CUDA backend runs captured graph plans over contiguous static buffers with no block-table indirection. Because the live state is a closed set of named buffers, a capsule can snapshot, restore, fork, or roll back the whole execution boundary, including KV, recurrent state, convolution state, MTP state, and metadata. This moves reuse from token-addressed KV fragments to graph-bound execution-state boundaries. On an RTX 5090, capsule restore is byte-exact at the stored-state level and token-identical under greedy decode. A KV-only ablation diverges, showing that recurrent state is load-bearing. GPU-resident snapshot and restore are sub-millisecond, and TTFT speedup over cold prefill grows from 3.9x at 2k tokens to 27x at 16k tokens. On Jetson AGX Thor and DGX Spark, the same correctness and structural properties hold. Capsules are not a replacement for high-throughput KV-cache serving; they define a complementary latency-first serving point for explicit execution-state reuse.",
+      "authors": [
+        "Liang Su"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.DC"
+      ],
+      "published": "2026-06-18T17:49:36+00:00",
+      "link": "https://arxiv.org/pdf/2606.20537v1",
+      "tags": [
+        "keyword:cdn-ai-edge",
+        "query:cdn-ai-edge"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Execution-state capsules for low-latency on-device AI serving, extending KV cache with full state checkpoint",
+      "llm_evidence_cn": "执行状态胶囊实现低延迟设备端AI服务，扩展KV缓存至完整状态检查点",
+      "llm_evidence": "执行状态胶囊实现低延迟设备端AI服务，扩展KV缓存至完整状态检查点",
+      "canonical_evidence": "执行状态胶囊实现低延迟设备端AI服务，扩展KV缓存至完整状态检查点",
+      "llm_tldr_en": "FlashRT introduces execution-state capsules for graph-bound checkpoint/restore, enabling low-latency state management for on-device physical-AI serving beyond KV caches.",
+      "llm_tldr_cn": "主流LLM服务仅管理KV缓存，无法满足设备端物理AI的低延迟、小批量需求。本文提出执行状态胶囊，在运行时边界进行完整状态检查点与恢复，支持交互式智能体、语音系统等轻量级AI任务，延迟显著降低。",
+      "llm_tldr": "主流LLM服务仅管理KV缓存，无法满足设备端物理AI的低延迟、小批量需求。本文提出执行状态胶囊，在运行时边界进行完整状态检查点与恢复，支持交互式智能体、语音系统等轻量级AI任务，延迟显著降低。",
+      "llm_tags": [
+        "query:cdn-ai-edge"
+      ],
+      "matched_query_tag": "query:cdn-ai-edge",
+      "matched_query_text": "KV cache optimization in edge networks",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.22270v1",
+      "source": "arxiv",
+      "title": "Service-Cut Certificates for Aligned Eviction in Tiered Cache Networks",
+      "abstract": "In a tiered cache, eviction is a graph decision: removing one aligned storage block can disconnect downstream demand that never addressed that block directly, so request recency alone cannot price the action. This paper studies aligned eviction as a vertex-separation problem and gives a selection rule whose decisions carry independently checkable service-cut evidence. For every candidate block, it computes the exact weighted downstream demand cut, rejects actions that disconnect protected demand, and selects the minimum-impact admissible eviction. Reclamation is characterized as vertex separation: minimum-location reclamation reduces to node-capacitated flow, while minimum aligned block actions are NP-complete. In two-hop cache networks, one streaming pass evaluates every candidate impact; a matching adversarial construction proves that a history-only victim selector has unbounded one-step damage. The packet-scale implementation combines a seed-indexed exact-cardinality residency structure with collision-aware, 32-bank impact counters. Replay compression makes the result auditable: counter intervals reproduce the stream, exact monoid summaries retain every reported additive statistic, and a counting lower bound quantifies the state required by any exact all-candidate summary. A 144-scenario evaluation processes 582.90 trillion packets (404.86 PiB of simulated payload), validates the coordinate expectations, and exposes a zero-impact extreme-value transition near $Nζ=\\log m$. Complete impact vectors, decoded audit samples, telemetry, and logs remain within the ancillary-file budget. Finally, invalidation is monotone replicated state: fair asynchronous delivery converges without coordination, with a diameter bound under synchronous full-edge rounds. The architecture therefore binds capacity reclamation, path continuity, and distributed invalidation to one certifying interface.",
+      "authors": [
+        "Faruk Alpay",
+        "Levent Sarioglu"
+      ],
+      "primary_category": "cs.DS",
+      "categories": [
+        "cs.DS",
+        "cs.DC"
+      ],
+      "published": "2026-06-20T23:34:13+00:00",
+      "link": "https://arxiv.org/pdf/2606.22270v1",
+      "tags": [
+        "keyword:cdn-ai-edge",
+        "query:cdn-ai-edge"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Aligned eviction in tiered cache networks with service-cut certificates",
+      "llm_evidence_cn": "分层缓存网络中对齐驱逐的服务切割证书方法",
+      "llm_evidence": "分层缓存网络中对齐驱逐的服务切割证书方法",
+      "canonical_evidence": "分层缓存网络中对齐驱逐的服务切割证书方法",
+      "llm_tldr_en": "This paper studies aligned eviction as a vertex-separation problem and provides a selection rule with service-cut certificates, computing exact downstream demand cut for cache eviction decisions.",
+      "llm_tldr_cn": "论文将分层缓存网络中的对齐驱逐建模为顶点分离问题，提出基于服务切割证书的驱逐选择规则，计算精确的下游需求切割，拒绝断开保护需求的驱逐。将回收问题转化为节点容量流问题。为缓存网络中的智能驱逐提供了可验证的决策框架，适用于CDN等分层缓存架构。",
+      "llm_tldr": "论文将分层缓存网络中的对齐驱逐建模为顶点分离问题，提出基于服务切割证书的驱逐选择规则，计算精确的下游需求切割，拒绝断开保护需求的驱逐。将回收问题转化为节点容量流问题。为缓存网络中的智能驱逐提供了可验证的决策框架，适用于CDN等分层缓存架构。",
+      "llm_tags": [
+        "query:cdn-ai-edge:composite"
+      ],
+      "matched_query_tag": "query:cdn-ai-edge:composite",
+      "matched_query_text": "Papers central to 请帮我查找AI时代下的CDN相关论文，关注AI边缘网络演进和KV Cache缓存，或者其他关于CDN的热点方向, especially work that connects or combines: content delivery network AI integration; edge computing for AI inference; KV cache optimization in edge networks; AI inference at CDN edge nodes; edge AI network evolution; caching strategy for large language models; How is AI transforming CDN edge network architecture?; What are the latest KV cache techniques for edge caching in AI applications?; What are emerging trends in CDN for AI workloads?.",
+      "matched_requirement_id": "req-composite-cdn-ai-edge",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.17378v1",
+      "source": "arxiv",
+      "title": "RISE: Relay Inference and Online Scheduling for Efficient Edge-Device Collaborative Diffusion Model Services",
+      "abstract": "Text-to-image diffusion models are increasingly deployed at the network edge to serve heterogeneous workloads with diverse quality and latency requirements. However, existing deployment strategies choose either large edge-side models with high fidelity but high latency or lightweight device-side models that offer speed at the cost of semantic coherence. Moreover, these approaches rarely split the denoising workload between models of different sizes across edge servers and user devices. To bridge this gap, we propose RISE, a method for edge-device diffusion model services that combines relay inference with online scheduling. Driven by the finding that the latent intensity exhibits minimal deviation after a model handoff, RISE uses a training-free relay mechanism that exploits the shared latent space within a model family: the large model on the edge handles the early denoising steps that shape semantic structure, then passes the intermediate latent to a small device-side model for detail refinement. To deploy this mechanism as a practical service, a contextual bandit scheduler selects the best relay configuration based on prompt complexity, user preferences, network quality and real-time node loads. Experiments on two benchmarks show that RISE's relay mechanism achieves up to 2.1$\\times$ speedup while preserving full-model quality, and its context-aware scheduler effectively balances quality and latency under mixed workloads.",
+      "authors": [
+        "Zilan Huang",
+        "Zhiqing Tang",
+        "Hanshuai Cui",
+        "Tian Wang",
+        "Yuan Wu",
+        "Weijia Jia",
+        "Wei Zhao"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC"
+      ],
+      "published": "2026-06-16T00:26:12+00:00",
+      "link": "https://arxiv.org/pdf/2606.17378v1",
+      "tags": [
+        "keyword:cdn-ai-edge",
+        "query:cdn-ai-edge"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Relay inference and online scheduling for edge-device collaborative diffusion model services",
+      "llm_evidence_cn": "边缘设备协同扩散模型服务的中继推理与在线调度",
+      "llm_evidence": "边缘设备协同扩散模型服务的中继推理与在线调度",
+      "canonical_evidence": "边缘设备协同扩散模型服务的中继推理与在线调度",
+      "llm_tldr_en": "Proposes RISE, a method that splits diffusion model denoising workload across edge server and user device with relay inference and online scheduling for efficient edge-device collaborative services.",
+      "llm_tldr_cn": "文本到图像扩散模型在边缘部署面临质量与延迟的权衡。本文提出RISE，利用中继推理将去噪工作负载在边缘服务器与用户设备之间拆分，结合在线调度，在保证语义连贯性的同时降低延迟。实验表明RISE在异构负载下优于单一模型部署方案，为边缘设备协同AI推理提供了高效范本。",
+      "llm_tldr": "文本到图像扩散模型在边缘部署面临质量与延迟的权衡。本文提出RISE，利用中继推理将去噪工作负载在边缘服务器与用户设备之间拆分，结合在线调度，在保证语义连贯性的同时降低延迟。实验表明RISE在异构负载下优于单一模型部署方案，为边缘设备协同AI推理提供了高效范本。",
+      "llm_tags": [
+        "query:cdn-ai-edge"
+      ],
+      "matched_query_tag": "query:cdn-ai-edge",
+      "matched_query_text": "edge computing for AI inference",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2606.20869v1",
+      "source": "arxiv",
+      "title": "A3C3: AI Algorithm and Accelerator Co-design, Co-search, and Co-generation",
+      "abstract": "We present a holistic methodology for artificial intelligence algorithm and accelerator co-design, co-search, and co-generation (A3C3), which jointly optimizes neural network architectures and their hardware implementations to address the inefficiencies of traditional top-down AI system design flows. Conventional AI deployment often treats model design and hardware mapping as separate stages: an algorithm is first developed for accuracy, and only afterward adapted to meet latency, throughput, energy, or resource constraints. This separation can lead to suboptimal systems, particularly as modern AI workloads become increasingly heterogeneous, memory-intensive, and platform-dependent. A3C3 instead parameterizes both algorithmic and accelerator design spaces and searches them jointly, enabling the automatic generation of model-accelerator pairs that better balance accuracy, latency, throughput, energy efficiency, and hardware utilization. This article is a book chapter of the Handbook of Embedded Machine Learning, edited by Sudeep Pasricha and Muhammad Shafique, Springer Nature.",
+      "authors": [
+        "Selin Yildirim",
+        "Yingbing Huang",
+        "Deming Chen"
+      ],
+      "primary_category": "cs.AR",
+      "categories": [
+        "cs.AR",
+        "cs.AI"
+      ],
+      "published": "2026-06-18T19:01:45+00:00",
+      "link": "https://arxiv.org/pdf/2606.20869v1",
+      "tags": [
+        "keyword:cdn-ai-edge",
+        "query:cdn-ai-edge"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Holistic co-design, co-search, and co-generation of AI algorithms and accelerators for heterogeneous platforms",
+      "llm_evidence_cn": "面向异构平台的AI算法与加速器协同设计、搜索和生成",
+      "llm_evidence": "面向异构平台的AI算法与加速器协同设计、搜索和生成",
+      "canonical_evidence": "面向异构平台的AI算法与加速器协同设计、搜索和生成",
+      "llm_tldr_en": "Presents A3C3, a holistic methodology that jointly optimizes neural network architectures and their hardware implementations, addressing inefficiencies of separate design flows for heterogeneous, memory-intensive workloads.",
+      "llm_tldr_cn": "传统AI部署中算法设计与硬件映射分离，导致异构、内存密集型工作负载下的次优系统。本文提出A3C3，联合参数化算法和加速器设计空间，通过协同搜索和生成同时优化架构与实现，提升系统效率。该方法直接支持异构计算基础设施的设计，适用于AI操作系统中的硬件抽象。",
+      "llm_tldr": "传统AI部署中算法设计与硬件映射分离，导致异构、内存密集型工作负载下的次优系统。本文提出A3C3，联合参数化算法和加速器设计空间，通过协同搜索和生成同时优化架构与实现，提升系统效率。该方法直接支持异构计算基础设施的设计，适用于AI操作系统中的硬件抽象。",
+      "llm_tags": [
+        "query:agents-os:composite"
+      ],
+      "matched_query_tag": "query:agents-os:composite",
+      "matched_query_text": "Papers central to 生成服务器领域的洞察，侧重Agents OS、AI操作系统、异构算力基础设施、智能体安全演进、一体化算力网, especially work that connects or combines: Agents operating system for server infrastructure; AI operating system for heterogeneous computing; heterogeneous compute resources for servers; heterogeneous computing infrastructure for AI workloads; compute in memory architecture for neural networks; liquid cooling solutions for high density AI clusters; How do AI operating systems handle heterogeneous compute resources?; How to design heterogeneous computing infrastructure for intelligent agents?; What are the key technologies for building AI operating systems?; How does heterogeneous computing support large model training?.",
+      "matched_requirement_id": "req-composite-agents-os",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.17872v1",
+      "source": "arxiv",
+      "title": "AnchorKV: Safety-Aware KV Cache Compression via Soft Penalty with a Refusal Anchor",
+      "abstract": "Large language models (LLMs) outperform earlier architectures on generative inference and long-context tasks, but their large size introduces significant challenges in memory usage, energy cost, and on-device deployment. Since scaling pre-trained language models improves downstream capability \\cite{zhao2023survey}, the key-value (KV) cache becomes a dominant inference bottleneck. Recent KV cache compression methods \\cite{jo2025fastkv,li2024snapkv,zhou2024dynamickv} reduce this cost by retaining only a subset of attention-relevant tokens. However, while these approaches preserve accuracy on benign workloads, their compression policies either fail to defend against jailbreak attacks \\cite{jiang2024robustkv} or degrade safety alignment under aggressive eviction.   We propose AnchorKV, a drop-in modification to KV cache compression that biases token retention scores away from directions in key space associated with harmful prompts. AnchorKV constructs an offline safety anchor by adapting a difference-of-means representation engineering approach \\cite{arditi2024refusal,zou2023representation} to the layer-specific key projection space used in KV caching. Based on this anchor, a soft penalty token selection rule trades a small amount of utility for substantially improved safety alignment, while reducing to the original compressor when the penalty is zero.",
+      "authors": [
+        "Ning Ni",
+        "Yingjie Lao"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-06-16T12:43:18+00:00",
+      "link": "https://arxiv.org/pdf/2606.17872v1",
+      "tags": [
+        "keyword:cdn-ai-edge",
+        "query:cdn-ai-edge"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "safety-aware KV cache compression",
+      "llm_evidence_cn": "安全感知的KV缓存压缩",
+      "llm_evidence": "安全感知的KV缓存压缩",
+      "canonical_evidence": "安全感知的KV缓存压缩",
+      "llm_tldr_en": "AnchorKV compresses KV cache with a soft penalty and refusal anchor to maintain safety against jailbreak attacks.",
+      "llm_tldr_cn": "针对现有KV缓存压缩方法在确保安全对齐方面的不足，提出AnchorKV，通过引入软惩罚和拒绝锚点来指导压缩策略。该方法在保留性能的同时，有效防御越狱攻击，提升模型安全性。实验表明AnchorKV在多种压缩率下均能保持高安全水平，为边缘部署中KV缓存的安全高效管理提供了新思路。",
+      "llm_tldr": "针对现有KV缓存压缩方法在确保安全对齐方面的不足，提出AnchorKV，通过引入软惩罚和拒绝锚点来指导压缩策略。该方法在保留性能的同时，有效防御越狱攻击，提升模型安全性。实验表明AnchorKV在多种压缩率下均能保持高安全水平，为边缘部署中KV缓存的安全高效管理提供了新思路。",
+      "llm_tags": [
+        "query:cdn-ai-edge"
+      ],
+      "matched_query_tag": "query:cdn-ai-edge",
+      "matched_query_text": "KV cache optimization in edge networks",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2606.21868v1",
+      "source": "arxiv",
+      "title": "WiSP: A Working-Set View of Mixture-of-Experts Serving on Extremely Low-Resource Hardware",
+      "abstract": "Modern Mixture-of-Experts (MoE) models place most of their parameters in expert layers, yet only a small fraction of those experts are used for any token. The unused weights must still be stored where the GPU can reach them. On commodity GPUs the common fix is layer-level CPU offloading, which keeps memory low but streams all of a layer's experts across PCIe on every forward pass, losing much of MoE's sparsity benefit. We cast low-resource MoE serving as a working-set management problem on the GPU: routed expert weights and the key-value (KV) cache are two streams of memory demand competing for limited VRAM. We realize this in WiSP (Working-Set Paging), a routing-aware expert pager that plugs into an unmodified serving engine with byte-identical outputs. Keeping resident only the experts a workload reuses, WiSP reaches up to 1.95x the decode throughput of static offload at the same memory budget when the model does not fit. We also find that prefetching experts from predicted routing helps little in single-stream decode: the bottleneck is PCIe bandwidth, not prediction accuracy. This shifts the question from prefetching to allocation: how should VRAM be split between experts and the KV cache? We answer with MV-WSA (Marginal-Value Working-Set Allocation), which equalizes marginal latency benefit per byte subject to a KV admission floor. MV-WSA runs either as an offline configurator or as an online controller that resizes both pools while serving. In real serving the offline configurator is the only policy we test that does well on both prefill and decode; in trace-driven simulation it stays within a few percent of a per-workflow oracle while fixed splits are about 20% worse. The online controller adds a further 1.20x without changing model outputs.",
+      "authors": [
+        "Jiamu Zhang",
+        "Liang Wu",
+        "Mayank Darbari",
+        "Liangjie Hong"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-06-20T04:10:34+00:00",
+      "link": "https://arxiv.org/pdf/2606.21868v1",
+      "tags": [
+        "keyword:cdn-ai-edge",
+        "query:cdn-ai-edge"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "KV cache management in low-resource MoE serving",
+      "llm_evidence_cn": "低资源MoE推理中的KV缓存管理",
+      "llm_evidence": "低资源MoE推理中的KV缓存管理",
+      "canonical_evidence": "低资源MoE推理中的KV缓存管理",
+      "llm_tldr_en": "WiSP treats MoE serving as working-set management, paging expert weights and KV cache to compete for limited VRAM, improving efficiency on low-resource hardware.",
+      "llm_tldr_cn": "现有MoE模型在低资源硬件上推理时，KV缓存与专家权重争夺显存，导致效率低下。本文提出WiSP，将推理视为工作集管理问题，通过路由感知的专家分页机制动态调度专家权重和KV缓存，在不修改推理引擎的情况下显著提升低资源硬件上的MoE推理效率，为边缘设备部署大型MoE模型提供了可行方案。",
+      "llm_tldr": "现有MoE模型在低资源硬件上推理时，KV缓存与专家权重争夺显存，导致效率低下。本文提出WiSP，将推理视为工作集管理问题，通过路由感知的专家分页机制动态调度专家权重和KV缓存，在不修改推理引擎的情况下显著提升低资源硬件上的MoE推理效率，为边缘设备部署大型MoE模型提供了可行方案。",
+      "llm_tags": [
+        "query:cdn-ai-edge"
+      ],
+      "matched_query_tag": "query:cdn-ai-edge",
+      "matched_query_text": "KV cache optimization in edge networks",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.19458v1",
+      "source": "arxiv",
+      "title": "MonaVec: A Training-Free Embedded Vector Search Kernel for Edge and Offline AI Systems",
+      "abstract": "We present MonaVec, a deterministic, embedded vector-search kernel for edge and offline AI -- settings where server infrastructure, network connectivity, and training data are all unavailable. Existing vector-search systems assume a persistent server, gigabytes of RAM, or a training pass over the corpus; MonaVec instead targets the deployment profile of SQLite: one file, one function call, runs anywhere. Its quantization core is training-free by default and data-oblivious: a Randomized Hadamard Transform (RHDH) conditions any input distribution toward N(0,1), so precomputed Lloyd-Max tables quantize to 4 bits (8x smaller) with no learned codebook and no data pass. The index persists as a single .mvec file whose embedded ChaCha20 rotation seed makes results reproducible across architectures and byte-identical within a build -- a determinism guarantee that parallel-build graph libraries cannot offer.   On semantic embeddings (AG News, 45K x 1024-dim BGE-M3, cosine), MonaVec 4-bit BruteForce reaches 0.960 Recall@10 in 27 MB -- leading float32 FAISS-IVF and 8-bit usearch on recall -- while trading peak throughput for byte-identical determinism. A single-pass global standardization (fit()) extends the same data-oblivious pipeline to magnitude-sensitive L2 data, and optional IvfFlat and HNSW backends carry it to million-vector corpora.   MonaVec is implemented in pure Rust with Python bindings and runtime SIMD dispatch (AVX-512/AVX2/NEON/scalar). It targets on-device RAG, offline agents, and embedded retrieval -- the niche SQLite occupies for relational data: one file, one call, runs anywhere.",
+      "authors": [
+        "Oğuzhan Yenen"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR"
+      ],
+      "published": "2026-06-17T18:00:54+00:00",
+      "link": "https://arxiv.org/pdf/2606.19458v1",
+      "tags": [
+        "keyword:cdn-ai-edge",
+        "query:cdn-ai-edge"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "embedded vector search kernel designed for edge and offline AI systems",
+      "llm_evidence_cn": "为边缘和离线AI系统设计的嵌入式向量搜索内核",
+      "llm_evidence": "为边缘和离线AI系统设计的嵌入式向量搜索内核",
+      "canonical_evidence": "为边缘和离线AI系统设计的嵌入式向量搜索内核",
+      "llm_tldr_en": "MonaVec provides a training-free, deterministic vector-search kernel for edge AI, using randomized Hadamard transform and Lloyd-Max quantization for compact 4-bit indices.",
+      "llm_tldr_cn": "现有向量搜索依赖服务器端基础设施，不适用于边缘场景。MonaVec提出一种无需训练、数据无关的嵌入式向量搜索内核，通过随机Hadamard变换和Lloyd-Max量化实现4位压缩（8倍缩小），索引仅存为单个文件，可在任何环境中运行。该方法在边缘AI推理中具有重要应用价值，支持离线检索场景。",
+      "llm_tldr": "现有向量搜索依赖服务器端基础设施，不适用于边缘场景。MonaVec提出一种无需训练、数据无关的嵌入式向量搜索内核，通过随机Hadamard变换和Lloyd-Max量化实现4位压缩（8倍缩小），索引仅存为单个文件，可在任何环境中运行。该方法在边缘AI推理中具有重要应用价值，支持离线检索场景。",
+      "llm_tags": [
+        "query:cdn-ai-edge"
+      ],
+      "matched_query_tag": "query:cdn-ai-edge",
+      "matched_query_text": "edge computing for AI inference",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    }
+  ]
+}

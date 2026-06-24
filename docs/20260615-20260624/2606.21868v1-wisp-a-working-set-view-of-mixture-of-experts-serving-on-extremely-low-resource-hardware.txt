@@ -1,0 +1,739 @@
+Title: WiSP: A Working-Set View of Mixture-of-Experts Serving on Extremely Low-Resource Hardware
+
+URL Source: https://arxiv.org/pdf/2606.21868v1
+
+Published Time: Tue, 23 Jun 2026 01:28:37 GMT
+
+Number of Pages: 18
+
+Markdown Content:
+# WISP: A W ORKING -S ET VIEW OF MIXTURE -OF -E XPERTS SERVING ON EXTREMELY LOW -R ESOURCE HARDWARE 
+
+Jiamu Zhang 1 Liang Wu 1 Mayank Darbari 1 Liangjie Hong 1
+
+## ABSTRACT 
+
+Modern Mixture-of-Experts (MoE) models place most of their parameters in expert layers, but only a small fraction of those experts are used for any token. The unused weights still have to be stored somewhere accessible to the GPU. On commodity GPUs, a common solution is layer-level CPU offloading, which keeps memory use low but transfers all experts in a layer across PCIe on every forward pass, losing much of MoE’s sparsity benefit. We view low-resource MoE serving as a working-set management problem on the GPU: routed expert weights and the key-value (KV) cache are two streams of memory demand competing for limited VRAM. We implement this idea in WiSP (Working-Set Paging), a routing-aware expert pager that plugs into an unmodified serving engine while preserving byte-identical outputs. By keeping only the experts that a workload is likely to reuse in GPU memory, WiSP achieves up to 1.95 × the decode throughput of static offload under the same memory budget when the model does not fit. We also find that prefetching experts from predicted routing decisions provides little benefit in single-stream decode: performance is limited by PCIe bandwidth rather than prediction accuracy. This shifts the main design question from prefetching to allocation: how should VRAM be divided between expert weights and the KV cache? We answer this with MV-WSA (Marginal-Value Working-Set Allocation), which equalizes marginal latency benefit per byte while preserving enough KV-cache memory for admission. MV-WSA can be used either as an offline configurator or as an online controller that resizes both memory pools while serving requests. In real serving experiments, the offline configurator is the only policy we test that performs well on both prefill and decode; in trace-driven simulation, it stays within a few percent of a per-workflow oracle while fixed splits are about 20% worse. The online controller further improves throughput by 1.20 × without changing model outputs. 
+
+## 1 INTRODUCTION 
+
+Many language-model workloads now run outside large datacenters. Local coding assistants, on-device agents, and shared inference on fractional GPUs all need interactive latency at low concurrency, often on hardware that was not provisioned for frontier-scale models. At the same time, many of the strongest open models are Mixture-of-Experts (MoE) models (Shazeer et al., 2017; Fedus et al., 2022), including Qwen3-30B-A3B (Qwen Team, 2025), Mixtral-8×7B (Jiang et al., 2024), and DeepSeek-V3 (DeepSeek-AI, 2024). The mismatch is mostly a memory problem. These models have tens to hundreds of billions of parameters and do not fit on commodity GPUs, even though only a small fraction of their parameters are used for any token. Most expert weights are inactive at a given step, but they still need to be stored somewhere the GPU can access.  
+
+> 1Nokia, Sunnyvale, CA 94085, USA. Correspondence to: Jiamu Zhang <jiamu.zhang@nokia.com >.
+> Preprint. Work in progress.
+
+A common way to run these models on small GPUs is of-floading: keep most weights in host memory and move them to the GPU when needed. This approach is well established, and its simplest form is static layer-level offload, such as vLLM’s --cpu-offload-gb (Kwon et al., 2023). Static offload can serve a 30B MoE model in well under 10 GiB of GPU memory, but it does not directly exploit expert sparsity. For each layer, it transfers all experts that a token might use, even though routing selects only a small subset for the actual computation. Several specialized MoE-offloading systems improve this basic design in different ways. Some move expert computa-tion to the CPU on a miss, as in ktransformers, which is fast but tied to Intel AMX (KVCache.AI, 2024). Others reduce memory pressure through quantization, as in llama.cpp, at the cost of changing model precision (Gerganov et al., 2023). A third line of work pipelines or predicts expert transfers so that communication can be hidden under computation (Cao et al., 2025; Du et al., 2024; Eliseev & Mazur, 2023). This last direction is closest to ours, but it targets a different set-ting: large-batch datacenter serving, where many experts 
+
+> arXiv:2606.21868v1 [cs.LG] 20 Jun 2026 Working-Set Paging for Low-Resource MoE Serving
+
+are active in each layer and there is enough computation to overlap data movement. Our setting is low-concurrency interactive serving, where the model is too large for the GPU but each request activates only a small routed subset of experts. The missing piece is to treat the resident expert set as a cache over the model’s own routing behavior, and to manage that cache together with the KV cache. We discuss prior systems in more detail in Appendix A. 
+
+Serving is a working-set problem. In low-resource MoE serving, the main constraints are GPU memory and PCIe bandwidth rather than compute. This makes the problem closely resemble the classical working-set problem (Den-ning, 1968; 1970). GPU memory is the limited fast store, while host memory is the backing store. Expert weights form a routing-dependent stream of memory references, and the KV cache forms a token-dependent stream. Both streams compete for the same VRAM budget. From this view, serving performance depends on keeping the useful parts of both streams resident, avoiding repeated transfers of recently used experts, and admitting only as many requests as the combined expert and KV working sets can support. It also puts expert offload and KV-cache management into the same allocation problem, rather than treating them as separate mechanisms. The same abstraction applies to any model with routed experts and a KV cache, including today’s MoE LLMs and emerging MoE vision-language models. The working-set view also shapes the system design. WiSP changes the caching and allocation policy, but leaves the serving engine, kernels, model weights, and numerical pre-cision unchanged. As a result, it produces byte-identical outputs to the underlying engine. WiSP is implemented as a drop-in plug-in. It reuses an indirection already exposed by the engine to redirect each MoE layer to a small resident GPU scratch space, where the currently cached experts are placed. This keeps the mechanism independent of a particular MoE architecture, as long as the engine can already serve that model. Section 3 describes the mechanism in detail. 1
+
+What we find. At matched GPU-memory budgets, WiSP’s routing-aware paging improves decode throughput by up to 1.95 × over static offload when the model does not fit in VRAM. When the model does fit, static residency is faster, since paging adds an unnecessary indirection; we report this crossover explicitly. We also test whether routing predictions can be used to 
+
+> 1We plan to release the implementation with a later version of this paper.
+
+prefetch experts and hide page faults. In low-concurrency decode, this optimization provides little benefit. There is too little computation available to overlap PCIe transfers, so performance is limited mainly by bandwidth rather than prediction accuracy. This changes the role of routing infor-mation: it is more useful for deciding which experts should stay resident than for hiding transfer latency. This leads to the allocation problem at the center of the paper. Expert weights and the KV cache share the same VRAM budget, so improving one pool can hurt the other. We introduce MV-WSA, which splits memory by equalizing the marginal latency benefit per byte, subject to a minimum KV-cache budget needed for admission. We implement it both as an offline configurator and as an online controller that resizes the two pools while serving requests. In real serving, the offline configurator is the only policy we test that performs well on both prefill and decode; in simulation, it stays within a few percent of a per-workflow oracle, while fixed splits are about 20% worse. The online controller further improves throughput by 1.20 × over the best offline split at the same VRAM budget, while preserving byte-identical outputs. We make four contributions: • A working-set formulation of low-resource MoE serving. We frame expert weights and the KV cache as two memory-reference streams competing for limited VRAM. This gives a common vocabulary for expert residency, KV-cache allocation, thrashing, and admis-sion, and separates our low-concurrency setting from high-batch datacenter serving (Section 2). • A drop-in routing-aware expert pager. We imple-ment expert paging through an indirection already ex-posed by the serving engine, without changing kernels, model weights, or quantization. At matched VRAM, WiSP improves decode throughput by up to 1.95 ×
+
+over static offload when the model does not fit (Sec-tions 3, 4). • A negative result on prefetching in low-concurrency decode. We show that routing-based expert prefetching is not the main bottleneck in this regime: single-stream decode is limited by PCIe bandwidth rather than rout-ing prediction accuracy. The routing signal is therefore more valuable for choosing a small resident expert set than for hiding transfer latency (Section 4). • MV-WSA for joint expert–KV allocation. We intro-duce a marginal-value allocator that divides VRAM between expert weights and the KV cache while pre-serving enough KV capacity for request admission. As an offline configurator, it performs well on both prefill and decode and tracks a per-workflow oracle within a few percent in simulation. As an online controller, it re-sizes both pools during serving and improves through-Working-Set Paging for Low-Resource MoE Serving 
+
+put by 1.20 × over the best offline split at the same VRAM budget (Sections 3, 5). 
+
+## 2 BACKGROUND : S ERVING AS A 
+
+## WORKING -S ET PROBLEM 
+
+2.1 The Working-Set View 
+
+A program’s working set is the set of memory pages it has used recently (Denning, 1968; 1970). If that set stays resident, execution is fast. If the resident set is too small, the program repeatedly faults on pages it just used and begins to thrash . If the system admits more concurrent work than the combined working sets can support, the whole machine thrashes. Looking back to what we care about, the low-resource MoE serving has the same shape: at each step, the model needs a small routed set of experts in every layer, and it also needs the KV blocks for the active tokens, so that both must be in GPU memory when used, both grow with load, and both compete for the same limited VRAM. This view is useful because expert use is sparse but not random. A token activates only k of N experts, so keeping every expert resident is wasteful when GPU memory is limited. At the same time, a decode burst touches more than a tiny per-token set, so the cache cannot simply hold the next token’s experts. The opportunity comes from reuse across bursts and sessions: a workload tends to revisit a stable subset of experts. Caching this routed working set rather than the whole expert pool is what lets a model that does not fit in VRAM still run efficiently on a smaller device. The KV cache is the other half of the same picture. Page-dAttention (Kwon et al., 2023) already treats KV blocks as pageable memory and manages them as a working set. Ex-pert weights, however, are usually handled separately, either kept fully resident or streamed in bulk. But both draw on the same VRAM budget: every byte spent holding experts is a byte unavailable to the KV cache, and vice versa. Seen this way, low-resource MoE serving is not two independent problems, expert offload and KV management, but a single allocation problem over two competing working sets. 
+
+2.2 Why the Serving Regime Matters 
+
+The best strategy depends on concurrency. In high-batch datacenter serving, a layer may activate many or most ex-perts across the batch. The per-layer working set is then close to the whole layer, and there is enough computation to overlap expert transfers with execution. Streaming and prefetching are natural in that setting (Liu et al., 2026; Cao et al., 2025). WiSP targets the opposite regime: one or a few interactive streams on a GPU that cannot hold the full model. Here each step activates only a small routed subset of experts, and decode has little computation with which to hide PCIe transfers. In this regime, the useful question is not how to stream the next layer fast enough, but which experts should remain resident across steps and how much VRAM should be left for KV. Section 4 measures this directly. 
+
+2.3 Scope and Generality 
+
+The expert-paging mechanism applies to any model with routed experts that the serving engine can expose as an ex-pert bank. The full working-set allocation problem applies when the model also has a KV cache, because expert weights and KV blocks compete for the same memory budget. Mod-els without a KV cache, such as diffusion MoEs or pure recurrent SSM–MoE variants, still benefit from the expert-paging mechanism as a way to reduce resident memory. They do not exercise the full expert–KV allocation problem, so we treat them as mechanism-generalization cases rather than headline throughput targets. Table 1 summarizes this distinction. 
+
+Where WiSP sits among existing systems. Most prior MoE-offloading work targets autoregressive MoE LLMs. The main axis that separates these systems is the serving regime: high-batch systems can stream or prefetch experts because they have enough computation to overlap trans-fers, whereas WiSP targets low-concurrency serving, where overlap is limited and reuse-based expert caching matters more. WiSP also changes only the residency policy, so the engine’s outputs stay byte-identical. The closest concurrent system, FluxMoE (Liu et al., 2026), shares the goal of trad-ing expert residency for KV capacity but uses a stream-and-evict policy tuned for high-batch overlap, while WiSP uses cache-and-reuse for the regime where overlap is unavail-able. Other MoE modalities (VLMs, hybrid, and diffusion models) use different serving stacks, none of which pro-vides a routing-aware expert pager; WiSP attaches to each either as the same vLLM plug-in or through a small wrapper. Appendix F gives the full design-space and serving-stack comparisons (Tables 7, 8). 
+
+## 3 WISP 
+
+WiSP has two parts. The first is a routing-aware expert pager (§3.2). It keeps a working set of experts in GPU mem-ory and pages the remaining experts through the serving engine’s existing expert map indirection. This gives us a simple substrate for expert caching: it needs no new kernels, does not change the model or its precision, and preserves byte-identical outputs. The second part, and our main algorithmic contribution, is 
+
+MV-WSA (Marginal-Value Working-Set Allocation, §3.3– §3.5). Once experts can be paged, the question becomes how much VRAM to give to resident experts and how much Working-Set Paging for Low-Resource MoE Serving 
+
+Table 1. Where the working-set view applies. Expert stream = routed experts that can be paged; KV stream = an autoregressive key–value cache that co-contends for memory. WiSP’s mechanism needs the former; its full theory needs both.                                             
+
+> Architecture MoE variant Representative Expert stream KV stream WiSP coverage Dense LLM ×(dense) Llama-3, Qwen2.5 ×✓n/a SSM (pure) ✓BlackMamba (Anthony et al., 2024) ✓×(recurrent state) mechanism only
+> MoE LLM ✓Mixtral, Qwen3-MoE, DeepSeek-V3 ✓✓full (primary) MoE VLM ✓DeepSeek-VL2, Kimi-VL, Aria ✓✓full (breadth)
+> Hybrid SSM–MoE ✓Jamba (Lieber et al., 2024) ✓✓(attention) full
+> MoE diffusion LLM ✓LLaDA-MoE (Zhu et al., 2025) ✓×(bidirectional) mechanism only MoE image diffusion ✓DiT-MoE (Fei et al., 2024) ✓×(latent denoise) mechanism only
+
+to leave for the KV cache. We treat this as a single working-set allocation problem over a fixed byte budget. The pager decides which experts stay resident within the expert bud-get, and MV-WSA decides how that budget is split between experts and KV for a given workload. We use MV-WSA in two ways: offline, as a startup configurator, and online, as a controller that resizes the two pools while serving re-quests. Figure 1 summarizes the design: the pager provides the caching mechanism, and MV-WSA controls the split between the expert working set and the KV cache. 
+
+3.1 Setting and Notation 
+
+The model has L MoE layers of N experts each; a router selects k ≪ N experts per token per layer. At step t the router in layer ℓ selects R(t) 
+
+> ℓ
+
+⊆ { 1, . . . , N }, and the forward pass needs the weights of every e ∈ R(t) 
+
+> ℓ
+
+resident when layer ℓ executes. One expert occupies Me bytes, so full residency costs LN M e, which for current MoEs (tens to hundreds of billions of parameters) exceeds commodity VRAM several times over. After fixed costs (non-expert weights, activations, CUDA context) are reserved, the device offers a fixed pageable budget B bytes shared by the two streams. We write it as 
+
+B = Bexp + Bkv , f ≜ Bexp /B ∈ (0 , 1) , (1) where f is the control variable we care about. The expert budget supports a per-layer resident cap C = Bexp /a , with 
+
+a ≜ LM e the GPU bytes of one resident expert across all L
+
+layers; the KV budget supports κ = Bkv /b blocks, where b
+
+is the GPU bytes of one KV block summed over all layers. We manage both pools as caches over their own reference stream. At a fixed budget B, the main thing that separates a good deployment from a bad one is where f lands. 
+
+3.2 The Expert Pager 
+
+Before we can allocate the budget, we need a way to use the expert side of it that is both cheap and exact, so that the allocator reasons about an accurate cost. WiSP pages experts through an indirection the engine already exposes, without a new kernel and without changing model outputs. 
+
+Algorithm 1 WISP LAYER .S TEP (R) at one MoE layer 
+
+1: Input: needed experts R; cap C; maps π, π −1; LRU ticks τ ;clock c; CPU master W cpu ; GPU scratch S; device map πdev 
+
+2: M ← { e ∈ R : π(e) = ⊥} ▷ faults (experts not resident) 3: U ← { s : π−1(s) /∈ R} in increasing τ ▷ LRU victims 4: ASSIGN each e ∈ M a victim slot se from U
+
+5: for each e ∈ M with slot se do 
+
+6: S[se] ← COPY ASYNC (W cpu [e]) ▷ H2D, compute stream 7: π(e) ← se; π−1(se) ← e; πdev [e] ← se
+
+8: end for 
+
+9: c ← c + 1 ; for e ∈ R do τ [π(e)] ← c
+
+10: return FUSED MOE(hidden , W =S, expert map =πdev )
+
+The expert-map hook. Modern fused-MoE kernels ac-cept a per-call permutation tensor π that remaps logical expert ids to physical slots. It was originally added so that expert-parallel deployments could skip non-local ids, but it is also exactly what a working-set cache needs. A host-side policy points π at a small GPU scratch of C slots per layer, and the unmodified kernel transparently reads from this scratch instead of from a full expert table. WiSP keeps all of its dynamic behavior in π. The pager minimizes cumulative fault traffic, 
+
+F = X
+
+> t,ℓ
+
+R(t) 
+
+> ℓ
+
+\ Π(t−1)  
+
+> ℓ
+
+· Me, (2) where Π(t) 
+
+> ℓ
+
+is layer ℓ’s resident set of at most C experts, and a page fault occurs whenever a routed expert is not resident. This is essentially virtual memory applied to expert weights, with two useful differences. The working set is structured: it is a k-bounded subset chosen by a known function of the hidden state. And any budget the pager frees can be given directly to the KV cache, since both share the same VRAM. 
+
+Per-step protocol. Algorithm 1 is the per-decode-step procedure at one layer. We keep a host-side inverse map 
+
+π−1 from slot to expert, an LRU tick τ per slot, and a monotone clock c. Given the routed set R, it fetches only the missing experts, evicts least-recently-used slots to make room, and dispatches the stock kernel. Two properties hold by construction. (P1) Bit-identical outputs: the kernel is unchanged, and the weights read through π are byte-equal to those the unpaged tensor would Working-Set Paging for Low-Resource MoE Serving Expert 1
+
+> Expert 2
+> Expert N
+> Expert 3
+
+KV swap area (host DRAM) 
+
+Host (CPU) 
+
+Device (GPU)              
+
+> F:non-expert weights & activations Reserved (not in B)
+> S:expert scratch (active experts)
+> expert map
+> split f
+> K:KV pool (on-device)
+> 𝑓 B
+> ( 1 -
+> 𝑓 )B
+> Pageable budget B
+> page-in (H2D, PCIe)
+> KV split / restore (Overflow, PCIe)
+
+(a) System Layout 
+
+## F S K    
+
+> K min
+> split f(high)
+> Expert-pressured
+> Tool-call burst, Short context →fhigh
+
+## F S K K min     
+
+> split f(low)
+> KV-pressured
+> long-context Multi-turn → flow
+
+B
+
+## F S K K min 
+
+B time 
+
+> Before
+
+## F S K
+
+> K min
+
+B   
+
+> After Dynamic
+> Controller resizes both pools at a drained barrier
+> drained barrier
+> active expert KV cache Fixed weights + activations
+
+(b) Runtime regimes: MV-WSA moves the split 
+
+Figure 1. WiSP at a glance. (a) System layout. The full expert weights stay pinned on the host; WiSP pages in only the routed experts to a small GPU scratch S over PCIe and runs the unmodified fused-MoE kernel through the expert map π, so output is byte-identical. The pageable budget B = Bexp + Bkv —the expert scratch S plus the KV pool K, excluding the fixed non-expert slab F —is divided by the split f ; KV that overflows the on-device pool spills to host. (b) Runtime regimes. The optimal split moves with the workload— expert-heavy for tool-call bursts, KV-heavy for long contexts—and MV-WSA tracks it, in the dynamic case by physically resizing both pools at a drained barrier, byte-identically. 
+
+supply, so the output matches an unpaged baseline up to the kernel’s own floating-point reproducibility. (P2) Single-stream ordering: the asynchronous host-to-device copy and the kernel dispatch run on the same CUDA stream, so stream ordering already guarantees that each fetched expert lands in scratch before the kernel reads it, with no explicit barrier. When a batch’s expert union exceeds the cap C (which can happen for a large batch or during prefill), WiSP splits the tokens into the fewest groups whose per-group expert union fits the cap. This is safe because, within one MoE layer, a token’s output depends only on its own activations and routed experts. Each group runs as its own kernel invocation, and the results are reassembled in token order. At decode this splitting never triggers. 
+
+Why LRU, and why it is exact. At decode, each step computes only a handful of k-row GEMMs, far too little work to hide a PCIe transfer behind (§4). So the goal is not to hide transfer latency but to maximize reuse : keep the experts a workload comes back to. LRU is the standard reuse-based policy, and it also has an exact analysis that we rely on throughout the paper. For any reference stream, the LRU misses at cap C are determined by the per-access reuse distance dt, the number of distinct items seen since item t was last referenced (with dt = ∞ on first sight). A reference hits at cap C exactly when 0 ≤ dt < C , so 
+
+m(C) = { t : dt ≥ C } (3) is the exact miss curve, monotone non-increasing in C.Equation (3) holds for the expert stream and, identically, for the KV stream, and is the object the allocator optimizes. 
+
+3.3 The Expert ↔KV Split 
+
+A split f keeps C = f B/a experts and κ = (1 − f )B/b 
+
+KV blocks resident. Each pool is an LRU cache over its own stream, with the exact miss curve (3) . The two pools have different miss costs. An expert miss costs a PCIe round-trip ( cexp = Me tbyte , where tbyte is the effective seconds per byte), while a KV miss costs a prefill recompute (ckv = β b tok , where β is the recompute seconds per token and btok the tokens per block). The serving latency at split 
+
+f is then 
+
+T (f ) = cexp mexp (C) + ckv mkv (κ). (4) Working-Set Paging for Low-Resource MoE Serving 
+
+The optimal split f ⋆ = arg min f T (f ) depends on the work-load. It is expert-heavy for a tool-call burst that revisits a small expert set ( f ⋆ → 1), and KV-heavy for a long context (f ⋆ interior); we measure both cases in §5.3. At an interior optimum, the split is equimarginal : moving one more byte buys the same latency reduction in either pool, 
+
+cexp m′
+
+> exp
+
+(C)/a = ckv m′
+
+> kv
+
+(κ)/b. (5) This is the principle MV-WSA follows: move bytes toward whichever pool currently buys more latency per byte. 
+
+The admission floor. The smooth cost in (4) misses one hard constraint. A continuous-batching scheduler must hold a step’s entire active set resident. If the GPU KV pool is too small to admit the concurrent working set, the scheduler preempts and re-prefills on every step, or at startup simply refuses to initialize. This is a cliff, not a gradual increase in misses. We capture it with a floor on the KV pool, 
+
+κ ≥ κmin = W · ⌈ ℓctx /b tok ⌉, (6) with W the served concurrency and ℓctx the per-session con-text. The floor is slack when KV is the pressured pool, but it becomes binding when experts are: there the unconstrained optimum pushes f ⋆ → 1, and κmin is what keeps the expert-heavy split admissible . This is exactly the difference be-tween MV-WSA and a KV-blind, expert-proportional split, which we measure as a literal non-start in §5.3. 
+
+3.4 MV-WSA: Configurator and Online Controller 
+
+A live server does not have the full miss curves that (4) needs. MV-WSA instead estimates them online, from de-cayed per-stream reuse-distance histograms, and moves f
+
+toward the equimarginal target (5) once per burst, with hys-teresis for stability. We defer the estimator and its design choices to Appendix B (Algorithm 2). The allocator runs at two time scales. Run open-loop on a short representative trace, it returns a converged split ˆf that we use as a startup configurator : given a budget, it emits the two engine knobs that realize ˆf at a fixed memory footprint, subject to the floor (6), 
+
+C = min  ⌊ ˆf B/a ⌋, ⌊(B−κmin b)/a ⌋, Bkv = B−Ca, 
+
+(7) that is, the per-layer expert cap (WiSP’s scratch size) and the GPU KV pool (vLLM’s KV-bytes), with all remain-ing VRAM held fixed. Every comparison is therefore iso-VRAM: the arms differ only in where the same bytes go. 
+
+3.5 Dynamic Dual-Resize 
+
+A single ˆf is the best fixed compromise over a trace. But an agentic session moves between regimes on its own— long-context turns, then tool-call bursts—so the full ver-sion of MV-WSA solves the split online , physically moving bytes across the expert ↔KV boundary while serving, at iso-VRAM. One observation makes this cheap: in a live engine, KV’s effective miss curve is a step . Once the pool covers the current working set (plus a little headroom) and stays above 
+
+κmin , an extra block is never read, so its marginal value is 
+
+≈ 0. With one side of the equimarginal balance pinned to this step, the solution has a simple closed form— keep KV at the top of its step, and give every remaining byte to experts .The controller then needs only one live measurement, the KV working-set peak, rather than a full KV miss curve (the control law is in Appendix D). The harder part is actually applying the new split inside a running engine. WiSP uses two in-process levers: one resizes the per-layer expert scratch (re-paging from the host master W cpu ), the other resizes the vLLM KV-block pool. Both fire only at a drained barrier , when no request holds a block that is about to move, and the controller always frees the shrinking pool before growing the other so that the transient footprint never exceeds B. We give the full procedure in Appendix D; here we state the three guarantees it provides. (D1) Iso-VRAM: the budget B = κb + Ca 
+
+is preserved on every step, so the dynamic arm is directly comparable to any static split. (D2) Output preservation: 
+
+both levers move bytes, not math —the scratch re-pages byte-equal weights through π, and KV tensors move only while no request holds a block—so under greedy decoding the output is byte-identical across a full shrink-then-grow cycle. (D3) Fail-safe: if a resize is rejected, the controller falls back to the previous split, so it is never worse than the static configurator it generalizes. The live controller runs this closed-form rule; we validate the full reuse-distance controller (Algorithm 2) in trace-driven simulation (§5.3). 
+
+3.6 Implementation 
+
+WiSP is a drop-in plug-in over an unmodified vLLM: a single self-contained package, with no fork, byte-identical output, and no dependence on a particular MoE architecture beyond what the engine already supports. It allocates the expert masters on the host, which avoids the load-time GPU spike that would otherwise exhaust a small card before serving even starts, keeps a C-slot GPU scratch, and runs Algorithm 1 on every forward pass. The static split (7) is set through the engine’s native controls (scratch size for the expert cap, KV-bytes for the pool). Overflow KV spills to host swap identically on every arm, so the split stays the only variable. The dynamic controller adds two in-process resize primitives at drained barriers. We implement both the BF16/FP16 path and the FP8 block-quantized path (the latter serves MiniMax in §5). Further engineering details are in Appendix E; GPTQ/AWQ variants and FP8 dynamic resize are left to follow-up work. Working-Set Paging for Low-Resource MoE Serving 
+
+## 4 THE CENTRAL FINDING : P REDICTION 
+
+## IS A MEMORY LEVER , N OT A SPEED 
+
+## LEVER 
+
+The working-set view suggests an obvious optimization. If we can predict which experts a token will need, we can prefetch them and hide the fault latency, turning WiSP from a demand pager into a speculative one. The route a token takes is in fact partly predictable, because the hidden state entering layer ℓ+1 is a deterministic function of the experts that already fired in the same forward pass. WiSP exploits this with a parameter-free, online co-activation predictor : a table that counts how often experts at one layer fire together with experts at a later layer, and scores candidate experts for a target layer from these statistics. It needs no gradi-ents, no calibration data, and no retraining, and it can be learned online or loaded per user (we give the construction in Appendix C). For a per-user table it reaches a respectable next-expert precision of around 0.5, so prefetching seems like it should help. The central—and, to us, initially surprising—empirical re-sult of this paper is that in the low-concurrency regime, prefetching buys no decode speed at all. Understanding why tells us where the routing signal’s value actually lies. Figure 2 contradicts the hypothesis in two independent ways. First, turning on the predictor’s speculative prefetch at a constrained cap does not help; it roughly halves decode throughput and doubles time-to-first-token. The specula-tive transfers compete with the demand transfers for the one scarce resource (PCIe bandwidth), and at a tight cap they evict experts that the next step still needs. Second, a topic-coherent session—whose routing should be both more predictable and more reused—reaches no higher steady-state throughput than a deliberately diverse one. There is simply no warm-up benefit to harvest. The reason is the bottleneck itself. At batch-1 decode, each layer computes a single token, so the MoE GEMM is tiny and there is essentially no compute behind which to overlap a side-stream PCIe prefetch. This is the opposite of the high-batch regime, where streaming systems can hide transfers under substantial layer compute. Worse, at a tight cap the speculation thrashes the small scratch. A better predictor cannot move decode latency when the wall is bandwidth. This is the same regime distinction we drew in Section 2, now measured directly: the strategy that wins at high con-currency is simply unavailable at low concurrency, where only cache-and-reuse is left. We can also put a concrete number on this wall. On Qwen3-30B-A3B at batch 1, roughly half of each layer’s top-8 experts turn over between adjacent decode steps (only 44 –
+
+48% carry over). So even a perfect cache of the previous step’s experts must still stream ≈1.8 GiB of expert weights every step. That mandatory traffic alone caps decode at ≈16 
+
+tok/s on PCIe 4.0 and ≈32 tok/s on PCIe 5.0, regardless of any prefetch policy, and WiSP’s full-cap operating point (≈27 tok/s, Figure 3) already sits just under that PCIe-5 ceil-ing. The pipe is already full; speculation can only reshuffle the traffic, not widen the pipe. This does not make the routing signal useless. Instead, it changes what the signal is good for. If prediction cannot buy decode latency, what it can buy is knowledge of where the working set converges—the size and membership of the expert set a deployment actually uses—and that converts nat-urally into memory. The smallest cap that keeps a workload near-lossless is just the support of its converged working set, and a routing predictor can estimate that support without a VRAM-probing sweep. A global cap that is safe for ev-ery user wastes memory on most of them, because any one user’s traffic concentrates on a smaller, user-specific subset; the predictor lets us right-size the cap per user and hand the freed VRAM to the KV cache. Because the routing signal is a memory lever and not a latency one, the right question becomes allocation: how to divide one fixed VRAM budget between the expert cache and the KV cache it competes with. That is exactly what MV-WSA addresses (§3.3–§3.5), and we evaluate it in §5.3. We note in passing the two regimes where prediction would convert back into speed— when there is compute to overlap (batched decode, and the diffusion models of §5.5) or reuse to exploit (multi-turn agent sessions)—as natural next steps. 
+
+## 5 EVALUATION 
+
+The evaluation follows the arc of the paper. We first check that paging does not change what the model produces (Sec-tion 5.1). The core systems result comes next: at a matched GPU budget, routing-aware caching sustains higher decode throughput than static offload (up to 1.95 × across the sub-fitting range), and the expert memory it frees converts di-rectly into KV capacity (Section 5.2). That trade sets up the allocation question, which Section 5.3 answers: MV-WSA splits the budget better than fixed or naive policies on real serving, both as a launch-time configurator and as a live con-troller. We then show where the routing signal is actually worth acting on—it buys memory, not decode speed, via per-user right-sizing (Section 5.4)—and close by showing the same pager carries unchanged across a MoE VLM, a hybrid model, and two diffusion modalities (Section 5.5). Extended per-user, working-set, and cross-architecture results are in Appendix G. 
+
+Setup and honest scoping. Unless noted, experiments run on a single NVIDIA H100 NVL (95,830 MiB, ≈94 GiB), vLLM 0.11.2, eager mode, temperature 0 (greedy, determin-istic). We are explicit about what is real versus emulated .Working-Set Paging for Low-Resource MoE Serving cap=8 cap=16  
+
+> 0
+> 2
+> 4
+> 6
+> 8
+> 10
+> 12
+> 14
+> 16
+> decode throughput (tok/s)
+> 46% 55%
+
+(a) Speculative prefetch hurts  
+
+> demand paging (no prefetch)
+> + speculative prefetch
+> topic-coherent
+> (code)
+> diverse
+> (mixed)
+> 0
+> 2
+> 4
+> 6
+> 8
+> 10
+> 12
+> 14
+> 16
+> decode throughput (tok/s)  13.9 14.1
+
+(b) Routing locality gives no warm-up    
+
+> Single-stream decode is PCIe-bandwidth-bound, not prediction-bound
+> Figure 2. Prediction does not buy decode speed at single-stream. (a) Turning on speculative prefetch with the online co-activation predictor lowers decode throughput by 46–55% at constrained caps and roughly doubles time-to-first-token (Qwen3-30B-A3B). (b) A topic-coherent session reaches no higher steady-state throughput than a deliberately diverse one, so there is no routing-locality warm-up to harvest. The binding constraint is PCIe bandwidth, not prediction quality.
+
+Two of our results are genuinely memory-bound on the hard-ware: MiniMax-M2 (229B, FP8) and Jamba-v0.1 (52B) do not fit on a single 94 GiB GPU, with no emulation involved. The iso-VRAM throughput numbers on Qwen3-30B-A3B and Kimi-VL, by contrast, emulate a small card by capping 
+
+gpu-memory-utilization : the model would fit on the H100, but we constrain both WiSP and the baseline to the same budget so the comparison is fair. We emphasize that a substantial fraction of our reported numbers (the iso-VRAM Qwen3-30B-A3B and Kimi-VL arms) are mea-sured on a simulated constrained device—a 94 GiB H100 with gpu-memory-utilization capped to the target budget—rather than on physically constrained hardware; validating these results on a real small-memory device (a smaller card or a MIG slice) is left to a follow-up version of this work. Finally, the two diffusion results are produced by a standalone re-implementation of the pager in pure PyTorch (no vLLM), so we make correctness and resident-memory claims there but no serving-latency claim. 
+
+5.1 Paging Is Output-Preserving 
+
+At temperature 0, WiSP’s output matches the unmodified engine for every cap we tested, consistent with property P1: the kernel reads weights through π that are byte-equal to the unpaged tensor. We confirm this not only on the LLMs but, more stringently, on the diffusion models, where we can compare entire generation trajectories: DiT-MoE latents match to a maximum absolute difference of exactly zero across a cap sweep, and LLaDA-MoE produces token-identical completions (Section 5.5). 
+
+5.2 Iso-VRAM Decode Throughput versus Static Offload 
+
+Table 2 is the headline scoreboard: WiSP versus the naive serving stack at matched GPU-memory budgets, across the four models that span our full-coverage MoE families. The diffusion mechanism-only rows have no throughput base-line to compare against and are reported separately in Ap-pendix G (Table 9). Figure 3 is the headline systems result. At matched GPU-memory budgets, WiSP sustains substantially higher decode throughput than static offload across the whole sub-fitting range, and the advantage is non-monotonic : it peaks at intermediate budgets (up to 1.95 ×), where WiSP caches enough of the reused expert set to win big while the routing-blind baseline still streams everything. It narrows toward the tightest budgets, where even WiSP’s resident set is too small to escape the PCIe wall and both arms are bandwidth-bound, and toward the full footprint, where the curves cross; once the model fits, static residency wins because WiSP’s per-layer paging hook is then pure overhead (full numbers in Table 2 and Figure 3). WiSP is for the regime where the model does not fit, not a universal speedup, and we say so. The same behavior holds on a model we did not design the method for: on the Kimi-VL-A3B MoE vision–language model (Section 5.5), WiSP again beats static offload at matched budgets (Table 2). Working-Set Paging for Low-Resource MoE Serving 
+
+Table 2. Main results. WiSP vs. the naive serving stack across all full-coverage MoE families, at matched GPU-memory budgets where a comparison is possible. Setting : SIM = visible GPU budget capped on a 94 GiB H100 to emulate a smaller card (same budget on both sides); FITS = model fits without any constraint; REAL = model genuinely exceeds one 94 GiB GPU; CAP . = capability check (see text). The naive baseline is the same engine’s static --cpu-offload-gb except where noted. A “ ×” entry is a measured failure—the naive stack does not start in that configuration. Setting GPU budget Naive baseline → tok/s WiSP → tok/s Speedup 
+
+MoE LLM — Qwen3-30B-A3B (BF16), 128 experts, top-8 (cf. Figure 3)  
+
+> SIM
+
+≈23 GiB offload 50 → 8.96 cap 16 → 13.79 1.54 × 
+
+> SIM
+
+≈32 GiB offload 44 → 10.27 cap 32 → 18.51 1.80 × 
+
+> SIM
+
+≈44 GiB offload 30 → 13.21 cap 64 → 25.75 1.95 × 
+
+> SIM
+
+≈67 GiB offload 15 → 26.53 cap 128 → 26.79 1.01 × (crossover) 
+
+MoE VLM — Kimi-VL-A3B (BF16), 64 experts, top-8  
+
+> SIM
+
+≈16 .7 GiB offload 20 → 8.02 cap 8 → 9.44 1.18 × 
+
+> SIM
+
+≈10 .7 GiB offload 24 → 9.76 cap 8 → 11.81 1.21 ×
+
+Hybrid SSM–MoE — Jamba-v0.1 (52B, 103 GiB BF16), 16 experts, top-2  
+
+> REAL
+
+one 94 GiB H100 full residency: × OOM ( 103 >94 ) cap 4 → 5.73 naive × 
+
+> REAL
+
+one 94 GiB H100 cpu-offload-gb (any): × assertion cap 8 → 9.80 naive ×
+
+MoE LLM — MiniMax-M2 (229B FP8), 256 experts, top-8 — see §5.2 for iso-GPU-VRAM caveat 
+
+> CAP
+
+. one 94 GiB H100 offload ≥180 : × host OOM (256 GiB cgroup) cap 32 → 3.70 (14 GiB exp.) naive ×
+
+Scaling to a frontier model: a capability check. We also run WiSP on the 229B-parameter FP8 MiniMax-M2 on one 94 GiB H100, as a capability check rather than a throughput claim. WiSP serves the model with coherent output at a 
+
+7–14 GiB expert-weight footprint. This is not a speed win— stock vLLM with enough static offload also serves the model on this card, and faster—but WiSP’s distinctive property here is decoupling the GPU footprint from the host footprint: it holds one compact CPU master and pages a small GPU scratch, whereas more static offload demands more host pinning until host RAM becomes the bottleneck. Cleanly probing the iso-GPU-VRAM regime where this pays off needs a physically smaller card, which we leave to future hardware work. 
+
+Freed expert memory becomes KV capacity—the joint working set, measured. The throughput result above is the expert side of the story; the framing’s sharper claim is that experts and the KV cache are two streams trading against one store. We measure that trade directly. Holding the GPU budget fixed (Qwen3-30B-A3B at ≈48 .7 GiB), we vary the expert cap and read off the KV pool vLLM allocates with the remainder (Table 3). Shrinking the cap from 32 to 8 frees expert VRAM that the engine immediately turns into 
+
++41 .7% KV tokens, and an identical +41 .7% in maximum concurrency—at the same total memory. Pushing the other way, a cap of 64 leaves no room for a usable KV pool at this budget and the engine fails to initialize: a measured joint admission boundary where the two working sets together exceed the store. This is the expert ↔KV trade made quanti-tative; it also poses the allocation question— where on this trade should a deployment sit—that Section 5.3 answers. 
+
+Table 3. The expert ↔KV trade at fixed VRAM (Qwen3-30B-A3B, 48.7 GiB, 128 experts). Smaller expert cap ⇒ larger KV pool ⇒
+
+higher concurrency; cap 64 crosses the joint feasibility boundary.                 
+
+> expert cap GPU KV cache (tok) max conc. @4096 serves? 8375,792 91 .75 ×✓
+> 16 338,928 82 .75 ×✓
+> 32 265,200 64 .75 ×✓
+> 64 ——×(no KV room)
+
+5.3 Allocating the Budget: MV-WSA 
+
+The trade above says experts and KV compete for one store; MV-WSA decides where to sit on it. We evaluate the al-locator at three levels, two static (the split is fixed for the run) and one dynamic (the split is resized during serving): the static startup configurator on real vllm serve (Ta-ble 4); the full online controller in trace-driven simulation, since one trace cannot be replayed live under many splits (Table 5); and the dynamic live dual-resize controller that physically moves bytes while serving (Table 6). 
+
+Static configurator, real serving. We launch one vllm serve per arm (OpenAI-compatible HTTP), benchmark it, and kill it: an agentic client replays AgentInstruct os 
+
+sessions at concurrency 4, each prepended with a distinct 
+
+∼1.2–1.5k-token pseudo-document so concurrent sessions genuinely hold their own KV (identical prefixes would be deduped by prefix caching). Every arm gets the same total GPU budget and the same host CPU-swap, so the only variable is the split. The arms are MV-WSA (con-figurator ˆf plus the admission floor κmin = W · ℓctx ), 
+
+50–50 (even split of the pageable pool), Flux-prop (KV-Working-Set Paging for Low-Resource MoE Serving                                      
+
+> Figure 3. Iso-VRAM decode throughput on Qwen3-30B-A3B (single H100, emulated budget). When the model does not fit, routing-aware paging (WiSP) moves far fewer bytes per step than static layer-grained offload; the advantage is largest at intermediate budgets ( 1.95 ×at 44 GiB) and narrows both toward the tightest budgets and toward the full footprint, where the two converge. Once the model fits, static residency wins because WiSP’s per-layer hook is then pure overhead—the honest cost that bounds the claim.
+> Table 4. MV-WSA startup configurator ( static split, fixed for the run) on real vllm serve , iso-VRAM, AgentInstruct os , con-currency 4, OLMoE-1B-7B at an 8 GiB budget (KV-pressured regime). Every arm gets the same total GPU budget and host CPU-swap; the only variable is the split. Turn wall is the median wall-clock per turn (prefill +decode), lower is better. MV-WSA is the only arm near-best on both TTFT and decode, so it has the lowest per-turn wall.
+> Arm (split) cap KV (GiB) TTFT med decode turn wall (s)
+> MV-WSA 21 2.6 2.9 40.6 6.3
+> 50–50 18 3.2 2.9 29.2 7.0 Flux-prop 35 0.5 19.8 56.2 22.0 naive offload ——21.3 30.7 25.5
+
+blind, expert-working-set-proportional prior), and naive of-fload (vanilla --cpu-offload-gb , WiSP off). Table 4 runs this on OLMoE-1B-7B at an 8 GiB budget, the KV-pressured regime where the optimal split leans toward KV; the simulation and live-controller results that follow probe the expert-pressured side. Each static prior is wrong on one of the two axes (Table 4). 
+
+Flux-prop is KV-blind: it spends the most on experts and decodes fastest, but starves the KV pool, so the scheduler cannot admit the concurrent batch and TTFT collapses. 50– 50 is KV-heavy: a smaller expert cap means slower decode at the same TTFT. Naive offload streams every expert and pays on both axes. MV-WSA is the only arm near-best on both TTFT and decode, because it sizes the resident set to the workload’s reused experts and gives the rest to KV, so it has the lowest median per-turn wall. The expert-pressured counterpart (a larger model where the optimum leans expert-heavy) is left to a follow-up version; the simulation and live-controller results below probe that regime. 
+
+The admission floor is what makes the right split feasible. 
+
+Flux-prop’s failure in Table 4 is the mild version of a sharper effect. On a model that genuinely does not fit, the uncon-strained objective drives the split toward f → 1 (all experts), and an expert-heavy split that leaves the KV pool below a single max model len sequence makes the engine refuse to start—a hard non-start, not a slowdown. The admission floor of Eq. (6) clamps the split to the most expert-heavy allocation that is still servable, which is exactly what lets WiSP page a model larger than the device (§5.2) without the scheduler deadlocking on KV. 
+
+Online convergence (simulation). The full reuse-distance controller (Algorithm 2) is validated in a trace-driven simulator, since a live server cannot replay the same trace under many splits. Across AgentInstruct workflows the per-workflow oracle split spans 0.22 –0.99 , so no single fixed split is good everywhere. MV-WSA converges to the per-workflow oracle within a few bursts and tracks it: at the operating budgets where KV genuinely competes it lands a median +3 .9% over the per-workflow oracle, while 50 /50 
+
+pays +19 .7% and Flux-prop +21 .3% . When the workflow 
+
+shifts within a session ( os →db →webshop ), adapting the split beats the best single static split chosen with hindsight (the global oracle) by up to 16 .3% (Table 5). 
+
+Live dual-resize: beating the best offline split. The closed-form controller of §3.5 runs in the in-process en-gine and resizes both pools at drained barriers. On the same Working-Set Paging for Low-Resource MoE Serving 
+
+Table 5. MV-WSA online controller in trace-driven simula-tion (AgentInstruct, operating regime where KV genuinely competes, effective context ≥8k). Stationary : median % over the per-workflow static oracle, lower is better. Shift 
+
+(os →db →webshop ): % vs. the best single static split chosen with hindsight; negative means MV-WSA is cheaper than that global oracle. The per-workflow oracle split itself spans 0.22 –
+
+0.99 , so no fixed split is good everywhere.            
+
+> Policy stationary (vs. oracle) shift (vs. global oracle)
+> MV-WSA +3.9%−4.7to −16 .3%
+> 50–50 +19 .7% —Flux-prop +21 .3% —
+
+Table 6. Live MV-WSA dual-resize ( dynamic : both pools resized 
+
+while serving) vs. the best offline split, iso-VRAM 24 GiB, Qwen3-30B-A3B, AgentInstruct os , concurrency 4, 36 timed turns. Both arms replay the byte-identical trace; the only difference is the policy. Lower is better except decode.                      
+
+> Arm cap KV pool TTFT med (s) decode (tok/s) e2e (s) fixed (offline) 36 3.65 GiB 40.35 13.37 448.1
+> dynamic 36 →40 3.65 →1.84 GiB 31.51 14.35 371.8
+> dynamic/fixed ——1.28 ×1.07 ×1.20 ×
+
+Qwen3 os trace at 24 GiB (Table 6), the contexts sit far below the conservative startup floor—the KV pool peaks at only ≈36% every round—so the static arm wastes most of its KV while holding experts capped. The live controller observes this on the first drained round, reclaims the idle KV into experts in one move, then holds steady with zero preemptions. The added residency cuts both prefill and decode paging, for a 1.20 × end-to-end win over the best of-fline split at the same budget. A separate resize-cycle check confirms property (D2): output is byte-identical across a full shrink-KV/grow-experts then grow-KV/shrink-experts cycle. 
+
+5.4 Where the Routing Signal Is Valuable: Memory, via Per-User Right-Sizing 
+
+Section 4 showed that the routing signal does not buy single-stream decode speed; here we show the form in which it is 
+
+valuable. The reuse the cache exploits is measurable on our AgentInstruct traces: a single decode burst’s expert union is 0.53 of the pool on Qwen3-30B-A3B (and 0.78 on the smaller 64-expert OLMoE), consecutive bursts overlap 0.80 –
+
+0.90 , and a session’s cumulative footprint saturates at 0.77 —a stable, below-full subset that a cache can hold. Crucially, this subset is user-specific and cheap to learn: a per-user co-activation predictor trained on a single session matches or beats a population predictor trained on 4× more data, and saturates within two sessions (Appendix G, Figure 4). This is the estimator behind per-user right-sizing—a user’s resident cap can be sized from very little of their own traffic— and no static or offline baseline has anywhere to put such per-user state. 
+
+5.5 Generality across Architectures and Modalities 
+
+The expert-paging mechanism needs only routed experts, so it applies far beyond the transformer LLM. The same plug-in pages the MoE vision–language model Kimi-VL-A3B 
+
+with no model-specific code, produces byte-identical text (including on image prompts), and beats static offload at matched budgets (Section 5.2). On the hybrid Jamba-v0.1 
+
+(52B; Mamba+attention+MoE), WiSP serves the model on a single 94 GiB GPU with correct output, in a regime where stock vLLM cannot serve it at all because full residency ex-ceeds VRAM and its offload path is unsupported for Jamba’s recurrent state—a capability claim scoped to the hybrid case. Finally, on two diffusion MoEs with no KV cache (DiT-MoE , LLaDA-MoE-7B ), a roughly 150-line wrapper reuses the same pager: generation is bit-/token-identical to full residency while resident expert memory drops up to 
+
+4×. These diffusion models also let us read the working-set structure off cleanly—a fully-activated per-forward stream with no cross-step reuse (DiT), where paging is a pure mem-ory lever, versus one with strong temporal locality across denoising steps (LLaDA), where prediction would convert back to speed. Appendix G reports these cross-architecture results in full (Table 9, Figures 5, 6). 
+
+## 6 CONCLUSION 
+
+Serving an MoE on a GPU that cannot hold it is a working-set problem: expert weights and the KV cache are two refer-ence streams competing for one small store. This framing unifies what are usually treated as separate expert-offload and KV-management problems, and it explains why the right mechanism differs between high- and low-concurrency serving. We realize the low-concurrency case as WiSP, a drop-in, byte-identical vLLM plug-in that beats the engine’s own static offload by up to 1.95 × at matched VRAM, and also serves a MoE VLM, a 52B hybrid model the baseline cannot serve on one GPU, and two diffusion modalities unchanged. Our main lesson is that in single-stream, memory-bound decode the useful lever is the caching policy, not routing pre-diction: the routing signal is worth more as a memory signal (the smallest safe resident set) than as a latency one. That makes allocation the central question, which MV-WSA an-swers by equalizing marginal latency-per-byte across the ex-pert and KV pools under one budget and an admission floor. Carrying the live controller’s full estimator into the serving loop, exercising it on multi-turn agent sessions and batched decode where prediction can convert back into speed, and validating on physically small GPUs are the natural next steps. Working-Set Paging for Low-Resource MoE Serving 
+
+## REFERENCES 
+
+Anthony, Q., Tokpanov, Y., Glorioso, P., and Millidge, B. BlackMamba: Mixture of experts for state-space models. 
+
+arXiv preprint arXiv:2402.01771 , 2024. Cao, S., Liu, S., Griggs, T., Schafhalter, P., Liu, X., Sheng, Y., Gonzalez, J. E., Zaharia, M., and Stoica, I. MoE-Lightning: High-throughput MoE inference on memory-constrained GPUs. In ACM International Conference on Architectural Support for Programming Languages and Operating Systems (ASPLOS) , 2025. DeepSeek-AI. DeepSeek-V3 technical report. arXiv preprint arXiv:2412.19437 , 2024. Denning, P. J. The working set model for program behavior. 
+
+Communications of the ACM , 11(5):323–333, 1968. Denning, P. J. Virtual memory. ACM Computing Surveys , 2 (3):153–189, 1970. Du, Z. et al. SiDA: Sparsity-inspired data-aware serving for efficient and scalable large Mixture-of-Experts models. In 
+
+Proceedings of Machine Learning and Systems (MLSys) ,2024. Eliseev, A. and Mazur, D. Fast inference of Mixture-of-Experts language models with offloading. arXiv preprint arXiv:2312.17238 , 2023. Fedus, W., Zoph, B., and Shazeer, N. Switch transformers: Scaling to trillion parameter models with simple and ef-ficient sparsity. Journal of Machine Learning Research (JMLR) , 23:1–39, 2022. Fei, Z., Fan, M., Yu, C., Li, D., and Huang, J. Scaling dif-fusion transformers to 16 billion parameters (DiT-MoE). 
+
+arXiv preprint arXiv:2407.11633 , 2024. Gerganov, G. et al. llama.cpp. https://github.com/ ggml-org/llama.cpp , 2023. Huang, Y., Fang, Z., Luo, W., Wu, R., Chen, W., and Zheng, Z. DyMoE: Dynamic expert orchestration with mixed-precision quantization for efficient MoE inference on edge. arXiv preprint arXiv:2603.19172 , 2026. Hwang, R., Wei, J., Cao, S., Hwang, C., Tang, X., Cao, T., and Yang, M. Pre-gated MoE: An algorithm-system co-design for fast and scalable mixture-of-expert inference. In ACM/IEEE International Symposium on Computer Architecture (ISCA) , 2024. Jiang, A. Q. et al. Mixtral of experts. arXiv preprint arXiv:2401.04088 , 2024. Kimi Team. Kimi-VL technical report. arXiv preprint arXiv:2504.07491 , 2025. KVCache.AI. KTransformers: A flexible frame-work for cutting-edge LLM inference optimiza-tions. https://github.com/kvcache-ai/ ktransformers , 2024. Kwon, W., Li, Z., Zhuang, S., Sheng, Y., Zheng, L., Yu, C. H., Gonzalez, J. E., Zhang, H., and Stoica, I. Efficient memory management for large language model serving with PagedAttention. In ACM Symposium on Operating Systems Principles (SOSP) , 2023. Li, D. et al. Aria: An open multimodal native mixture-of-experts model. arXiv preprint arXiv:2410.05993 , 2024. Lieber, O. et al. Jamba: A hybrid transformer-Mamba language model. arXiv preprint arXiv:2403.19887 , 2024. Liu, Q., He, C. Y., Jiang, H., Wang, Z., Zhao, A., and Lee, P. P. C. FluxMoE: Decoupling expert residency for high-performance MoE serving. arXiv preprint arXiv:2604.02715 , 2026. Liu, Z., Yuan, J., Jin, H., Zhong, S., Xu, Z., Braverman, V., Chen, B., and Hu, X. KIVI: A tuning-free asym-metric 2bit quantization for KV cache. In International Conference on Machine Learning (ICML) , 2024. Nie, S. et al. Large language diffusion models (LLaDA). 
+
+arXiv preprint arXiv:2502.09992 , 2025. Peebles, W. and Xie, S. Scalable diffusion models with transformers. In IEEE/CVF International Conference on Computer Vision (ICCV) , 2023. Qwen Team. Qwen3 technical report. arXiv preprint arXiv:2505.09388 , 2025. Shazeer, N., Mirhoseini, A., Maziarz, K., Davis, A., Le, Q., Hinton, G., and Dean, J. Outrageously large neural networks: The sparsely-gated Mixture-of-Experts layer. In International Conference on Learning Representations (ICLR) , 2017. Wu, Z. et al. DeepSeek-VL2: Mixture-of-experts vision-language models for advanced multimodal understanding. 
+
+arXiv preprint arXiv:2412.10302 , 2024. Xue, L., Fu, Y., Lu, Z., Mai, L., and Marina, M. MoE-Infinity: Efficient MoE inference on personal ma-chines with sparsity-aware expert cache. arXiv preprint arXiv:2401.14361 , 2024. Yu, H., Cui, X., Zhang, H., Wang, H., and Wang, H. Taming latency-memory trade-off in MoE-based LLM serving via fine-grained expert offloading. In European Conference on Computer Systems (EuroSys) , 2026. Working-Set Paging for Low-Resource MoE Serving 
+
+Zheng, L. et al. SGLang: Efficient execution of structured language model programs. In Advances in Neural Infor-mation Processing Systems (NeurIPS) , 2024. Zhong, S., Liang, L., Wang, Y., Wang, R., Huang, R., and Li, M. HybriMoE: Hybrid CPU-GPU scheduling and cache management for efficient MoE inference. In ACM/IEEE Design Automation Conference (DAC) , 2025. Zhu, F., You, Z., Xing, Y., Huang, Z., et al. LLaDA-MoE: A sparse MoE diffusion language model. arXiv preprint arXiv:2509.24389 , 2025. 
+
+## A RELATED WORK 
+
+WiSP’s conceptual basis is Denning’s working-set model and thrashing theory (Denning, 1968; 1970); our contri-bution is to recognize that low-resource MoE serving is a direct instance and to transplant the vocabulary wholesale. On the systems side, PagedAttention in vLLM (Kwon et al., 2023) and RadixAttention in SGLang (Zheng et al., 2024) brought a paging and prefix-sharing discipline to the KV reference stream; we bring the same discipline to the expert stream and treat the two as co-contending working sets over one store. A line of batch-oriented systems serves MoEs on memory-constrained GPUs by overlapping transfer with com-pute: MoE-Lightning (Cao et al., 2025) pipelines paged weights and reports up to 10 .3× on a T4, SiDA-MoE (Du et al., 2024) uses an offline hash predictor of active ex-perts (approximate, ∼1% accuracy drop), and Mixtral-offloading (Eliseev & Mazur, 2023) streams experts for a single stream. These target high throughput at large batch, where there is ample compute to hide transfers. A parallel line predicts or caches experts to cut miss latency rather than stream blindly: MoE-Infinity (Xue et al., 2024) keeps a sparsity-aware expert cache driven by activation tracking on personal machines; Pre-gated MoE (Hwang et al., 2024) co-designs the model to pre-compute the next layer’s experts one step ahead; HybriMoE (Zhong et al., 2025) splits expert work across CPU and GPU with an impact-driven prefetch; FineMoE (Yu et al., 2026) retrieves per-request expert maps by semantic and trajectory similarity to guide prefetching; and DyMoE (Huang et al., 2026) assigns experts mixed pre-cision (down to skipping) to shrink edge transfers. All share WiSP’s premise that expert residency is the bottleneck, but each spends the routing signal on prefetching for speed —which Section 4 shows is a net loss in single-stream decode, where no compute hides a transfer—and none allocates the freed expert budget against the KV cache. WiSP spends the signal on sizing instead and treats experts and KV as one budget. The closest concurrent work is FluxMoE (Liu et al., 2026), which, like WiSP, builds on vLLM and reclaims ex-pert VRAM for the KV cache, but adopts a stream-and-evict policy—paging an expert in just before its layer and evicting it immediately, pipelined with layer compute—to maximize high-batch throughput. WiSP differs in four ways: it tar-gets the low-concurrency, cache-and-reuse operating point, where Section 4 shows there is no compute to overlap; it ships as a pure plug-in over the unmodified engine with no virtual-memory machinery; rather than a fixed, overlap-tuned residency plan it allocates the expert ↔KV split by marginal value (MV-WSA), online and subject to an admis-sion floor, and physically resizes both pools while serving; and it contributes the working-set framing, the measure-ment of when prediction does and does not pay off, and the cross-architecture breadth. The systems are complementary Working-Set Paging for Low-Resource MoE Serving 
+
+across the concurrency axis. Prior work on MoE routing prediction and speculative load-ing motivates the predictor we build in Section 4; we eval-uate it directly and report a negative speed result for the low-concurrency regime, which clarifies that the signal is better spent on memory than latency. KV-cache compres-sion methods such as KIVI (Liu et al., 2024) reduce the other side of the joint working set and compose with WiSP rather than competing with it. Finally, WiSP is evaluated across MoE LLMs (Shazeer et al., 2017; Fedus et al., 2022; Jiang et al., 2024; DeepSeek-AI, 2024; Qwen Team, 2025), MoE VLMs (Wu et al., 2024; Kimi Team, 2025; Li et al., 2024), a hybrid SSM-MoE (Lieber et al., 2024; Anthony et al., 2024), and MoE diffusion models for images (Peebles & Xie, 2023; Fei et al., 2024) and language (Nie et al., 2025; Zhu et al., 2025); we use these only as test subjects and change none of them. 
+
+## B MV-WSA O NLINE CONTROLLER 
+
+The online controller (Algorithm 2) estimates the two miss curves from the streams it is already serving and moves f
+
+toward the equimarginal target (5) once per burst. It rests on three design decisions, each of which we found necessary in practice. (1) Decayed reuse-distance histograms as a live miss-curve estimate: per burst it bins each stream’s reuse distances into hexp , h kv , decaying by ρ ∈ (0 , 1) be-fore adding new counts; the tail bm(c) = P 
+
+> d≥c
+
+h[d] is a predicted miss curve whose finite difference is the marginal in Eq. (5) . (2) Optimize warm reuse only: first-sight (compulsory) misses are constant in f , and including them swamps the early warm-reuse signal—it biases the con-troller toward whichever pool has simply been seen less, a cold-start pathology—so we drop them. (3) Grid marginals over a bimodal gap, with hysteresis: MoE and KV reuse distances are strongly bimodal (a tight within-burst mode and a far cross-session mode), so a point-density marginal evaluated in the gap reads ≈ 0 and the controller stalls; MV-WSA instead evaluates the predicted cost on a fixed grid of candidate splits and takes finite differences, moving only when the predicted gain clears a gate g, by no more than a rate limit η, and never for a target within a dead-zone 
+
+δ.
+
+## C THE CO-A CTIVATION PREDICTOR 
+
+The co-activation predictor used in §4 is a parameter-free, online table. It exploits the fact that the hidden state entering layer ℓ+1 is a deterministic function of the experts that already fired earlier in the same forward pass, so routing at a later layer is partly predictable from routing at an earlier one. Concretely, the table counts how often expert e at layer ℓ
+
+Algorithm 2 MV-WSA step at burst i (per server)                                                                                             
+
+> 1: State: split f; decayed histograms hexp , h kv ; budget B; costs
+> cexp , c kv ; grid G ⊂ (0 ,1)
+> 2: Params: decay ρ, dead-zone δ, gate g, rate η, floors k, κ min
+> 3: observe burst reuse distances Dexp , D kv (warm only) 4: h•←ρ h •+HIST (D•)▷both streams 5: bm•(c)←P
+> d≥ch•[d]▷predicted warm misses 6: for f′∈G:bT(f′)←cexp bmexp (f′B/a )+
+> ckv bmkv ((1 −f′)B/b )
+> 7: ˜f←arg min f′∈G bT(f′)
+> 8: gain ←  bT(f)−bT( ˜f)/bT(f)
+> 9: if |˜f−f|> δ and gain > g then
+> 10: f←clip  f+ clip( ˜f−f, −η, η ),0,1
+> 11: end if
+> 12: realize C= max( k, f B/a ),κ= max( κmin ,(1 −f)B/b )
+
+and expert e′ at a later layer ℓ′ fire together, and normalizes each count by the source marginal (how often e fires) to obtain a conditional co-activation probability. To score a candidate expert for a target layer, the predictor takes a distance-decayed sum of these conditionals over the experts that have already fired in the current forward pass, weighting nearer source layers more heavily. The highest-scoring experts are the predicted next experts. The table needs no gradients, no calibration data, and no retraining. It can be initialized empty and learned online, shipped as a population-level baseline, or loaded per user. We use it in two ways. The speculative-prefetch use—acting on the predictions to fetch experts ahead of time—is the subject of §4, where we find it does not help in the low-concurrency regime. Its robust use is right-sizing : estimat-ing the support of a user’s converged working set so the resident cap can be set without a VRAM-probing sweep, freeing memory for the KV cache (§4, §3.3). 
+
+## D DYNAMIC DUAL -R ESIZE CONTROL LAW 
+
+Recall a = LM e. At a drained barrier the conserved budget is measured directly, B = κb + Ca , and the target sizes 
+
+˜C, ˜κ are 
+
+˜κ = max  κmin , ⌈(1 + h) p⌉, (8) 
+
+˜C = clip  ⌊(B − ˜κ b )/a ⌋, C min , C max 
+
+, (9) 
+
+˜κ ← ⌊ (B − ˜C a )/b ⌋, (10) where p is the burst’s peak KV occupancy (blocks actually used) and h the KV headroom. Equation (8) promotes the admission floor (6) from a one-shot startup constraint to a continuously enforced invariant; (9) is the equimarginal “remainder to experts” rule for a KV step curve; and the recompute (10) reclaims any slack the cap clamp leaves, so the move never overcommits ( ˜C a + ˜ κ b ≤ B). The expert-scratch resize grows or shrinks the per-layer Working-Set Paging for Low-Resource MoE Serving 
+
+GPU scratch S to ˜C slots, re-paging now-resident experts from W cpu and dropping victims on a shrink, with π, π −1
+
+and the LRU ticks resized alongside. The KV-pool resize 
+
+reallocates the worker’s per-layer KV tensors to ˜κ blocks and rebuilds the scheduler’s shared block pool in place, pre-serving the cached null block identity, done only when the pool is fully drained. To keep the transient footprint at 
+
+max( old , new ) ≤ B rather than their sum, the controller always frees the shrinking side before growing the other (on an expert grow: shrink KV, then grow scratch; on a shrink: the reverse). Every move is wrapped so a failed resize is skipped—the engine is left in its prior, usable state—and a cap dead-zone ∆ suppresses moves smaller than ∆ experts so the split is stable under round-to-round noise. 
+
+## E IMPLEMENTATION DETAILS 
+
+WiSP registers through the standard 
+
+vllm.general plugins entry point, so a single 
+
+pip install suffices; the plug-in fires in every vLLM process before any model class is imported and patches three methods on the fused-MoE module—weight creation, post-load processing, and the forward. Weight creation allocates the expert masters on pinned host memory (this is what avoids the load-time GPU spike); post-load processing builds the per-layer C-slot scratch and the maps π, π −1; the forward runs Algorithm 1 and dispatches the unmodified kernel with π as expert map . The FP8 block-quantized path pages four tensors per expert (the weights and their block scales) and forces the Triton backend to bypass DeepGEMM’s load-time post-processing, which assumes full residency. The dynamic controller’s two primitives are resize layer caps (grow or shrink the expert scratch, re-paging from the host master) and a KV-pool reallocation that rebuilds the scheduler’s block pool in place (Appendix D). 
+
+## F SERVING DESIGN SPACE 
+
+This appendix expands the placement of WiSP among ex-isting systems summarized in Section 2.3. Table 7 com-pares WiSP against prior autoregressive MoE-LLM serving systems along the axes that matter for our setting (routing-awareness, byte-identity, delivery, and target regime), and Table 8 lists the native serving stacks of the non-AR MoE modalities and how WiSP attaches to each. 
+
+## G EXTENDED EVALUATION 
+
+This appendix gives the full versions of the per-user, working-set, and cross-architecture results that Sections 5.4 and 5.5 summarize. 
+
+G.1 Personalization as Sample Efficiency 
+
+Figure 4 shows the form in which the routing signal is valu-able. Across both models, a per-user co-activation predictor trained on a single session matches or exceeds a popula-tion predictor at every training budget—personal at K=1 
+
+already exceeds global at K=6 , even though the population predictor sees four times the data at each budget—on every topic, with a consistent topic-difficulty ranking, the advan-tage largest exactly where routing is most workload-specific (code) and smallest where it is most generic (planning). Two consequences matter for deployment. The predictor that would ship with the engine (population) is strictly worse than the one a user grows after a session or two, and it saturates within two sessions, so the cold-start window is short. This is the estimator behind per-user right-sizing: a user’s working set can be sized from very little of their own traffic, and no baseline that uses an offline or static policy has anywhere to put such per-user state. The concentration this exploits is directly measurable on the same AgentIn-struct traces: a single decode burst’s expert union is 0.53 
+
+of the pool on Qwen3-30B-A3B (and 0.78 on the smaller 64-expert OLMoE), consecutive bursts overlap 0.80 –0.90 ,and a session’s cumulative footprint saturates at 0.77 on Qwen3—a stable, below-full subset that a cache can hold and a per-user predictor can size, with headroom that grows as the expert count rises. 
+
+G.2 The Working-Set Law, Made Measurable 
+
+Figure 5 characterizes the structure that governs where pre-diction could pay off, on a model where the working set is unusually clean to read off. A diffusion forward routes hun-dreds of patch tokens through the experts, so its per-forward working set is essentially the entire expert set, and the fault counts trace Denning’s law exactly: below the working set the cache thrashes, and at the working set faults collapse and reuse takes over. Resident memory scales linearly with the cap, four times smaller at the tightest setting, and the output is bit-exact throughout. This is the cleanest illus-tration we have of why a single, fully-activated reference stream lets paging bound memory but not latency—and, read the other way, of why diffusion’s abundant per-step compute is precisely the regime where a prefetcher would have something to hide behind, the speed lever that single-stream LLM decode lacks. On a fine-grained, heavily load-balanced LLM under diverse prompts (Qwen3-30B-A3B), by contrast, routing is too uniform for right-sizing to exploit and the throughput-versus-cap curve is essentially topic-independent—a conservative lower bound we report for honesty. Working-Set Paging for Low-Resource MoE Serving 
+
+Table 7. AR MoE-LLM serving systems. WiSP is the low-concurrency, drop-in, reuse-caching point in the design space.                                              
+
+> System expert mechanism routing-aware byte-identical delivery regime vLLM --cpu-offload-gb (Kwon et al., 2023) static, layer-grained ×✓built-in any (wasteful) ktransformers (KVCache.AI, 2024) CPU-side compute (AMX) ×✓engine Intel CPU+GPU llama.cpp (Gerganov et al., 2023) GGUF offload ××(lossy) engine edge MoE-Lightning (Cao et al., 2025) pipelined paged weights ✓✓engine high-batch SiDA (Du et al., 2024) data-aware hash offload ✓×(approx) engine high-batch FluxMoE (Liu et al., 2026) (concurrent) stream-and-evict + planner ✓✓vLLM integ. high-batch
+> WiSP (ours) cache-and-reuse via expert map ✓✓plug-in (entry point) low-concurrency
+
+Table 8. Serving stacks for non-AR MoE modalities and how WiSP attaches.                     
+
+> Modality Representative Native serving stack Native expert paging WiSP integration MoE VLM Kimi-VL, DeepSeek-VL2 vLLM (multimodal) none same engine plug-in Hybrid SSM–MoE Jamba vLLM ( JambaForCausalLM )none; offload unsupported same plug-in MoE image diffusion DiT-MoE diffusers / repo (PyTorch) none ∼150 -line wrapper MoE diffusion LLM LLaDA-MoE HF Transformers / dInfer none same wrapper
+
+G.3 A Different Structure: Temporal Locality in a Diffusion LLM 
+
+DiT-MoE shows one kind of working-set structure—spatial, within a single forward, with no reuse below the working set. A diffusion language model exhibits the complementary kind. LLaDA-MoE generates by iteratively denoising the 
+
+same sequence over many steps, so we ask not how a single forward routes but how routing evolves across denoising steps. Figure 6 makes the contrast with DiT precise. The per-step working set is large—about 96% of the 64 experts fire in every step—so a naive single-step pager thrashes just as it does on DiT, and bounding memory is again the only thing a small cap buys within a step. But across steps the pic-ture changes: adjacent denoising steps agree on 44% of their per-position routing decisions, nearly twice the 23% of a shuffled-order baseline, and the agreement decays monoton-ically with step distance—the signature of genuine temporal locality rather than uniform reuse. DiT’s structure is spatial and confined to one forward, so a prefetcher has nothing to anticipate across forwards; LLaDA’s structure is tempo-ral, so the experts a step will need are largely the ones the previous step just used, and a warm or predictive cache that survives across steps has real structure to exploit. To-gether these bracket the two regimes the framing predicts: a fully-activated stream with no cross-step reuse (DiT), where paging is a pure memory lever, and a fully-activated stream 
+
+with cross-step reuse (LLaDA), where the routing signal becomes actionable—the diffusion counterpart of the multi-turn agent reuse we leave to future work. 
+
+G.4 Cross-Architecture Coverage 
+
+Table 9 collects the cross-architecture results, every row from a real run. On the MoE vision–language model Kimi-VL-A3B , the same plug-in pages the Moonlight backbone (64 experts; the MoonViT vision tower stays resident) with no model-specific code, produces byte-identical text at tem-perature 0 including on a multimodal image prompt, runs the multimodal path unchanged under paging, and beats static offload at matched budgets (Section 5.2). On the hybrid 
+
+Jamba-v0.1 (52B; interleaved Mamba, attention, and MoE), WiSP serves the model on a single 94 GiB GPU with co-herent, correct output—a regime where stock vLLM cannot serve it at all, because full residency exceeds VRAM and 
+
+--cpu-offload-gb , the usual escape hatch for plain transformer MoEs, is unsupported for Jamba’s hybrid re-current state. Cap acts as a memory–speed dial (57 GiB at 5.73 tok/s for cap 4, 68 GiB at 9.80 tok/s for cap 8), and output is token-identical across caps, which is our correct-ness check since no single-GPU vanilla baseline can run. Finally, on two non-autoregressive diffusion MoEs with no KV cache, we lift the pager out of vLLM into a roughly 150-line architecture-agnostic wrapper: on DiT-MoE (image) the generation is bit-exact while resident expert memory drops up to 4× (Figure 5), and on LLaDA-MoE-7B (a dif-fusion language model) the official block-wise diffusion decode is token-identical to full residency at cap 16 with a correct answer while resident expert memory falls from 12.0 to 3.0 GiB. One practical by-product surfaced along the way: enabling small-expert-count MoEs (Mixtral and Jamba, with ≤ 16 
+
+experts) to page at all required relaxing an overly conser-vative resident-set floor that had previously clamped such models to full residency. A scope note keeps us honest. For plain transformer MoEs we do not claim a “stock vLLM cannot start” floor—with enough offload the unmodified engine serves them slowly, and our claim there is the iso-VRAM advantage of Sec-tion 5.2. The Jamba result is a genuine exception rather than a walk-back: for that hybrid architecture the offload path is unsupported by the engine, so single-GPU serving is infeasible for the baseline and WiSP’s paging is what enables it—a capability claim, scoped to the hybrid case. Working-Set Paging for Low-Resource MoE Serving 1 2 3 4 5 6             
+
+> training prompts K
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> next-expert precision@ k personal@K=1 (0.44)
+> global@K=6 (0.34) 0.51
+> 0.34
+> Qwen3-30B-A3B (top-8)
+> 123456
+> training prompts K
+> personal@K=1 (0.44)
+> global@K=6 (0.42)
+> 0.48
+> 0.42
+> Mixtral-8×7B (top-2)
+> Per-user routing predictors are up to 6× more sample-efficient than population (personal@K=1 global@K=6)
+> personal (per-user) global (population, 4× data) marginal (popularity)
+
+Figure 4. Per-user routing predictors are far more sample-efficient than population ones. On both Qwen3-30B-A3B and Mixtral-8 ×7B, a predictor trained on a single user’s session (personal) matches or beats a predictor trained on 4× more population data (global) at every training budget K; personal at K=1 already exceeds global at K=6 . The gap is largest on the most domain-distinct workload (code, 
+
+3.2× on Qwen3) and saturates by K=2 .
+
+Table 9. Cross-architecture coverage, every row measured. Real = genuinely exceeds one GPU budget; emulated = budget capped to emulate a small card; capability = serves the model with correct output, but does not establish a head-to-head throughput win (see text); 
+
+mechanism = standalone pager, correctness and memory only. Model Modality Reality Headline result MiniMax-M2 (229B, FP8) MoE LLM capability serves on 1 GPU at 7–14 GiB expert footprint; vanilla also serves (faster, but uses 88 GiB GPU); WiSP decouples GPU from host Qwen3-30B-A3B MoE LLM emulated iso-VRAM up to 1.95 × vs offload Kimi-VL-A3B MoE VLM emulated byte-identical incl. image; 1.18 –1.21 ×
+
+Jamba-v0.1 (52B, hybrid) text (Mamba+attn+MoE) real serves where stock vLLM cannot; cap-invariant DiT-MoE-S image diffusion mechanism bit-exact; 4× less resident; thrash cliff LLaDA-MoE-7B diffusion LLM mechanism token-identical; 12 → 3 GiB ( 4×)
+
+## H LIMITATIONS 
+
+WiSP currently runs in eager mode, because the plug-in does not yet support CUDA graphs; both sides of our compar-isons are measured eager for fairness. The per-layer paging decision sits on the Python hot path and costs roughly a third of the per-layer time at full residency, which caps the high-VRAM end of Figure 3 and is the obvious optimiza-tion target. Our personalization results assume a single user; multi-tenant packing of overlapping working sets is left to future work. We do not benchmark ktransformers on its AMX fast path—a regime disclosure rather than a measured loss—and our iso-VRAM throughput numbers emulate a small card by capping GPU-memory utilization, so a physi-cally smaller GPU would make the same point without the caveat. The MV-WSA results carry their own honest boundaries. The startup configurator and its cross-regime wins (Table 4) are real vllm serve runs, and the full reuse-distance controller (Algorithm 2) is validated in trace-driven simula-tion rather than online, because replaying one trace under many splits is only possible offline. The live dual-resize controller (§3.5, Table 6) is a working proof of concept on real kernels: it runs the closed-form step-curve rule rather than the full equimarginal estimator, it is driven from the in-process v1 engine (not yet wired into the multi-process 
+
+vllm serve loop), its byte-identity under a resize cycle is established by a dedicated resize-cycle check rather than a standing regression test, and the reported numbers are a single model/workload configuration; broader coverage and a serve-loop integration are in progress. Finally, MV-WSA’s cost model uses a few measured or preset constants (per-expert bytes, effective PCIe bandwidth, prefill-recompute rate); making the allocator self-calibrate these from the live environment—and porting the full equimarginal estimator onto the live resize path—are the natural next steps. Working-Set Paging for Low-Resource MoE Serving 2 4 6 8
+
+resident cap (of N = 8 experts) 
+
+0
+
+1000 
+
+2000 
+
+3000 
+
+4000 
+
+5000 
+
+6000    
+
+> expert references over a 50-step generation
+> cap < W: thrash
+> every reference is a page fault (4800) working set W= 8
+> 4704
+> cache hits
+> faults collapse
+> to 96 (one cold pass)
+
+(a) Thrash cliff at cap = working set 
+
+2 4 6 8
+
+resident cap (of N = 8 experts) 
+
+0.0 
+
+0.1 
+
+0.2 
+
+0.3 
+
+0.4 
+
+0.5 
+
+0.6 
+
+0.7  
+
+> resident expert memory (GiB)
+> 4.0×
+> 2.0×
+> 1.33×
+> 1.0×
+> max| | = 0 at every cap
+
+(b) Resident memory = cap/ N (bit-exact) 
+
+DiT-MoE (image diffusion): the working-set law, reproduced 
+
+Figure 5. Working-set theory reproduced on an image-diffusion MoE (DiT-MoE-S, standalone pager). (a) Because a diffusion forward activates essentially the whole expert set over its patch tokens, a cap below the working set thrashes—every reference faults (4800 faults, 0 hits, i.e. 8 experts × 12 MoE blocks × 50 denoising steps)—and at cap = working set the faults collapse to a single cold pass (96) with 4704 hits. (b) Resident expert memory scales as cap/ N , up to 4× smaller, and the generation is bit-exact at every cap. 0 5 10 15 20 25 30 
+
+denoising step 
+
+0.0 
+
+0.2 
+
+0.4 
+
+0.6 
+
+0.8 
+
+1.0 
+
+> working set / N  (N=64)
+> single-step paging
+> thrashes (cf. DiT)
+
+(a) Per-step working set N (large) 
+
+2.5 5.0 7.5 10.0 12.5 15.0 
+
+step distance d 
+
+0.0 
+
+0.1 
+
+0.2 
+
+0.3 
+
+0.4 
+
+0.5   
+
+> routing-decision agreement  d=1: 0.44 (1.9× shuffled)
+
+(b) Adjacent steps reuse routing (temporal locality) 
+
+> denoising-step pairs
+> shuffled baseline (0.23)
+
+LLaDA-MoE (diffusion LLM): large working set, but strong temporal locality 
+
+Figure 6. LLaDA-MoE has a large but temporally local working set. (a) Each denoising step activates ≈96% of all 64 experts, so—exactly as in DiT—paging a single step thrashes unless the cap is near N . (b) Yet adjacent denoising steps reuse their routing decisions: the per-position top-k agreement is 0.44 at distance one ( ≈1.9× a shuffled-step baseline of 0.23) and decays smoothly with step distance. The structure is temporal, not spatial.

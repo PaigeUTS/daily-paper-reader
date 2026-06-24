@@ -1,0 +1,339 @@
+Title: Low-Energy Reduced RISC-V Instruction Subset Processor for Tsetlin Machine Inference at the Edge
+
+URL Source: https://arxiv.org/pdf/2606.19964v1
+
+Published Time: Fri, 19 Jun 2026 00:40:04 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+# Low-Energy Reduced RISC-V Instruction Subset Processor for Tsetlin Machine Inference at the Edge 
+
+Chanda Gupta 1, Sanidhya Bhatia 1, Shaurya Priyadarshi 1, Himani Panwar 1, Rishad Shafik 2 and Sudip Roy 1
+
+> 1
+
+CoDA Laboratory , Indian Institute of Technology Roorkee , Roorkee, India 
+
+> 2
+
+Microsystems Research Group , Newcastle University , Newcastle upon Tyne, UK 
+
+{chanda g, s bhatia, s priyadarshi, h panwar, sudip.roy }@cs.iitr.ac.in, rishad.shafik@newcastle.ac.uk 
+
+Abstract —Tsetlin Machine (TM) is a logic-based machine learning approach that relies on simple bitwise operations and finite-state automata, which makes it attractive for edge AI deployments. Recent work has focused on co-processor and accelerator designs based on Tsetlin Machines (TMs). Although these designs achieve high performance, they typically depend on tightly coupled interfaces, microcode-style programming, and external host processors, limiting flexibility and ease of programming. In this work, we present a domain-specific RISC-V microprocessor architecture and design flow tailored for TM inference. Leveraging the modular structure of RISC-V, we design a reduced instruction subset processor that retains pro-grammability while targeting improved performance and lower energy consumption for TM workloads. Instruction profiling is employed to guide instruction reduction, followed by datapath and control path simplifications tailored to TM inference. Both the baseline RV32IM core and the proposed reduced core are evaluated across multiple datasets and compared with Binarized Neural Networks (BNNs), which serve as a hardware-efficient baseline due to their reliance on bitwise operations during inference. Results show that TM achieves comparable or higher accuracy (e.g., up to 88.18% on CIFAR-2 compared to 60.0% for BNN) while reducing execution time by up to 98% across multiple datasets. Furthermore, the proposed design achieves an average 29 .7× reduction in energy consumption, demonstrating its effectiveness for programmable and efficient edge AI systems. 
+
+Index Terms —Binarized Neural Networks (BNNs), RISC-V, RV32IM-ISA, Tsetlin Machine (TM) 
+
+I. I NTRODUCTION 
+
+The rapid growth of edge computing in domains such as the Internet of Things (IoT), smart sensing, and autonomous sys-tems has created a strong demand for energy-efficient and low-complexity processors capable of performing edge Artificial Intelligence (AI) inference. To meet these requirements, re-searchers have explored specialized hardware architectures for accelerating machine learning workloads [1], [2]. One common approach is the use of Application-Specific Integrated Circuits (ASICs), which implement fixed-function hardware tailored to specific algorithms [3]. Processors like Apple’s Neural Engine and Google’s Tensor Processing Unit (TPU) have shown high-performance AI inference using ASIC-based designs. However, these designs usually lack the flexibility needed to accommodate changing machine learning models because they are optimized for a limited set of operations. To overcome this limitation, Application-Specific Instruction-set Processors (ASIPs) extend conventional processors with customized instruction sets and specialized datapaths while preserving programmability. Dedicated hardware support for signal processing and low-power computation is offered by embedded systems like the Texas Instruments MSP430 micro-controller and its Low Energy Accelerator (LEA) [2]. Despite these benefits, ASIP-based systems can increase design com-plexity and require careful hardware-software co-design. The idea of open hardware has recently gained traction, allowing researchers to create more accessible and customiz-able CPU architectures [4], [5]. Among these, the open-source RISC-V instruction set architecture (ISA) has gained a lot of interest because of its modular design and support for custom extensions, which allow for the creation of domain-specific processors while maintaining programmability. Neural network models, such as Transformer architectures and Con-volutional Neural Networks (CNNs), are the main focus of the majority of current domain-specific processor research [3]. However, these models rely on compute-intensive operations and large memory footprints, resulting in complex processor implementations and high computational costs. Tsetlin Machine (TM) has recently emerged as a novel machine learning paradigm based on propositional logic rather than arithmetic computation [6]. Built on Boolean expressions and simple decision rules, TM models have been shown in prior literature to achieve low computational complexity, high interpretability, and significant energy efficiency [7], [8]. These characteristics make TM well-suited for resource-constrained edge AI systems. However, efficiently mapping such algo-rithms onto programmable processor architectures remains an open challenge. Our hypothesis is that such an approach can enable processor architectures with ultra-low energy consump-tion, fast operation, and reduced overall system overhead. For comparative analysis, we consider a neural network-based characterization using Binarized Neural Networks (BNNs) [9], which utilize binary weights and activations for inference, and perform comprehensive evaluations. We make the following key contributions:  
+
+> •
+
+Design of a programmable and high-performance domain-specific RISC-V architecture tailored for Tsetlin Machine inference.  
+
+> •
+
+Extensive validation of the proposed architecture across multiple TM workloads, demonstrating the trade-offs between performance, accuracy, and programmability. 
+
+> arXiv:2606.19964v1 [cs.LG] 18 Jun 2026
+
+Fig. 1: Block diagram of a multiclass Tsetlin machine.  
+
+> •
+
+Comparative analysis with Binarized Neural Networks (BNNs) on RISC-V processors to evaluate performance and energy efficiency. The remainder of the paper is organized as follows. Sec. II presents the background of the proposed work. Section III describes the proposed method, simulation results are provided in Sec. IV and finally, Sec. V concludes the paper. II. B ACKGROUND 
+
+This section presents background on the TM model, BNNs and RISC-V for domain-specific architectures. 
+
+A. Tsetlin Machine Model and BNNs 
+
+Lightweight machine learning models are increasingly ex-plored for edge intelligence due to their reduced computa-tional requirements. Among these, Binarized Neural Networks (BNNs) and Tsetlin Machines (TM) have drawn interest as ef-fective substitutes for traditional deep learning models. Tsetlin Machine (TM) is an logic-based machine learning model that uses propositional logic for pattern recognition tasks [6]. Its core components include Tsetlin Automata (TA) organized into conjunctive clauses, along with summation, threshold, and feedback modules. BNNs are derived from conventional deep neural networks by constraining weights and activations to binary values. They employ multi-layer architectures and backpropagation-based training, replacing costly arithmetic operations with efficient bitwise operations. This significantly reduces computational complexity and memory usage, making BNNs suitable for resource-constrained edge environments. For multi-class classification, we employ the Multiclass TM, where each class is represented by a set of clauses. Since most real-world tasks involve multiple classes, the terms TM and Multiclass TM are used interchangeably in this work. As Stage 1  Stage 2  Stage 3    
+
+> Dataset Booleanization
+> and TM Training
+> Instruction Profiling
+> and ISA Reduction
+> Datapath and Control
+> Path Optimizations
+> Remove Redundant
+> Instructions
+> TM Model
+> (T1 and T2)
+> Clause
+> Generation Reduce Pipeline and
+> Control Complexity
+
+Fig. 2: Proposed design flow for reduced RISC-V architecture. illustrated in Fig. 1, a Multiclass TM consists of M classes, each containing N clauses. Each clause is constructed from a group of TAs, where the number of automata equals twice the number of Boolean input features to account for both inputs and their negations. A Booleanizer converts raw input features into binary values and their complements, which serve as inputs to the clause computation module. For each datapoint, the clause computation stage produces a 1-bit output per clause based on the collective decisions of the associated TAs. Each class contains an even number of clauses with alternating polarities of +1 and −1, indicating whether a clause supports or opposes the classification outcome. The clause outputs are aggregated through a summation process to compute a class sum for each class, and an arg max operation selects the class with the highest sum as the predicted output. Using straightforward logical procedures, this voting-based system allows for effective and comprehensible classification. The threshold T and the specificity parameter s are two important hyperparameters in TM. While s establishes the likelihood of using literals in clauses, the T regulates the number of clauses that take part in voting. 
+
+B. RISC-V for Domain-Specific Architectures 
+
+An open-source, modular, extensible platform for processor design is offered by RISC-V, which enables designers to set up cores for domain-specific applications [5]. A basic standardized base instruction set, such as RV32I, is defined by the RISC-V ISA and can be expanded or decreased. It provides fine-grained control over memory management, execution units, and the processor pipeline to optimize deterministic machine learning workloads. In addition, rapid development and deployment are supported by established toolchains of RISC-V, including open-source cores and GCC-based com-pilers. Furthermore, efficient mapping of application-specific workloads onto hardware is made possible by the ability to customize both the instruction subset and microarchitec-ture, which minimizes needless computational cost.Therefore, RISC-V serves as an efficient hardware platform for logic-based, lightweight machine learning models such as the Tsetlin Machine. Scalable edge AI deployments require a balance between programmability and hardware efficiency, which is made possible by such domain-specific customization. III. P ROPOSED REDUCED RISC-V D ESIGN FLOW 
+
+This section presents the proposed RISC-V design flow for Tsetlin Machine inference, organized into three stages. A. Overview of the Proposed Design Flow 
+
+The proposed design flow consists of three stages, as shown in Fig. 2. Stage 1 performs dataset Booleanization and Tsetlin Machine (TM) model generation. Stage 2 focuses on instruction profiling to enable ISA reduction along with initial datapath and control path simplifications. Stage 3 applies further refinement to the datapath and control logic to reduce complexity and improve efficiency for TM inference on the RISC-V processor. 
+
+B. Tsetlin Machine Model Generation 
+
+We implemented multiple inference strategies on RISC-V cores for comprehensive evaluation. Two Tsetlin Machine approaches (T1 and T2) were used, differing in clause storage and evaluation, along with a baseline BNN inference for fair comparison due to its similar bitwise operations. 1) Vanilla TM inference (T1): Vanilla TM inference refers to the standard clause evaluation process without any opti-mization techniques. In this strategy, each clause is evaluated by sequentially checking every literal for inclusion and then comparing it against the input literal vector. After clause evaluation, the vote sum is computed sequentially for each class, and the class with the highest vote sum is selected as the output. The literal states (include/exclude) are stored in memory for each clause as boolean values. This procedure is formalized in Algorithm 1 . At lines 1–8, the algorithm iterates over each class and clause, evaluating useful clauses by checking literal inclusion and updating the clause out-put through logical operations, while non-useful clauses are skipped to avoid unnecessary computation. Subsequently, lines 9–16 compute the vote total for each class by incrementing or decrementing votes based on clause polarity. Finally, at line 17, the class with the maximum vote value is selected as the predicted output. It is implemented in C++, and the RISC-V GNU toolchain [10] is used for cross-compilation. 2) Modified TM inference (T2): To improve efficiency, we implemented a second inference strategy inspired by [11], in which each clause stores only the indices of literals that are actually included, encoded as half-words (16-bit values). Only these indices are accessed and assessed during inference. The number of memory accesses, memory usage, and logical comparisons needed for clause evaluation are all greatly de-creased by this sparse clause structure. For example, even if only 10 literals are active in a sentence containing 128 literals, the usual technique needs keeping 128 inclusion flags, each taking up a byte (in C++ Inference). The improved version, on the other hand, only needs to hold ten indices, each of which usually requires two bytes, greatly lowering the memory footprint in these situations. The improved strategy ensures functional equivalency with the traditional approach while preserving the semantics of clause evaluation in spite of this compression. This procedure is formalized in Algorithm 2 .At lines 1–9, the algorithm iterates over each class and clause, evaluating only the literals whose indices are stored in memory. If a clause contains included literals, the clause output is initialized and updated by sequentially checking the 
+
+Algorithm 1: Vanilla TM inference (T1)                                                                        
+
+> Input: literal values[], temp is included[][][], useful clause[][], max classes, max clauses, max literals, temp variable
+> Output: predicted class result
+> 1foreach class i do
+> 2foreach clause j do
+> 3if useful clause[i][ j] then
+> 4clause out put [i][ j]←1;
+> 5for k←0to max literals −1do
+> 6clause out put [i][ j]←clause out put [i][ j]∧
+> (( ¬temp is included [i][ j][ k]) ∨
+> literal values [k]) ;
+> 7else
+> 8clause out put [i][ j]←0;
+> 9foreach class i do
+> 10 votes [i]←max clauses ;
+> 11 foreach clause j do
+> 12 if clause out put [i][ j] = 1then
+> 13 if j<temp variable then
+> 14 votes [i]←votes [i] + 1;
+> 15 else
+> 16 votes [i]←votes [i]−1;
+> 17 result ←arg max ivotes [i];
+
+Algorithm 2: Modified TM inference (T2)                                                                             
+
+> Input: literal values[], included literal offsets[][][], included literal count[][], max classes, max clauses, temp variable
+> Output: predicted class result
+> 1foreach class i do
+> 2foreach clause j do
+> 3if included literal count [i][ j]>0then
+> 4clause out put [i][ j]←1;
+> 5for k←0to included literal count [i][ j]−1do
+> 6literal index ←
+> included literal o f f sets [i][ j][ k];
+> 7clause out put [i][ j]←clause out put [i][ j]∧
+> literal values [literal index ];
+> 8else
+> 9clause out put [i][ j]←0;
+> 10 foreach class i do
+> 11 votes [i]←max clauses ;
+> 12 foreach clause j do
+> 13 if clause out put [i][ j] = 1then
+> 14 if j<temp variable then
+> 15 votes [i]←votes [i] + 1;
+> 16 else
+> 17 votes [i]←votes [i]−1;
+> 18 result ←arg max ivotes [i];
+
+referenced literal values; otherwise, the clause output is set to zero to avoid unnecessary computation. Subsequently, lines 10–17 compute the vote total for each class by adjusting votes based on clause polarity. Finally, at line 18, the class with the maximum vote value is selected as the predicted output. 3) Binarized Neural Networks (BNNs): To ensure a con-sistent and fair comparison between TM and BNN inference, a baseline BNN inference approach was implemented in C++ and cross-compiled in a similar manner. We use BNNs as a hardware-efficient baseline due to their bitwise operation-based inference. In this approach, inference is performed sequentially across layers, where each neuron evaluates the binary outputs from the previous layer against the correspond-ing binary weights. Matching pairs contribute positively to an accumulation sum, while mismatches reduce it, effectively realizing XNOR-based comparisons followed by integer accu-mulation. The accumulated value is then evaluated against a zero threshold to determine the neuron activation. This process continues until the final layer produces class scores, and the class with the highest score is selected as the predicted output. 
+
+C. Software Compilation Flow and Model Deployment 
+
+Tsetlin Machine models were trained using the TMU (Tsetlin Machine Unified) Python library [12]. Multiple datasets and clause configurations were used to evaluate per-formance across diverse conditions. BNN models were trained using Larq, a TensorFlow framework for BNNs, and model weights were extracted. The extracted clauses and weights were strategically placed in the data-memory (DMEM) along-side the test input before simulation. Inference logic was implemented in C++, cross-compiled using the same RISC-V toolchain, and converted into instruction memory using the same assembly flow. This ensured a consistent and fair com-parison between TM and BNN inference in terms of memory structure, control flow, and execution overhead. 
+
+D. Instruction Profiling 
+
+Instruction profiling was performed by analyzing the assem-bly generated from TM inference to identify frequently used instructions. In the absence of function calls in the RISC-V simulation, stack behavior is emulated by initializing the stack pointer and assigning memory addresses to parameters and local variables. Pseudo-instructions are converted into base RISC-V ISA instructions for compatibility with the reduced instruction subset. The conversions are as follows: (i) li x, imm → addi x, x0, imm 
+
+(ii) mv x, y → addi x, y, 0
+
+(iii) beqz x, label → beq x, x0, label 
+
+(iv) snez x, y → sltu x, x0, y
+
+(v) zext.b x, y → andi x, y, 0xff 
+
+(vi) bge x, y, label → blt y, x, label 
+
+(vii) nop → add x0, x0, x0 
+
+The impact of reducing high frequency instructions is shown in Fig. 3(a), demonstrating significant instruction count reduc-tion using the modified approach. A subset of instructions contributes most to this reduction. The trend of absolute reduction with increasing clauses is illustrated in Fig. 3(b). 
+
+E. Domain-Specific Design and Optimization 
+
+We utilised two versions of a single-core RISC-V processor from the UltraEmbedded open-source GitHub repository [13]. Both cores were synthesized and simulated using Xilinx Vivado, enabling us to accurately capture instruction execution behavior and analyze resource utilization. 
+
+1) Original RISC-V Core (R1): The original RISC-V core is a full RV32IM implementation, supporting the RV32I base instruction set along with the multiplication division extension (M) and the Control and Status Register (ZICSR) ADD ADDI LW SW      
+
+> Instruction Type
+> 10 5
+> 10 6
+> 10 7
+> Instruction Count (Log Scale)
+> -97.6%
+> -96.3%
+> -97.7%
+> -96.8%
+> T1 Standard
+> T2 Optimized
+> 50 100 150 200 250 300
+> #Clauses
+> 0
+> 2×10
+> 4×10
+> 6×10
+> 8×10
+> Instruction Reduction (T1-T2)
+> ADD
+> ADDI
+> LW
+> SW
+
+Fig. 3: (a) Instruction count comparison between T1 and T2, and (b) absolute instruction reduction trend. extensions totaling 59 instructions. It follows a classic 5-stage pipeline (Fetch, Decode, Execute, Memory, Writeback) with support for result forwarding, configurable pipeline depth, and privilege modes (user, supervisor, and machine). The ZICSR extension enables access to control and status registers, while memory can be interfaced via instruction/data caches or tightly coupled memories (TCMs) using an Advanced eXtensible Interface (AXI) bus interface. While Fig. 2 presents the overall three-stage design methodology, Fig. 4 illustrates the implementation workflow and system architecture used for executing TM inference on the RISC-V processor. In our setup, the core was connected to a tightly coupled instruction and data memories via the AXI interface. The compiled inference code was loaded into instruction memory, while clause data, input features, and output buffers placed in data memory as shown in Fig. 4. 
+
+2) Design Modified RISC-V Core (R2): The modified core is a simplified variant that supports only the instructions required for TM and BNN inference, reducing control com-plexity and unnecessary hardware. Profiling (Section III-D) identifies frequently used instructions and critical datapath and control paths. Optimization is then focused on these key components, followed by revisiting the design to evaluate improvements in efficiency and performance. To strip down the core, we used the following strategy: a. remove instruction definitions and flags, b. prune decode and execution logic for those instructions, c. simplify control and data paths. The core supported a total of 27 instructions after reduction.  
+
+> •
+
+Base ISA Instructions (21): andi, addi, xori, Tsetlin Machine     
+
+> Inference Logic
+> (in C++)
+> RISCV Cross
+> Compiler Raw RISCV
+> Assembly Code
+> Clean RISCV Assembly
+> Code
+> (Predict Function)
+> RISCV
+> Assembler
+> Instructions in
+> Hex Format
+> RISCV Core with
+> RV32IM support
+> with Zicsr
+> Extension
+> AXI
+> IMEM
+> DMEM
+> TCM Initialize
+> IMEM
+> TM Model
+> (TMU Library) Dataset
+> Booleanize
+> Load Trained
+> Clauses
+> Test Input
+> Booleanize
+> Replace
+> Pseudo Instructions
+
+Fig. 4: Hardware-software co-design approach for domain-specific RISC-V design. 50 100 150 200 250 300                               
+
+> #Clauses
+> 10 −1
+> 10 0
+> Time (ms)
+> (a) CIFAR-2
+> 50 100 150 200 250 300
+> #Clauses
+> 10 1
+> 10 2
+> 10 3
+> Time (ms)
+> (b) Statlog
+> 50 100 150 200 250 300
+> #Clauses
+> 10 1
+> 10 2
+> 10 3
+> Time (ms)
+> (c) Gesture
+> 50 100 150 200 250 300
+> #Clauses
+> 10 1
+> 10 2
+> Time (ms)
+> (d) Gas
+> 50 100 150 200 250 300
+> #Clauses
+> 10 1
+> 10 2
+> 10 3
+> Time (ms)
+> (e) EMG
+> 50 100 150 200 250 300
+> #Clauses
+> 10 1
+> 10 2
+> 10 3
+> Time (ms)
+> (f) FMNIST
+> Core:R1, TM:T1 Core:R1, TM:T2 Core:R2, TM:T1 Core:R2, TM:T2 BNN-R1 BNN-R2
+
+Fig. 5: Execution time (in ms) across multiple inference scenarios for datasets. 
+
+slli, add, lui, sltu, or, and, jal, beq, bne, blt, lw, lbu, lhu, sb, sw, ecall, ebreak, eret  
+
+> •
+
+ZICSR Extension Instructions (6): csrrw, csrrs, csrrc, csrrwt, csrrsi, csrrci 
+
+IV. E XPERIMENTAL RESULTS 
+
+The designs were synthesized in Xilinx Vivado targeting the Zynq-7000 ZC702 Evaluation Board, and the on-chip power consumption of both cores was analyzed. The original RISC-V core (R1) exhibited a total on-chip power consumption of 0.138 W, while the modified RISC-V core (R2) consumed 0.135 W. These measurements were obtained under the fol-lowing environmental and thermal conditions: (i) junction temperature of 26.6 °C, (ii) thermal margin of 58.4 °C (4.9 W), and (iii) ambient temperature of 25 °C. The post-synthesis timing analysis revealed that the core R1 exhibited a longest path delay of 13.142 ns, whereas the modified core (R2) showed a reduced path delay of 11.831 ns, resulting in faster operation. Consequently, clock periods of 14 ns and 12 ns were used for simulations of R1 and R2, respectively, to ensure a positive Worst Negative Slack (WNS) in both cases. Execution time was measured for all inference scenarios as shown in Fig. 5, where Time (ms) is plotted on a logarithmic scale. While both cores required the same number of clock cycles, their differing clock periods resulted in different execution times, highlighting the performance gain from the reduction. We evaluated inference strategies T1 and T2 on six datasets (Table I) using both the cores R1 and R2. For each dataset, we analyzed the accuracy of the TM model (Table II) across varying numbers of clauses and compared it with the accuracy of a BNN model. The resource utilization of the unmodified core (R1) and the reduced core (R2) was analyzed post-synthesis (Table III). The number of LUTs was reduced by 28.4%, and the number of FFs by 12.6%. The DSP usage saw a 100% reduction due to the removal of the TABLE I: Summary of the datasets used in experiments.                           
+
+> Dataset Description #Class #Features #Samples
+> CIFAR-2 [14] 2-class CIFAR animal vs. non-animal 2324 60000 Statlog [15] 3-D and 2-D vehicle images 4360 846 Gesture [16] Hand, wrist, head, and spine positions 5180 9901 Gas [17] Chemical sensor data for 6 gases 6128 13900 EMG [18] EMG data for static hand gestures 8160 14232 FMNIST [19] 28×28 grayscale fashion images 10 784 70000
+
+TABLE II: Inference accuracy of TM and BNNs (in %).                                                  
+
+> Clauses per Class Dataset 50 100 150 200 250 300 BNN
+> CIFAR-2 [14] 78.78 83.5 85.9 86.95 87.75 88.18 60.0 Statlog [15] 76.5 78.8 78.2 80.0 80.6 80.0 72.4 Gesture [16] 64.2 68.0 71.0 73.6 75.0 75.9 76.5 Gas [17] 72.9 85.0 85.5 86.3 86.9 86.9 85.8 EMG [18] 80.3 84.6 85.4 86.0 86.1 85.8 83.9 FMNIST [19] 82.72 84.31 84.72 84.77 84.2 84.81 80.04
+
+TABLE III: Resource utilization comparison.                     
+
+> Resources Availability Usage (R1) R1% Usage (R2) R2%
+> LUT 53200 3493 6.57% 2501 4.70% FF 106400 2393 4.70% 2092 1.97% DSP 200 41.82% 00%
+
+multiplier and divider units in R2. TM inference strategies, T1 (Vanilla TM) and T2 (Modified TM), were simulated on both cores R1 and R2 across all clause configurations. Additionally, BNN inference was executed for each dataset on both cores. Using a hardware-software co-design approach, we modified the TM inference to reduce memory usage and improve execu-tion speed. Subsequently, the RISC-V core was streamlined to support a limited set of instructions tailored for TM inference. This co-optimization enabled a maximum reduction of 99.28% in execution time and an average reduction of 96.55% across all inference scenarios. We also observed that for similar accuracy, TM consistently outperforms BNNs in terms of execution time, with the modified TM inference showing a significant performance advantage over BNN. To estimate the energy consumed during inference, we use the relation E = P × T , where E denotes energy (mJ), P represents total on-chip power (W), and T is the 50 100 150 200 250 300                               
+
+> #Clauses
+> 10 −1
+> Energy (mJ)
+> (a) CIFAR-2
+> 50 100 150 200 250 300
+> #Clauses
+> 10 0
+> 10 1
+> 10 2
+> Energy (mJ)
+> (b) Statlog
+> 50 100 150 200 250 300
+> #Clauses
+> 10 0
+> 10 1
+> 10 2
+> Energy (mJ)
+> (c) Gesture
+> 50 100 150 200 250 300
+> #Clauses
+> 10 0
+> 10 1
+> Energy (mJ)
+> (d) Gas
+> 50 100 150 200 250 300
+> #Clauses
+> 10 0
+> 10 1
+> 10 2
+> Energy (mJ)
+> (e) EMG
+> 50 100 150 200 250 300
+> #Clauses
+> 10 1
+> 10 2
+> Energy (mJ)
+> (f) FMNIST
+> BNN1 BNN2 R1-T1 R1-T2 R2-T1 R2-T2
+
+Fig. 6: Energy Consumption (in mJ) vs. number of clauses per class across datasets. execution time (ms). The plots in Fig. 6 illustrate the variation in energy consumption of TM inference with respect to the number of clauses, with Energy (mJ) plotted on a logarithmic scale. The dotted horizontal lines indicate the corresponding energy consumption of BNN inference for comparison. Reduc-ing the instruction set in the core resulted in a power reduction of 3 mW (from 0.138 W to 0.135 W), amounting to a 2.18% decrease in hardware power consumption. When combined with the inference algorithm optimization, we observed an av-erage energy reduction of 96.63%, with a maximum reduction of 99.3% across all datasets and clause configurations. V. C ONCLUSIONS AND FUTURE WORK 
+
+This work addresses the challenge of designing a pro-grammable processor with low energy, fast operation, and reduced overhead for edge AI inference. We presented a domain-specific RISC-V design flow for Tsetlin Machine (TM) inference, guided by instruction profiling and ISA re-duction. Results show that TM achieves comparable or higher accuracy than BNNs, with up to 98% lower execution time and 29.7 × energy savings. This demonstrates the effectiveness of the reduced programmable RISC-V architecture for edge AI. Future work will explore custom instructions, architectural simplifications, and a design automation flow for RISC-V-based domain-specific processors targeting TM workloads. REFERENCES [1] S.-F. Hsiao, T.-H. Chao, Y.-C. Yuan, and K.-C. Chen, “Hardware Accelerator for MobileViT Vision Transformer with Reconfigurable Computation,” in Proc. of the ISCAS , 2024, pp. 1–4. [2] S. A. Tunheim, L. Jiao, R. Shafik, A. Yakovlev, and O.-C. Granmo, “Tsetlin Machine-Based Image Classification FPGA Accelerator With On-Device Training,” IEEE Transactions on Circuits and Systems I: Regular Papers , vol. 72, no. 2, pp. 830–843, 2025. [3] J. Dean, “1.1 The Deep Learning Revolution and its Implications for Computer Architecture and Chip Design,” in Proc. of the ISSCC , 2024, pp. 8–14. [4] Y. Zeng, S. Duan, R. Shafik, and A. Yakovlev, “Fast and Compact Tsetlin Machine Inference on CPUs Using Instruction-Level Optimization,” in 
+
+Proc. of the ISTM , 2025, pp. 44–47. [5] E. Cui, T. Li, and Q. Wei, “RISC-V Instruction Set Architecture Extensions: A Survey,” IEEE Access , vol. 11, pp. 24 696–24 711, 2023. [6] O. C. Granmo, “The Tsetlin Machine – A Game Theoretic Bandit Driven Approach to Optimal Pattern Recognition with Propositional Logic,” 2021. [Online]. Available: https://arxiv.org/abs/1804.01508 [7] S. Duan, R. Shafik, and A. Yakovlev, “ETHEREAL: Energy-efficient and High-throughput Inference using Compressed Tsetlin Machine,” in 
+
+Proc. of the IWASI , 2025, pp. 1–6. [8] O. Tarasyuk, A. Gorbenko, T. Rahman, L. Jiao, O.-C. Granmo, R. Shafik, and A. Yakovlev, “Learning Dynamics, Pattern Recognition Capability and Interpretability of the Tsetlin Machine,” Pattern Recognition , vol. 174, p. 113028, 2026. [9] M. Courbariaux, I. Hubara, D. Soudry, R. El-Yaniv, and Y. Bengio, “Binarized Neural Networks: Training Deep Neural Networks with Weights and Activations Constrained to + 1 or-1,” 2016. [Online]. Available: https://arxiv.org/abs/1602.02830 [10] RISC-V Collab, “RISC-V GNU Toolchain,” [Online]. Available: https://github.com/riscv-collab/riscv-gnu-toolchain, 2025, [Accessed:Feb,2026]. [11] S. Maheshwari, T. Rahman, R. Shafik, A. Yakovlev, A. Rafiev, L. Jiao, and O.-C. Granmo, “REDRESS: Generating Compressed Models for Edge Inference Using Tsetlin Machines,” IEEE TPAMI , vol. 45, no. 9, pp. 11 152–11 168, 2023. [12] Cair, “TMU,” [Online]. Available: https://github.com/cair/tmu/tree/main, 2025, [Accessed:Feb,2026]. [13] Ultraembedded, “RISC-V,” [Online]. Available: https://github.com/ultraembedded/riscv, 2025, [Accessed:Feb,2026]. [14] A. Krizhevsky, V. Nair, and G. Hinton, “CIFAR-2,” [Online]. Available: https://keras.io/api/datasets/cifar10/, 2017, [Accessed:Feb,2026]. [15] P. Mowforth and B. Shepherd, “Statlog (Vehicle Silhouettes),” UCI Machine Learning Repository, [Online]. Available: https://archive.ics.uci.edu/ml/datasets/Statlog+(Vehicle+Silhouettes), 2023, [Accessed:Feb,2026]. [16] R. Madeo, P. Wagner, and S. Peres, “Gesture Phase Segmentation,” UCI Machine Learning Repository, [Online]. Available: https://archive.ics.uci.edu/ml/datasets/Gesture+Phase+Segmentation, 2014, [Accessed: Feb, 2026]. [17] A. Vergara, “Gas Sensor Array Drift Dataset,” UCI Machine Learning Repository, [Online]. Available: https://archive.ics.uci.edu/ml/datasets/Gas+Sensor+Array+Drift+Dataset, 2012, [Accessed: Feb, 2026]. [18] N. Krilova, I. Kastalskiy, V. Kazantsev, V. A. Makarov, and S. Lobov, “EMG Data for Gestures,” UCI Machine Learning Repository, [Online]. Available: https://archive.ics.uci.edu/ml/datasets/EMG+data+for+gestures, 2019, [Accessed: Feb, 2026]. [19] H. Xiao, K. Rasul, and R. Vollgraf, “Fashion-MNIST,” Keras, [Online]. Available: https://keras.io/api/datasets/fashion mnist/, 2017, [Accessed: Feb, 2026].
